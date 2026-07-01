@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Esboço de Telas — Family Journey</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+
+:root {
+  --ink: #0f0e17;
+  --parchment: #f5f0e8;
+  --gold: #e8a020;
+  --gold-light: #f5c842;
+  --teal: #1a6b6b;
+  --teal-light: #2a9898;
+  --ember: #c94a1a;
+  --mist: #8a8fa8;
+  --card-bg: #1c1b2e;
+  --card-border: #2e2d44;
+  --screen-bg: #13121f;
+  --phone-frame: #1a1928;
+  --accent-purple: #6b4fff;
+  --green-done: #2d9e5a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: #0a0917;
+  color: #f0eee8;
+  padding: 0 0 80px;
+}
+
+/* ── DOC HEADER ── */
+.doc-header {
+  background: linear-gradient(135deg, #0f0e1a 0%, #1a1630 60%, #0f1420 100%);
+  border-bottom: 1px solid rgba(232,160,32,0.3);
+  padding: 48px 40px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(107,79,255,0.15), transparent);
+  pointer-events: none;
+}
+.doc-tag {
+  display: inline-block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 3px;
+  color: var(--gold); text-transform: uppercase;
+  border: 1px solid rgba(232,160,32,0.4); border-radius: 20px;
+  padding: 4px 14px; margin-bottom: 18px;
+}
+.doc-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 800; color: #f5f0e8;
+  line-height: 1.1; margin-bottom: 14px;
+}
+.doc-title span { color: var(--gold); }
+.doc-desc {
+  font-size: 15px; color: var(--mist);
+  max-width: 560px; margin: 0 auto; line-height: 1.7;
+}
+.doc-meta {
+  display: flex; gap: 24px; justify-content: center; margin-top: 28px; flex-wrap: wrap;
+}
+.doc-meta-item {
+  font-size: 12px; color: var(--mist); font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.doc-meta-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+
+/* ── SECTION ── */
+.section {
+  padding: 56px 24px 0;
+  max-width: 1200px; margin: 0 auto;
+}
+.section-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 3px;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 8px;
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px; font-weight: 800; color: #f5f0e8;
+  margin-bottom: 6px;
+}
+.section-desc {
+  font-size: 14px; color: var(--mist); line-height: 1.6; margin-bottom: 36px; max-width: 680px;
+}
+
+/* ── SCREEN GRID ── */
+.screens-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+}
+.screens-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.screens-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.screens-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 900px) {
+  .screens-grid-3, .screens-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .screens-grid-2, .screens-grid-3, .screens-grid-4 { grid-template-columns: 1fr; }
+}
+
+/* ── PHONE FRAME ── */
+.phone-wrap {
+  display: flex; flex-direction: column; align-items: center;
+}
+.phone-label {
+  font-size: 13px; font-weight: 600; color: #f5f0e8;
+  margin-bottom: 12px; text-align: center;
+}
+.phone-sublabel {
+  font-size: 11px; color: var(--mist);
+  margin-bottom: 16px; text-align: center; line-height: 1.5;
+  max-width: 240px;
+}
+.phone {
+  width: 260px;
+  background: var(--phone-frame);
+  border-radius: 36px;
+  padding: 10px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 24px 60px rgba(0,0,0,0.7), 0 0 40px rgba(107,79,255,0.08);
+  position: relative;
+}
+.phone-notch {
+  width: 70px; height: 22px;
+  background: var(--phone-frame);
+  border-radius: 0 0 14px 14px;
+  margin: 0 auto 0;
+  position: relative; z-index: 2;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.notch-cam { width: 8px; height: 8px; border-radius: 50%; background: #0a0917; }
+.notch-speaker { width: 32px; height: 4px; border-radius: 2px; background: #0a0917; }
+.phone-screen {
+  background: var(--screen-bg);
+  border-radius: 28px;
+  overflow: hidden;
+  min-height: 520px;
+  position: relative;
+}
+.phone-btn-side {
+  position: absolute; right: -3px; top: 80px;
+  width: 3px; height: 40px; background: #2a2840; border-radius: 0 3px 3px 0;
+}
+.phone-btn-side2 {
+  position: absolute; right: -3px; top: 130px;
+  width: 3px; height: 28px; background: #2a2840; border-radius: 0 3px 3px 0;
+}
+
+/* ── STATUS BAR ── */
+.status-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 16px 4px; font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.7);
+}
+.status-icons { display: flex; gap: 4px; align-items: center; }
+.status-icon { font-size: 9px; }
+
+/* ── SCREEN CONTENT STYLES ── */
+
+/* Onboarding */
+.ob-bg {
+  background: linear-gradient(180deg, #0d0c1a 0%, #1a1040 50%, #0d1a2a 100%);
+  min-height: 520px; padding: 20px 18px 24px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.ob-stars {
+  text-align: center; font-size: 10px; color: rgba(255,255,255,0.2);
+  letter-spacing: 8px; margin-bottom: 24px; padding-top: 8px;
+}
+.ob-planet {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2a6b9e, #0a1a2e);
+  box-shadow: 0 0 0 12px rgba(42,152,152,0.1), 0 0 0 24px rgba(42,152,152,0.05);
+  margin: 0 auto 20px; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; font-size: 36px;
+}
+.ob-ring {
+  position: absolute; width: 140px; height: 30px;
+  border: 2px solid rgba(232,160,32,0.3); border-radius: 50%;
+  top: 50%; left: 50%; transform: translate(-50%,-50%) rotateX(70deg);
+}
+.ob-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #f5f0e8; text-align: center; margin-bottom: 6px; }
+.ob-sub { font-size: 11px; color: var(--mist); text-align: center; margin-bottom: 28px; line-height: 1.5; }
+.ob-campaign-card {
+  width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(232,160,32,0.2);
+  border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: all 0.2s;
+}
+.ob-camp-icon { font-size: 24px; }
+.ob-camp-info { flex: 1; }
+.ob-camp-name { font-size: 12px; font-weight: 700; color: #f5f0e8; }
+.ob-camp-desc { font-size: 10px; color: var(--mist); margin-top: 1px; }
+.ob-camp-badge { font-size: 9px; background: rgba(232,160,32,0.15); color: var(--gold); border: 1px solid rgba(232,160,32,0.3); border-radius: 6px; padding: 2px 6px; }
+.ob-btn {
+  width: 100%; background: linear-gradient(135deg, var(--gold), #c47a10);
+  border: none; border-radius: 14px; padding: 14px;
+  font-size: 13px; font-weight: 700; color: #0f0e17; margin-top: 16px; text-align: center;
+}
+.ob-link { font-size: 10px; color: var(--mist); text-align: center; margin-top: 10px; }
+
+/* Home / Dashboard */
+.home-bg {
+  background: linear-gradient(180deg, #0d0c1a 0%, #0f131f 100%);
+  min-height: 520px;
+}
+.home-hero {
+  background: linear-gradient(135deg, #0d1a30 0%, #1a1040 100%);
+  padding: 12px 16px 20px; position: relative; overflow: hidden;
+}
+.home-hero::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 40px;
+  background: linear-gradient(0deg, #0f131f, transparent);
+}
+.home-hero-stars { font-size: 8px; color: rgba(255,255,255,0.15); letter-spacing: 5px; margin-bottom: 10px; }
+.home-camp-tag { font-size: 9px; color: var(--gold); font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+.home-camp-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: #f5f0e8; margin-bottom: 2px; }
+.home-camp-chapter { font-size: 10px; color: var(--teal-light); margin-bottom: 12px; }
+.home-scene-img {
+  width: 100%; height: 80px;
+  background: linear-gradient(135deg, #0a1a30, #1a2a40);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  font-size: 32px; letter-spacing: 8px; position: relative; overflow: hidden;
+}
+.home-scene-img::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(232,160,32,0.05) 50%, transparent 100%);
+}
+.progress-section { padding: 14px 16px 0; }
+.prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.prog-title { font-size: 10px; font-weight: 700; color: var(--mist); letter-spacing: 1px; text-transform: uppercase; }
+.prog-pct { font-size: 10px; font-weight: 700; color: var(--gold); }
+.prog-bar-bg { background: rgba(255,255,255,0.08); border-radius: 6px; height: 8px; overflow: hidden; margin-bottom: 4px; }
+.prog-bar { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--teal), var(--gold)); }
+.prog-sub { font-size: 9px; color: var(--mist); }
+.members-row { display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto; }
+.members-row::-webkit-scrollbar { display: none; }
+.member-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  flex-shrink: 0;
+}
+.member-avatar-sm { font-size: 22px; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; }
+.member-avatar-sm.active { border-color: var(--gold); }
+.member-name-sm { font-size: 8px; color: var(--mist); font-weight: 600; }
+.member-prog-sm { font-size: 8px; color: var(--gold); font-weight: 700; }
+.tasks-section { padding: 12px 16px 0; }
+.tasks-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.tasks-title { font-size: 11px; font-weight: 700; color: #f5f0e8; text-transform: uppercase; letter-spacing: 1px; }
+.tasks-filter { font-size: 9px; color: var(--gold); font-weight: 600; }
+.task-card {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 10px 12px; margin-bottom: 7px;
+  display: flex; align-items: flex-start; gap: 10px; position: relative; overflow: hidden;
+}
+.task-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); border-radius: 3px 0 0 3px; }
+.task-card.done::before { background: var(--green-done); }
+.task-card.done { opacity: 0.6; }
+.task-icon { font-size: 18px; margin-top: 1px; }
+.task-info { flex: 1; }
+.task-name { font-size: 11px; font-weight: 700; color: #f5f0e8; margin-bottom: 2px; }
+.task-narrative { font-size: 9px; color: var(--teal-light); font-style: italic; margin-bottom: 3px; }
+.task-assignee { font-size: 8px; color: var(--mist); }
+.task-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; margin-top: 2px; }
+.task-check.done { background: var(--green-done); border-color: var(--green-done); color: #fff; }
+
+/* Campaign Map */
+.map-bg {
+  background: linear-gradient(180deg, #081015 0%, #0d1520 100%);
+  min-height: 520px;
+}
+.map-header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+.map-back { font-size: 14px; color: var(--mist); }
+.map-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; color: #f5f0e8; flex: 1; }
+.map-area {
+  margin: 0 16px; border-radius: 16px; overflow: hidden;
+  background: linear-gradient(135deg, #0a1520, #0d2030);
+  border: 1px solid rgba(255,255,255,0.08);
+  height: 200px; position: relative; display: flex; align-items: center; justify-content: center;
+}
+.map-deco { position: absolute; font-size: 48px; opacity: 0.06; }
+.map-path {
+  position: absolute; width: 90%; height: 2px; background: rgba(232,160,32,0.2);
+  left: 5%; top: 50%;
+}
+.map-node {
+  position: absolute; width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+  border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
+}
+.map-node.done { background: rgba(45,158,90,0.3); border-color: var(--green-done); }
+.map-node.current { background: rgba(232,160,32,0.2); border-color: var(--gold); box-shadow: 0 0 12px rgba(232,160,32,0.4); animation: pulse 2s infinite; }
+.map-node.locked { opacity: 0.3; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 12px rgba(232,160,32,0.4); } 50% { box-shadow: 0 0 20px rgba(232,160,32,0.7); } }
+.map-node-label { position: absolute; font-size: 7px; color: var(--mist); white-space: nowrap; top: calc(100% + 4px); text-align: center; left: 50%; transform: translateX(-50%); }
+.map-chapter-list { padding: 14px 16px 0; }
+.chapter-item {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 10px 12px; margin-bottom: 7px;
+}
+.chapter-num { font-size: 10px; font-weight: 800; color: var(--mist); min-width: 20px; }
+.chapter-info { flex: 1; }
+.chapter-name { font-size: 11px; font-weight: 700; color: #f5f0e8; }
+.chapter-status { font-size: 9px; color: var(--mist); margin-top: 1px; }
+.chapter-icon { font-size: 14px; }
+.chapter-item.done .chapter-icon { color: var(--green-done); }
+.chapter-item.current { border-color: var(--gold); background: rgba(232,160,32,0.05); }
+.chapter-item.locked { opacity: 0.4; }
+
+/* Profile / Family */
+.profile-bg {
+  background: var(--screen-bg);
+  min-height: 520px;
+}
+.profile-header {
+  background: linear-gradient(135deg, #0d1a30, #12103a);
+  padding: 14px 16px 20px;
+}
+.profile-team { font-size: 9px; color: var(--gold); font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+.profile-family { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: #f5f0e8; margin-bottom: 12px; }
+.family-avatars { display: flex; gap: -6px; }
+.fam-av { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--screen-bg); background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-left: -6px; }
+.fam-av:first-child { margin-left: 0; }
+.fam-stats { display: flex; gap: 12px; margin-top: 10px; }
+.fam-stat { text-align: center; }
+.fam-stat-val { font-size: 16px; font-weight: 800; color: var(--gold); }
+.fam-stat-lbl { font-size: 8px; color: var(--mist); }
+.member-list { padding: 14px 16px; }
+.member-card-full {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 12px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+.mem-avatar { font-size: 28px; width: 46px; height: 46px; border-radius: 14px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; }
+.mem-info { flex: 1; }
+.mem-name { font-size: 12px; font-weight: 700; color: #f5f0e8; }
+.mem-role { font-size: 9px; color: var(--mist); margin-top: 1px; }
+.mem-tasks { font-size: 9px; color: var(--gold); margin-top: 3px; }
+.mem-progress { text-align: right; }
+.mem-pct { font-size: 16px; font-weight: 800; color: var(--gold); }
+.mem-pct-lbl { font-size: 8px; color: var(--mist); }
+.role-pill { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 8px; font-weight: 700; }
+.role-pai { background: rgba(107,79,255,0.15); color: #9b7eff; border: 1px solid rgba(107,79,255,0.3); }
+.role-mae { background: rgba(201,74,26,0.15); color: #e88a60; border: 1px solid rgba(201,74,26,0.3); }
+.role-filho { background: rgba(42,152,152,0.15); color: var(--teal-light); border: 1px solid rgba(42,152,152,0.3); }
+
+/* Task Detail */
+.detail-bg {
+  background: var(--screen-bg);
+  min-height: 520px;
+}
+.detail-header { padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+.detail-back { font-size: 14px; color: var(--mist); }
+.detail-options { margin-left: auto; font-size: 14px; color: var(--mist); }
+.detail-hero {
+  background: linear-gradient(135deg, #0d1a30, #1a1040);
+  margin: 0 16px; border-radius: 18px; padding: 20px 18px; margin-bottom: 14px;
+  position: relative; overflow: hidden;
+}
+.detail-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(232,160,32,0.1), transparent 60%);
+}
+.detail-emoji { font-size: 40px; margin-bottom: 8px; display: block; }
+.detail-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: #f5f0e8; margin-bottom: 6px; }
+.detail-narrative {
+  font-size: 11px; color: var(--teal-light); font-style: italic; line-height: 1.5; margin-bottom: 10px;
+  padding: 8px 10px; background: rgba(42,152,152,0.08); border-left: 2px solid var(--teal); border-radius: 0 8px 8px 0;
+}
+.detail-assignee-row { display: flex; align-items: center; gap: 6px; }
+.detail-avatar { font-size: 14px; }
+.detail-assignee-name { font-size: 10px; font-weight: 700; color: var(--mist); }
+.detail-section { padding: 0 16px 12px; }
+.detail-section-title { font-size: 10px; font-weight: 700; color: var(--mist); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.detail-obs-input {
+  width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; padding: 10px 12px; color: var(--mist);
+  font-size: 10px; min-height: 50px; display: flex; align-items: flex-start;
+}
+.detail-photos-row { display: flex; gap: 8px; }
+.detail-photo { width: 56px; height: 56px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.detail-photo.add { border-color: var(--gold); color: var(--gold); font-size: 20px; }
+.detail-complete-btn {
+  margin: 0 16px 0; background: linear-gradient(135deg, var(--teal), #0d3a3a);
+  border: none; border-radius: 14px; padding: 14px; text-align: center;
+  font-size: 13px; font-weight: 700; color: #f5f0e8; width: calc(100% - 32px);
+}
+
+/* Unlock Chapter */
+.unlock-bg {
+  background: radial-gradient(ellipse at 50% 30%, #1a1040, #060510);
+  min-height: 520px; display: flex; flex-direction: column; align-items: center;
+  padding: 20px 16px 24px; text-align: center;
+}
+.unlock-rays {
+  position: absolute; inset: 0;
+  background: conic-gradient(from 0deg at 50% 30%, transparent 0deg, rgba(232,160,32,0.04) 20deg, transparent 40deg, rgba(107,79,255,0.04) 100deg, transparent 120deg);
+  pointer-events: none;
+}
+.unlock-badge { font-size: 72px; margin-bottom: 12px; filter: drop-shadow(0 0 20px rgba(232,160,32,0.6)); }
+.unlock-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; }
+.unlock-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #f5f0e8; margin-bottom: 8px; }
+.unlock-story {
+  font-size: 11px; color: #c0b8d0; line-height: 1.6; margin-bottom: 20px; text-align: center;
+  background: rgba(255,255,255,0.04); border-radius: 12px; padding: 12px 14px;
+  border: 1px solid rgba(232,160,32,0.15);
+}
+.unlock-rewards { display: flex; gap: 10px; margin-bottom: 20px; }
+.unlock-reward {
+  flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(232,160,32,0.2);
+  border-radius: 12px; padding: 10px 8px; text-align: center;
+}
+.unlock-reward-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+.unlock-reward-name { font-size: 9px; color: var(--mist); font-weight: 600; }
+.unlock-btn {
+  width: 100%; background: linear-gradient(135deg, var(--gold), #c47a10);
+  border: none; border-radius: 14px; padding: 14px;
+  font-size: 13px; font-weight: 700; color: #0f0e17;
+}
+.unlock-skip { font-size: 10px; color: var(--mist); margin-top: 12px; }
+
+/* Histórico */
+.history-bg { background: var(--screen-bg); min-height: 520px; }
+.history-header { padding: 12px 16px 8px; }
+.history-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: #f5f0e8; margin-bottom: 4px; }
+.history-sub { font-size: 10px; color: var(--mist); }
+.history-tabs { display: flex; gap: 4px; padding: 0 16px 12px; }
+.history-tab {
+  padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: 700;
+  border: 1px solid rgba(255,255,255,0.1); color: var(--mist); background: transparent;
+}
+.history-tab.active { background: rgba(232,160,32,0.15); border-color: var(--gold); color: var(--gold); }
+.history-week {
+  margin: 0 16px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px; padding: 12px;
+}
+.hist-week-title { font-size: 10px; font-weight: 700; color: var(--mist); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.hist-days { display: flex; gap: 4px; justify-content: space-between; }
+.hist-day { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+.hist-day-bar-bg { height: 50px; width: 14px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden; display: flex; align-items: flex-end; }
+.hist-day-bar { width: 100%; background: linear-gradient(0deg, var(--teal), var(--gold)); border-radius: 6px; }
+.hist-day-name { font-size: 7px; color: var(--mist); font-weight: 600; }
+.hist-entry {
+  margin: 0 16px 7px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hist-entry-icon { font-size: 20px; }
+.hist-entry-info { flex: 1; }
+.hist-entry-title { font-size: 11px; font-weight: 700; color: #f5f0e8; }
+.hist-entry-date { font-size: 9px; color: var(--mist); margin-top: 1px; }
+.hist-entry-photo { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+/* Settings */
+.settings-bg { background: var(--screen-bg); min-height: 520px; }
+.settings-header { padding: 12px 16px 16px; }
+.settings-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: #f5f0e8; }
+.settings-section { padding: 0 16px 14px; }
+.settings-section-label { font-size: 9px; font-weight: 700; color: var(--mist); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.settings-item {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 11px 12px; margin-bottom: 5px;
+  display: flex; align-items: center; gap: 10px;
+}
+.settings-item-icon { font-size: 16px; }
+.settings-item-info { flex: 1; }
+.settings-item-name { font-size: 11px; font-weight: 700; color: #f5f0e8; }
+.settings-item-sub { font-size: 9px; color: var(--mist); margin-top: 1px; }
+.settings-chevron { font-size: 10px; color: var(--mist); }
+.settings-toggle { width: 36px; height: 20px; border-radius: 10px; background: var(--teal); position: relative; }
+.settings-toggle::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; top: 2px; right: 2px; }
+.settings-toggle.off { background: rgba(255,255,255,0.15); }
+.settings-toggle.off::after { right: auto; left: 2px; }
+
+/* Bottom Nav */
+.bottom-nav {
+  display: flex; background: rgba(15,14,26,0.95);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 8px 0 10px;
+}
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.nav-icon { font-size: 16px; }
+.nav-label { font-size: 8px; font-weight: 600; color: var(--mist); }
+.nav-item.active .nav-icon { filter: none; }
+.nav-item.active .nav-label { color: var(--gold); }
+.nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+
+/* ── CALLOUTS ── */
+.callout-row {
+  display: flex; gap: 12px; margin: 10px 0 0; flex-wrap: wrap;
+}
+.callout {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(232,160,32,0.06); border: 1px solid rgba(232,160,32,0.2);
+  border-radius: 10px; padding: 10px 14px; flex: 1; min-width: 180px;
+}
+.callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.callout-text { font-size: 12px; color: rgba(240,238,232,0.8); line-height: 1.5; }
+.callout.teal { background: rgba(42,152,152,0.06); border-color: rgba(42,152,152,0.25); }
+.callout.purple { background: rgba(107,79,255,0.06); border-color: rgba(107,79,255,0.25); }
+
+/* ── FLOW DIAGRAM ── */
+.flow-section { padding: 56px 24px 0; max-width: 1200px; margin: 0 auto; }
+.flow-diagram {
+  display: flex; gap: 0; align-items: center; flex-wrap: wrap; justify-content: center; margin-top: 32px;
+}
+.flow-node {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; padding: 14px 18px; text-align: center; min-width: 120px;
+}
+.flow-node.gold { border-color: rgba(232,160,32,0.4); background: rgba(232,160,32,0.06); }
+.flow-node.teal { border-color: rgba(42,152,152,0.4); background: rgba(42,152,152,0.06); }
+.flow-node-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+.flow-node-name { font-size: 11px; font-weight: 700; color: #f5f0e8; }
+.flow-node-sub { font-size: 9px; color: var(--mist); margin-top: 2px; }
+.flow-arrow { font-size: 18px; color: var(--mist); padding: 0 6px; flex-shrink: 0; }
+
+/* ── COLOR PALETTE ── */
+.palette-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
+.swatch { border-radius: 10px; overflow: hidden; }
+.swatch-color { height: 48px; }
+.swatch-label { padding: 6px 10px; background: rgba(255,255,255,0.04); }
+.swatch-name { font-size: 10px; font-weight: 700; color: #f5f0e8; }
+.swatch-hex { font-size: 9px; color: var(--mist); font-family: monospace; }
+
+/* ── DIVIDER ── */
+.divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 56px 24px 0; }
+</style>
+</head>
+<body>
+
+<!-- ══ DOC HEADER ══ -->
+<div class="doc-header">
+  <div class="doc-tag">Esboço de Produto · Flutter App</div>
+  <h1 class="doc-title">Family <span>Journey</span></h1>
+  <p class="doc-desc">Esboço das telas principais do app de homeschool colaborativo. Um jogo onde o jogador é a família — não a criança.</p>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><div class="doc-meta-dot"></div>10 Telas mapeadas</div>
+    <div class="doc-meta-item"><div class="doc-meta-dot"></div>Plataforma Flutter (iOS + Android)</div>
+    <div class="doc-meta-item"><div class="doc-meta-dot"></div>Funciona 100% offline</div>
+  </div>
+</div>
+
+
+<!-- ══ FLUXO GERAL ══ -->
+<div class="flow-section">
+  <div class="section-label">Arquitetura de Navegação</div>
+  <div class="section-title">Fluxo principal do app</div>
+  <p class="section-desc">O usuário entra sempre pelo Dashboard. A campanha ativa dá contexto narrativo para todas as telas.</p>
+  <div class="flow-diagram">
+    <div class="flow-node gold">
+      <span class="flow-node-icon">🚀</span>
+      <div class="flow-node-name">Onboarding</div>
+      <div class="flow-node-sub">Cadastro família<br>+ escolha campanha</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node gold">
+      <span class="flow-node-icon">🏠</span>
+      <div class="flow-node-name">Dashboard</div>
+      <div class="flow-node-sub">Tarefas do dia<br>+ progresso</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node teal">
+      <span class="flow-node-icon">📋</span>
+      <div class="flow-node-name">Tarefa</div>
+      <div class="flow-node-sub">Detalhes, obs<br>+ fotos</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node gold">
+      <span class="flow-node-icon">🎉</span>
+      <div class="flow-node-name">Desbloqueio</div>
+      <div class="flow-node-sub">Novo capítulo<br>da aventura</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+    <div class="flow-node" style="min-width:100px">
+      <span class="flow-node-icon">🗺️</span>
+      <div class="flow-node-name">Mapa</div>
+    </div>
+    <div class="flow-node" style="min-width:100px">
+      <span class="flow-node-icon">👨‍👩‍👧‍👦</span>
+      <div class="flow-node-name">Família</div>
+    </div>
+    <div class="flow-node" style="min-width:100px">
+      <span class="flow-node-icon">📖</span>
+      <div class="flow-node-name">Histórico</div>
+    </div>
+    <div class="flow-node" style="min-width:100px">
+      <span class="flow-node-icon">⚙️</span>
+      <div class="flow-node-name">Config.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ SECÇÃO 1: ONBOARDING ══ -->
+<div class="section">
+  <div class="section-label">Tela 01 · Tela 02</div>
+  <div class="section-title">Onboarding — Boas-vindas & Escolha de Campanha</div>
+  <p class="section-desc">Primeira experiência do app. A família escolhe a narrativa antes de qualquer cadastro — já entra no clima de aventura.</p>
+
+  <div class="screens-grid screens-grid-2">
+    <!-- Tela 1 -->
+    <div class="phone-wrap">
+      <div class="phone-label">Boas-vindas</div>
+      <div class="phone-sublabel">Apresentação da proposta colaborativa antes de qualquer dado.</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span class="status-icon">●●●</span><span class="status-icon">WiFi</span><span class="status-icon">🔋</span></div></div>
+          <div class="ob-bg">
+            <div class="ob-stars">✦ · · · ✦ · · · ✦ · · · ✦</div>
+            <div class="ob-planet">
+              🚀
+              <div class="ob-ring"></div>
+            </div>
+            <div class="ob-title">Family Journey</div>
+            <div class="ob-sub">A aventura de aprender juntos começa aqui. Vocês são a equipe.</div>
+            <div style="display:flex;gap:16px;margin-bottom:20px;">
+              <div style="text-align:center;flex:1;">
+                <div style="font-size:18px;margin-bottom:3px">🤝</div>
+                <div style="font-size:9px;color:var(--mist);font-weight:600">Cooperação</div>
+              </div>
+              <div style="text-align:center;flex:1;">
+                <div style="font-size:18px;margin-bottom:3px">📖</div>
+                <div style="font-size:9px;color:var(--mist);font-weight:600">Narrativa</div>
+              </div>
+              <div style="text-align:center;flex:1;">
+                <div style="font-size:18px;margin-bottom:3px">📵</div>
+                <div style="font-size:9px;color:var(--mist);font-weight:600">100% Offline</div>
+              </div>
+            </div>
+            <div class="ob-btn">Começar nossa aventura →</div>
+            <div class="ob-link">Já tenho conta · Restaurar backup</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tela 2 -->
+    <div class="phone-wrap">
+      <div class="phone-label">Escolha a Campanha</div>
+      <div class="phone-sublabel">A narrativa é escolhida antes do cadastro — define o tom de toda a jornada.</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="ob-bg" style="padding-top:14px;">
+            <div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:6px;">ESCOLHA A AVENTURA</div>
+            <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#f5f0e8;margin-bottom:4px;">Qual missão a família aceita?</div>
+            <div style="font-size:10px;color:var(--mist);margin-bottom:14px;line-height:1.5;">Cada campanha tem sua história. A mecânica é sempre a mesma.</div>
+            <div class="ob-campaign-card" style="border-color:rgba(232,160,32,0.4);background:rgba(232,160,32,0.06)">
+              <div class="ob-camp-icon">🚀</div>
+              <div class="ob-camp-info">
+                <div class="ob-camp-name">Expedição Espacial</div>
+                <div class="ob-camp-desc">Construam o foguete e desvende os mistérios do cosmos</div>
+              </div>
+              <div class="ob-camp-badge">✓ SELECIONADA</div>
+            </div>
+            <div class="ob-campaign-card">
+              <div class="ob-camp-icon">🌊</div>
+              <div class="ob-camp-info">
+                <div class="ob-camp-name">Fundo do Mar</div>
+                <div class="ob-camp-desc">Explore os oceanos inexplorados</div>
+              </div>
+              <div class="ob-camp-badge">Em breve</div>
+            </div>
+            <div class="ob-campaign-card">
+              <div class="ob-camp-icon">🏰</div>
+              <div class="ob-camp-info">
+                <div class="ob-camp-name">Reino Medieval</div>
+                <div class="ob-camp-desc">Construa um reino próspero em família</div>
+              </div>
+              <div class="ob-camp-badge">Em breve</div>
+            </div>
+            <div class="ob-campaign-card">
+              <div class="ob-camp-icon">🦕</div>
+              <div class="ob-camp-info">
+                <div class="ob-camp-name">Era dos Dinossauros</div>
+                <div class="ob-camp-desc">Viaje ao passado e descubra os gigantes</div>
+              </div>
+              <div class="ob-camp-badge">Em breve</div>
+            </div>
+            <div class="ob-btn" style="margin-top:10px;">Iniciar Expedição Espacial →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout-row">
+    <div class="callout">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text"><strong>Narrativa primeiro.</strong> A família se engaja com a aventura antes de preencher qualquer formulário. O cadastro vem depois.</div>
+    </div>
+    <div class="callout teal">
+      <div class="callout-icon">🗂️</div>
+      <div class="callout-text"><strong>Campanhas extensíveis.</strong> A mecânica nunca muda — só a história. Novas campanhas podem ser adicionadas sem alterar o app.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECÇÃO 2: DASHBOARD ══ -->
+<div class="section">
+  <div class="section-label">Tela 03</div>
+  <div class="section-title">Dashboard — A Base de Operações</div>
+  <p class="section-desc">Tela central do app. Mostra o contexto narrativo, o progresso coletivo e as tarefas do dia — tudo junto, sem separação entre "jogo" e "escola".</p>
+
+  <div class="screens-grid" style="grid-template-columns: 1fr; max-width: 320px; margin: 0 auto;">
+    <div class="phone-wrap">
+      <div class="phone-label">Dashboard · Expedição Espacial</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="home-bg">
+            <div class="home-hero">
+              <div class="home-hero-stars">✦ · ✦ · ✦ · ✦ · ✦ · ✦</div>
+              <div class="home-camp-tag">EXPEDIÇÃO ESPACIAL</div>
+              <div class="home-camp-name">Capítulo 2: O Motor</div>
+              <div class="home-camp-chapter">🔬 Precisamos testar os sistemas do foguete</div>
+              <div class="home-scene-img">🚀 🌌 🔭</div>
+            </div>
+            <div class="progress-section">
+              <div class="prog-header">
+                <span class="prog-title">Progresso da equipe hoje</span>
+                <span class="prog-pct">60%</span>
+              </div>
+              <div class="prog-bar-bg"><div class="prog-bar" style="width:60%"></div></div>
+              <div class="prog-sub">3 de 5 tarefas concluídas · Desbloqueio a 80%</div>
+            </div>
+            <div class="members-row">
+              <div class="member-chip">
+                <div class="member-avatar-sm active">👨</div>
+                <div class="member-name-sm">Papai</div>
+                <div class="member-prog-sm">2/2</div>
+              </div>
+              <div class="member-chip">
+                <div class="member-avatar-sm active">👩</div>
+                <div class="member-name-sm">Mamãe</div>
+                <div class="member-prog-sm">1/1</div>
+              </div>
+              <div class="member-chip">
+                <div class="member-avatar-sm">🧒</div>
+                <div class="member-name-sm">Pedro</div>
+                <div class="member-prog-sm">0/2</div>
+              </div>
+              <div class="member-chip">
+                <div class="member-avatar-sm">👧</div>
+                <div class="member-name-sm">Maria</div>
+                <div class="member-prog-sm">0/2</div>
+              </div>
+            </div>
+            <div class="tasks-section">
+              <div class="tasks-header">
+                <span class="tasks-title">Tarefas de hoje</span>
+                <span class="tasks-filter">Ver todas →</span>
+              </div>
+              <div class="task-card done">
+                <div class="task-icon">📐</div>
+                <div class="task-info">
+                  <div class="task-name">Matemática · Frações</div>
+                  <div class="task-narrative">"Calcular quantidade de combustível"</div>
+                  <div class="task-assignee">👩 Mamãe acompanha · 🧒 Pedro</div>
+                </div>
+                <div class="task-check done">✓</div>
+              </div>
+              <div class="task-card" style="border-left-color:var(--teal)">
+                <div class="task-icon">🔭</div>
+                <div class="task-info">
+                  <div class="task-name">Ciências · Materiais</div>
+                  <div class="task-narrative">"Escolher liga metálica do foguete"</div>
+                  <div class="task-assignee">👨 Papai ensina · 👧 Maria</div>
+                </div>
+                <div class="task-check"></div>
+              </div>
+              <div class="task-card" style="border-left-color:var(--accent-purple)">
+                <div class="task-icon">📚</div>
+                <div class="task-info">
+                  <div class="task-name">Leitura · Cap. 5</div>
+                  <div class="task-narrative">"Ler o manual do motor da nave"</div>
+                  <div class="task-assignee">🧒 Pedro</div>
+                </div>
+                <div class="task-check"></div>
+              </div>
+            </div>
+            <div style="height:10px"></div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item active"><span class="nav-icon">🏠</span><div class="nav-dot"></div></div>
+            <div class="nav-item"><span class="nav-icon">🗺️</span><span class="nav-label">Mapa</span></div>
+            <div class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span class="nav-label">Família</span></div>
+            <div class="nav-item"><span class="nav-icon">📖</span><span class="nav-label">Histórico</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout-row">
+    <div class="callout teal">
+      <div class="callout-icon">🎭</div>
+      <div class="callout-text"><strong>Narrativa embutida.</strong> Cada tarefa escolar aparece com uma "missão narrativa" em itálico. A criança não faz uma lição de matemática — ela calcula o combustível do foguete.</div>
+    </div>
+    <div class="callout purple">
+      <div class="callout-icon">📊</div>
+      <div class="callout-text"><strong>Progresso coletivo.</strong> A barra de progresso é do time. Os chips de membros mostram contribuição individual, mas o desbloqueio é sempre coletivo.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECÇÃO 3: MAPA DA CAMPANHA ══ -->
+<style>
+/* ── MARIO-STYLE MAP ── */
+.mario-map-screen {
+  background: linear-gradient(180deg, #0d1a30 0%, #0a1220 40%, #061018 100%);
+  min-height: 520px;
+  overflow: hidden;
+}
+.mario-map-header {
+  padding: 10px 14px 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.mario-map-back { font-size: 13px; color: var(--mist); }
+.mario-map-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; color: #f5f0e8; flex: 1; }
+.mario-camp-badge {
+  font-size: 8px; font-weight: 700; color: var(--gold);
+  background: rgba(232,160,32,0.15); border: 1px solid rgba(232,160,32,0.35);
+  border-radius: 8px; padding: 2px 7px; letter-spacing: 1px;
+}
+
+/* The scrollable world map canvas */
+.mario-world-canvas {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+}
+
+/* Background landscape layers */
+.mario-sky {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #0a1520 0%, #102030 55%, #1a3a20 55%, #0e2a14 100%);
+}
+/* Stars in sky */
+.mario-star { position: absolute; background: #fff; border-radius: 50%; }
+
+/* Ground strip */
+.mario-ground {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+  background: linear-gradient(180deg, #1a3a20 0%, #0e2a14 100%);
+  border-top: 2px solid rgba(45,158,90,0.5);
+}
+/* Mountains in background */
+.mario-mountain {
+  position: absolute; bottom: 58px;
+  width: 0; height: 0;
+  border-left: solid transparent;
+  border-right: solid transparent;
+  border-bottom: solid;
+}
+
+/* Dotted path connecting nodes */
+.mario-path-svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  overflow: visible;
+}
+
+/* World map nodes */
+.mario-node-wrap {
+  position: absolute;
+  display: flex; flex-direction: column; align-items: center;
+  transform: translate(-50%, -50%);
+}
+.mario-node {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900;
+  border: 3px solid;
+  position: relative;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+}
+.mario-node.done {
+  background: linear-gradient(180deg, #3dbf6a, #1e7a40);
+  border-color: #5de08a;
+  color: #fff;
+}
+.mario-node.current {
+  background: linear-gradient(180deg, #f5c842, #c88a10);
+  border-color: #ffe570;
+  color: #0f0e17;
+  animation: mario-pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.5), 0 0 16px rgba(245,200,66,0.6);
+}
+.mario-node.locked {
+  background: linear-gradient(180deg, #2a2a3e, #16161e);
+  border-color: #3a3a50;
+  color: #555;
+}
+@keyframes mario-pulse {
+  0%, 100% { box-shadow: 0 4px 0 rgba(0,0,0,0.5), 0 0 12px rgba(245,200,66,0.5); transform: scale(1); }
+  50%       { box-shadow: 0 4px 0 rgba(0,0,0,0.5), 0 0 22px rgba(245,200,66,0.8); transform: scale(1.06); }
+}
+.mario-node-label {
+  font-size: 7px; font-weight: 700; color: #f5f0e8;
+  margin-top: 4px; white-space: nowrap; text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+.mario-node.locked .mario-node-label { color: #555; }
+
+/* Family avatar walking on path */
+.mario-family-avatar {
+  position: absolute;
+  font-size: 18px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+/* Decorative map elements */
+.mario-tree {
+  position: absolute; bottom: 58px;
+  font-size: 16px; line-height: 1;
+}
+.mario-cloud {
+  position: absolute;
+  font-size: 13px; opacity: 0.25;
+}
+
+/* Chapter info card below map */
+.mario-chapter-card {
+  margin: 0 12px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(232,160,32,0.25);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.mario-chapter-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(232,160,32,0.2), rgba(232,160,32,0.05));
+  border: 1px solid rgba(232,160,32,0.3);
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+  flex-shrink: 0;
+}
+.mario-chapter-info { flex: 1; }
+.mario-chapter-num { font-size: 8px; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
+.mario-chapter-name { font-size: 12px; font-weight: 700; color: #f5f0e8; margin: 1px 0; }
+.mario-chapter-progress { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.mario-prog-mini { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.mario-prog-mini-bar { height: 100%; background: linear-gradient(90deg, var(--teal), var(--gold)); border-radius: 3px; }
+.mario-prog-pct { font-size: 8px; color: var(--gold); font-weight: 700; }
+.mario-chapter-cta {
+  font-size: 9px; color: var(--gold); font-weight: 700;
+  background: rgba(232,160,32,0.12); border: 1px solid rgba(232,160,32,0.3);
+  border-radius: 8px; padding: 5px 8px; white-space: nowrap;
+}
+
+/* Mini chapter list */
+.mario-mini-list { padding: 0 12px 6px; }
+.mario-mini-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.mario-mini-item:last-child { border-bottom: none; }
+.mario-mini-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid;
+}
+.mario-mini-dot.done { background: var(--green-done); border-color: var(--green-done); }
+.mario-mini-dot.current { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 6px rgba(232,160,32,0.6); }
+.mario-mini-dot.locked { background: transparent; border-color: #333; }
+.mario-mini-name { font-size: 10px; font-weight: 700; color: #f5f0e8; flex: 1; }
+.mario-mini-item.locked .mario-mini-name { color: #444; }
+.mario-mini-status { font-size: 8px; color: var(--mist); }
+.mario-mini-item.current .mario-mini-status { color: var(--gold); }
+</style>
+
+<div class="section">
+  <div class="section-label">Tela 04</div>
+  <div class="section-title">Mapa da Campanha — Estilo Mundo</div>
+  <p class="section-desc">Inspirado nos mapas de mundo clássicos: a família caminha de fase em fase por um cenário ilustrado. Cada nó é um capítulo — concluídos ficam verdes, o atual pulsa em dourado, os próximos permanecem bloqueados.</p>
+
+  <div class="screens-grid" style="grid-template-columns:1fr;max-width:300px;margin:0 auto">
+    <div class="phone-wrap">
+      <div class="phone-label">Mapa do Mundo · Expedição Espacial</div>
+      <div class="phone-sublabel">A família "anda" pelo mapa conforme completa os capítulos — exatamente como nos clássicos de videogame.</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="mario-map-screen">
+
+            <div class="mario-map-header">
+              <span class="mario-map-back">←</span>
+              <span class="mario-map-title">🗺️ Jornada da Família</span>
+              <span class="mario-camp-badge">EXPEDIÇÃO ESPACIAL</span>
+            </div>
+
+            <!-- WORLD MAP CANVAS -->
+            <div class="mario-world-canvas">
+              <!-- Sky + ground -->
+              <div class="mario-sky"></div>
+
+              <!-- Stars -->
+              <div class="mario-star" style="width:2px;height:2px;top:8%;left:12%;opacity:0.6"></div>
+              <div class="mario-star" style="width:1px;height:1px;top:15%;left:35%;opacity:0.4"></div>
+              <div class="mario-star" style="width:2px;height:2px;top:6%;left:55%;opacity:0.7"></div>
+              <div class="mario-star" style="width:1px;height:1px;top:20%;left:72%;opacity:0.5"></div>
+              <div class="mario-star" style="width:2px;height:2px;top:10%;left:88%;opacity:0.4"></div>
+              <div class="mario-star" style="width:1px;height:1px;top:25%;left:25%;opacity:0.5"></div>
+
+              <!-- Mountains -->
+              <div class="mario-mountain" style="left:5%;border-left-width:22px;border-right-width:22px;border-bottom-width:38px;border-bottom-color:#0e2a1a;opacity:0.7"></div>
+              <div class="mario-mountain" style="left:18%;border-left-width:30px;border-right-width:30px;border-bottom-width:52px;border-bottom-color:#112a18;opacity:0.6"></div>
+              <div class="mario-mountain" style="right:10%;border-left-width:26px;border-right-width:26px;border-bottom-width:44px;border-bottom-color:#0e2a1a;opacity:0.5"></div>
+              <div class="mario-mountain" style="right:28%;border-left-width:18px;border-right-width:18px;border-bottom-width:32px;border-bottom-color:#112a18;opacity:0.6"></div>
+
+              <!-- Trees -->
+              <div class="mario-tree" style="left:8%">🌲</div>
+              <div class="mario-tree" style="left:14%">🌲</div>
+              <div class="mario-tree" style="left:36%">🌳</div>
+              <div class="mario-tree" style="right:18%">🌲</div>
+              <div class="mario-tree" style="right:6%">🌳</div>
+
+              <!-- Clouds -->
+              <div class="mario-cloud" style="left:20%;top:12%">☁️</div>
+              <div class="mario-cloud" style="left:55%;top:8%">☁️</div>
+              <div class="mario-cloud" style="right:12%;top:16%">☁️</div>
+
+              <!-- Ground -->
+              <div class="mario-ground"></div>
+
+              <!-- SVG dotted path connecting nodes -->
+              <svg class="mario-path-svg" viewBox="0 0 240 320" preserveAspectRatio="none">
+                <!-- Path: node positions in viewBox coords -->
+                <!-- Start(22,245) → Cap1(72,190) → Cap2(120,215) → Cap3(168,175) → End(218,200) -->
+                <path d="M22,245 C40,230 55,195 72,190 C89,185 100,220 120,215 C140,210 152,178 168,175 C184,172 200,195 218,200"
+                  fill="none"
+                  stroke="rgba(232,160,32,0.35)"
+                  stroke-width="2.5"
+                  stroke-dasharray="6,5"
+                  stroke-linecap="round"/>
+                <!-- Completed segment highlight -->
+                <path d="M22,245 C40,230 55,195 72,190 C89,185 100,220 120,215"
+                  fill="none"
+                  stroke="rgba(45,158,90,0.6)"
+                  stroke-width="2.5"
+                  stroke-dasharray="6,5"
+                  stroke-linecap="round"/>
+              </svg>
+
+              <!-- NODE: Start -->
+              <div class="mario-node-wrap" style="left:9.2%;top:76.6%">
+                <div class="mario-node done">✓</div>
+                <div class="mario-node-label">Início</div>
+              </div>
+
+              <!-- NODE: Cap 1 -->
+              <div class="mario-node-wrap" style="left:30%;top:59.4%">
+                <div class="mario-node done">🛠️</div>
+                <div class="mario-node-label">Cap. 1</div>
+              </div>
+
+              <!-- NODE: Cap 2 (CURRENT) — family avatar above -->
+              <div class="mario-family-avatar" style="left:50%;top:57%">👨‍👩‍👧‍👦</div>
+              <div class="mario-node-wrap" style="left:50%;top:67.2%">
+                <div class="mario-node current">⚙️</div>
+                <div class="mario-node-label">Cap. 2 · AQUI</div>
+              </div>
+
+              <!-- NODE: Cap 3 -->
+              <div class="mario-node-wrap" style="left:70%;top:54.7%">
+                <div class="mario-node locked">🔒</div>
+                <div class="mario-node-label">Cap. 3</div>
+              </div>
+
+              <!-- NODE: Final -->
+              <div class="mario-node-wrap" style="left:90.8%;top:62.5%">
+                <div class="mario-node locked">🚀</div>
+                <div class="mario-node-label">Destino!</div>
+              </div>
+            </div>
+            <!-- END CANVAS -->
+
+            <!-- Current chapter card -->
+            <div class="mario-chapter-card">
+              <div class="mario-chapter-icon">⚙️</div>
+              <div class="mario-chapter-info">
+                <div class="mario-chapter-num">CAPÍTULO 2 · EM ANDAMENTO</div>
+                <div class="mario-chapter-name">A Construção do Motor</div>
+                <div class="mario-chapter-progress">
+                  <div class="mario-prog-mini"><div class="mario-prog-mini-bar" style="width:60%"></div></div>
+                  <div class="mario-prog-pct">60%</div>
+                </div>
+              </div>
+              <div class="mario-chapter-cta">Ver tarefas →</div>
+            </div>
+
+            <!-- Mini chapter list -->
+            <div class="mario-mini-list">
+              <div class="mario-mini-item">
+                <div class="mario-mini-dot done"></div>
+                <div class="mario-mini-name">Cap. 1 · A Convocação</div>
+                <div class="mario-mini-status">✅ Concluído</div>
+              </div>
+              <div class="mario-mini-item current">
+                <div class="mario-mini-dot current"></div>
+                <div class="mario-mini-name">Cap. 2 · O Motor</div>
+                <div class="mario-mini-status" style="color:var(--gold)">⚙️ 60%</div>
+              </div>
+              <div class="mario-mini-item locked">
+                <div class="mario-mini-dot locked"></div>
+                <div class="mario-mini-name">Cap. 3 · O Lançamento</div>
+                <div class="mario-mini-status">🔒 Bloqueado</div>
+              </div>
+              <div class="mario-mini-item locked">
+                <div class="mario-mini-dot locked"></div>
+                <div class="mario-mini-name">Cap. 4 · A Grande Viagem</div>
+                <div class="mario-mini-status">🔒 Bloqueado</div>
+              </div>
+            </div>
+
+          </div><!-- end mario-map-screen -->
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></div>
+            <div class="nav-item active"><span class="nav-icon">🗺️</span><div class="nav-dot"></div></div>
+            <div class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span class="nav-label">Família</span></div>
+            <div class="nav-item"><span class="nav-icon">📖</span><span class="nav-label">Histórico</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout-row">
+    <div class="callout">
+      <div class="callout-icon">🎮</div>
+      <div class="callout-text"><strong>Mapa estilo mundo clássico.</strong> Cenário ilustrado com chão, montanhas, árvores e estrelas. A família se move pelo mapa como nos jogos de plataforma — cada capítulo é uma fase a conquistar juntos.</div>
+    </div>
+    <div class="callout teal">
+      <div class="callout-icon">🔒</div>
+      <div class="callout-text"><strong>Desbloqueio progressivo.</strong> Fases futuras ficam escurecidas e bloqueadas até o progresso necessário. O avatar da família (👨‍👩‍👧‍👦) fica posicionado exatamente no capítulo atual.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECÇÃO 4: PERFIS ══ -->
+<div class="section">
+  <div class="section-label">Tela 05</div>
+  <div class="section-title">Família — Equipe da Missão</div>
+  <p class="section-desc">Cada membro tem seu papel. Pais são comandantes — também têm tarefas e contribuem para o progresso. A tela não é um ranking, é o retrato da equipe.</p>
+
+  <div class="screens-grid" style="grid-template-columns:1fr;max-width:300px;margin:0 auto">
+    <div class="phone-wrap">
+      <div class="phone-label">Equipe · Família Silva</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="profile-bg">
+            <div class="profile-header">
+              <div class="profile-team">EQUIPE DA MISSÃO</div>
+              <div class="profile-family">Família Silva 👨‍👩‍👧‍👦</div>
+              <div class="family-avatars">
+                <div class="fam-av">👨</div>
+                <div class="fam-av">👩</div>
+                <div class="fam-av">🧒</div>
+                <div class="fam-av">👧</div>
+              </div>
+              <div class="fam-stats">
+                <div class="fam-stat"><div class="fam-stat-val">12</div><div class="fam-stat-lbl">Dias juntos</div></div>
+                <div class="fam-stat"><div class="fam-stat-val">2</div><div class="fam-stat-lbl">Capítulos</div></div>
+                <div class="fam-stat"><div class="fam-stat-val">87%</div><div class="fam-stat-lbl">Aproveitamento</div></div>
+              </div>
+            </div>
+            <div class="member-list">
+              <div class="member-card-full">
+                <div class="mem-avatar">👨</div>
+                <div class="mem-info">
+                  <div class="mem-name">Carlos (Papai)</div>
+                  <span class="role-pill role-pai">Comandante</span>
+                  <div class="mem-tasks" style="margin-top:4px">Orienta · Ensina · Acompanha</div>
+                </div>
+                <div class="mem-progress"><div class="mem-pct">2/2</div><div class="mem-pct-lbl">hoje</div></div>
+              </div>
+              <div class="member-card-full">
+                <div class="mem-avatar">👩</div>
+                <div class="mem-info">
+                  <div class="mem-name">Ana (Mamãe)</div>
+                  <span class="role-pill role-mae">Comandante</span>
+                  <div class="mem-tasks" style="margin-top:4px">Orienta · Celebra</div>
+                </div>
+                <div class="mem-progress"><div class="mem-pct">1/1</div><div class="mem-pct-lbl">hoje</div></div>
+              </div>
+              <div class="member-card-full">
+                <div class="mem-avatar">🧒</div>
+                <div class="mem-info">
+                  <div class="mem-name">Pedro, 9 anos</div>
+                  <span class="role-pill role-filho">Tripulante</span>
+                  <div class="mem-tasks" style="margin-top:4px">Matemática · Leitura</div>
+                </div>
+                <div class="mem-progress"><div class="mem-pct">0/2</div><div class="mem-pct-lbl">hoje</div></div>
+              </div>
+              <div class="member-card-full">
+                <div class="mem-avatar">👧</div>
+                <div class="mem-info">
+                  <div class="mem-name">Maria, 7 anos</div>
+                  <span class="role-pill role-filho">Tripulante</span>
+                  <div class="mem-tasks" style="margin-top:4px">Ciências · Artes</div>
+                </div>
+                <div class="mem-progress"><div class="mem-pct">0/2</div><div class="mem-pct-lbl">hoje</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></div>
+            <div class="nav-item"><span class="nav-icon">🗺️</span><span class="nav-label">Mapa</span></div>
+            <div class="nav-item active"><span class="nav-icon">👨‍👩‍👧‍👦</span><div class="nav-dot"></div></div>
+            <div class="nav-item"><span class="nav-icon">📖</span><span class="nav-label">Histórico</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECÇÃO 5: TAREFA DETALHE ══ -->
+<div class="section">
+  <div class="section-label">Tela 06</div>
+  <div class="section-title">Detalhe da Tarefa — Registro da Jornada</div>
+  <p class="section-desc">A tarefa tem contexto narrativo, campo de observações livres e registro de fotos. O app documenta a jornada além do simples "feito / não feito".</p>
+
+  <div class="screens-grid" style="grid-template-columns:1fr;max-width:300px;margin:0 auto">
+    <div class="phone-wrap">
+      <div class="phone-label">Tarefa · Pedro · Ciências</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="detail-bg">
+            <div class="detail-header">
+              <span class="detail-back">← Tarefas</span>
+              <span class="detail-options">⋯</span>
+            </div>
+            <div class="detail-hero" style="margin-bottom:12px">
+              <span class="detail-emoji">🔭</span>
+              <div class="detail-title">Ciências — Materiais</div>
+              <div class="detail-narrative">"Escolher a liga metálica certa para o foguete não pode errar. A tripulação depende de você."</div>
+              <div class="detail-assignee-row">
+                <span class="detail-avatar">🧒</span>
+                <span class="detail-assignee-name">Pedro</span>
+                <span style="font-size:8px;color:var(--mist);margin-left:6px">· Papai acompanha</span>
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-section-title">Anotações do dia</div>
+              <div class="detail-obs-input">Pedro descobriu que o alumínio é mais leve que o aço e...</div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-section-title">Fotos do momento</div>
+              <div class="detail-photos-row">
+                <div class="detail-photo">📸</div>
+                <div class="detail-photo">📸</div>
+                <div class="detail-photo add">＋</div>
+              </div>
+            </div>
+            <div class="detail-complete-btn">✅ Marcar como concluída</div>
+            <div style="text-align:center;padding:10px;font-size:9px;color:var(--mist)">Pular para amanhã</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout-row">
+    <div class="callout">
+      <div class="callout-icon">📸</div>
+      <div class="callout-text"><strong>Registro de fotos.</strong> Cada tarefa pode ter fotos do momento — uma atividade prática, um caderno, um experimento. Alimenta o histórico da jornada automaticamente.</div>
+    </div>
+    <div class="callout teal">
+      <div class="callout-icon">📝</div>
+      <div class="callout-text"><strong>Observações livres.</strong> Campo aberto para o pai/mãe ou a própria criança anotar descobertas, dificuldades e conquistas. Sem formulários rígidos.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECÇÃO 6: DESBLOQUEIO ══ -->
+<div class="section">
+  <div class="section-label">Tela 07</div>
+  <div class="section-title">Desbloqueio de Capítulo — O Momento da Celebração</div>
+  <p class="section-desc">Quando o time atinge o percentual de progresso, um novo capítulo é desbloqueado. A narrativa avança. Esse é o momento de celebração coletiva.</p>
+
+  <div class="screens-grid" style="grid-template-columns:1fr;max-width:300px;margin:0 auto">
+    <div class="phone-wrap">
+      <div class="phone-label">Capítulo desbloqueado!</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="unlock-bg">
+            <div class="unlock-badge">🚀</div>
+            <div class="unlock-eyebrow">✦ Capítulo desbloqueado ✦</div>
+            <div class="unlock-title">O Motor está pronto!</div>
+            <div class="unlock-story">
+              "O motor de fusão foi montado com sucesso. Os cálculos de Pedro foram precisos. Os materiais de Maria resistiram ao calor. A Família Silva está pronta para a próxima etapa da missão."
+            </div>
+            <div class="unlock-rewards">
+              <div class="unlock-reward">
+                <span class="unlock-reward-icon">🗺️</span>
+                <div class="unlock-reward-name">Mapa atualizado</div>
+              </div>
+              <div class="unlock-reward">
+                <span class="unlock-reward-icon">📖</span>
+                <div class="unlock-reward-name">Próx. capítulo</div>
+              </div>
+              <div class="unlock-reward">
+                <span class="unlock-reward-icon">📸</span>
+                <div class="unlock-reward-name">Memória salva</div>
+              </div>
+            </div>
+            <div class="unlock-btn">Ler o próximo capítulo →</div>
+            <div class="unlock-skip">Ver no mapa · Salvar para depois</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout-row">
+    <div class="callout purple">
+      <div class="callout-icon">🎉</div>
+      <div class="callout-text"><strong>Celebração coletiva.</strong> O texto do desbloqueio menciona a contribuição de cada membro — "os cálculos de Pedro, os materiais de Maria". Ninguém é anônimo na vitória.</div>
+    </div>
+    <div class="callout">
+      <div class="callout-icon">📖</div>
+      <div class="callout-text"><strong>Narrativa contínua.</strong> O desbloqueio não é só uma tela de recompensa. É a continuação da história. A família quer saber o que vem a seguir.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECÇÃO 7: HISTÓRICO ══ -->
+<div class="section">
+  <div class="section-label">Tela 08</div>
+  <div class="section-title">Histórico — A Jornada da Família</div>
+  <p class="section-desc">Registro completo de tudo que foi vivido: tarefas, fotos, observações e capítulos desbloqueados. Um diário automático da aventura familiar.</p>
+
+  <div class="screens-grid" style="grid-template-columns:1fr;max-width:300px;margin:0 auto">
+    <div class="phone-wrap">
+      <div class="phone-label">Histórico · Jornada da Família</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="history-bg">
+            <div class="history-header">
+              <div class="history-title">📖 Nossa Jornada</div>
+              <div class="history-sub">12 dias de aventura · Família Silva</div>
+            </div>
+            <div class="history-tabs">
+              <div class="history-tab active">Semana</div>
+              <div class="history-tab">Tarefas</div>
+              <div class="history-tab">Fotos</div>
+            </div>
+            <div class="history-week">
+              <div class="hist-week-title">Esta semana · 78% do time</div>
+              <div class="hist-days">
+                <div class="hist-day">
+                  <div class="hist-day-bar-bg"><div class="hist-day-bar" style="height:90%"></div></div>
+                  <div class="hist-day-name">SEG</div>
+                </div>
+                <div class="hist-day">
+                  <div class="hist-day-bar-bg"><div class="hist-day-bar" style="height:100%"></div></div>
+                  <div class="hist-day-name">TER</div>
+                </div>
+                <div class="hist-day">
+                  <div class="hist-day-bar-bg"><div class="hist-day-bar" style="height:60%"></div></div>
+                  <div class="hist-day-name">QUA</div>
+                </div>
+                <div class="hist-day">
+                  <div class="hist-day-bar-bg"><div class="hist-day-bar" style="height:80%"></div></div>
+                  <div class="hist-day-name">QUI</div>
+                </div>
+                <div class="hist-day">
+                  <div class="hist-day-bar-bg"><div class="hist-day-bar" style="height:40%"></div></div>
+                  <div class="hist-day-name">HOJ</div>
+                </div>
+                <div class="hist-day">
+                  <div class="hist-day-bar-bg"><div class="hist-day-bar" style="height:0%"></div></div>
+                  <div class="hist-day-name">SAB</div>
+                </div>
+                <div class="hist-day">
+                  <div class="hist-day-bar-bg"><div class="hist-day-bar" style="height:0%"></div></div>
+                  <div class="hist-day-name">DOM</div>
+                </div>
+              </div>
+            </div>
+            <div class="hist-entry">
+              <div class="hist-entry-icon">🚀</div>
+              <div class="hist-entry-info">
+                <div class="hist-entry-title">Capítulo 2 desbloqueado!</div>
+                <div class="hist-entry-date">Ontem · Toda a família</div>
+              </div>
+              <div class="hist-entry-photo">🎉</div>
+            </div>
+            <div class="hist-entry">
+              <div class="hist-entry-icon">📐</div>
+              <div class="hist-entry-info">
+                <div class="hist-entry-title">Matemática · Pedro concluiu</div>
+                <div class="hist-entry-date">Ontem · com foto</div>
+              </div>
+              <div class="hist-entry-photo">📸</div>
+            </div>
+            <div class="hist-entry">
+              <div class="hist-entry-icon">🔭</div>
+              <div class="hist-entry-info">
+                <div class="hist-entry-title">Ciências · "Materiais incríveis!"</div>
+                <div class="hist-entry-date">Terça-feira · Papai anotou</div>
+              </div>
+              <div class="hist-entry-photo">📸</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></div>
+            <div class="nav-item"><span class="nav-icon">🗺️</span><span class="nav-label">Mapa</span></div>
+            <div class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span class="nav-label">Família</span></div>
+            <div class="nav-item active"><span class="nav-icon">📖</span><div class="nav-dot"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECÇÃO 8: CONFIGS ══ -->
+<div class="section">
+  <div class="section-label">Tela 09 · Tela 10</div>
+  <div class="section-title">Configurações — Backstage dos Pais</div>
+  <p class="section-desc">Gerenciamento de membros, tarefas, backup e restauração. Área protegida dos pais, sem misturar com a experiência das crianças.</p>
+
+  <div class="screens-grid screens-grid-2">
+    <div class="phone-wrap">
+      <div class="phone-label">Configurações Gerais</div>
+      <div class="phone-sublabel">Backup, restauração, membros e campanha ativa.</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="settings-bg">
+            <div class="settings-header">
+              <div style="font-size:9px;color:var(--mist);font-weight:600;letter-spacing:2px;margin-bottom:4px">⚙️ ÁREA DOS PAIS</div>
+              <div class="settings-title">Configurações</div>
+            </div>
+            <div class="settings-section">
+              <div class="settings-section-label">Família</div>
+              <div class="settings-item">
+                <div class="settings-item-icon">👨‍👩‍👧‍👦</div>
+                <div class="settings-item-info">
+                  <div class="settings-item-name">Membros da equipe</div>
+                  <div class="settings-item-sub">4 membros cadastrados</div>
+                </div>
+                <div class="settings-chevron">›</div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-item-icon">🗺️</div>
+                <div class="settings-item-info">
+                  <div class="settings-item-name">Campanha ativa</div>
+                  <div class="settings-item-sub">Expedição Espacial · Cap. 2</div>
+                </div>
+                <div class="settings-chevron">›</div>
+              </div>
+            </div>
+            <div class="settings-section">
+              <div class="settings-section-label">Tarefas</div>
+              <div class="settings-item">
+                <div class="settings-item-icon">📋</div>
+                <div class="settings-item-info">
+                  <div class="settings-item-name">Gerenciar tarefas</div>
+                  <div class="settings-item-sub">Criar, editar e organizar por membro</div>
+                </div>
+                <div class="settings-chevron">›</div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-item-icon">🔔</div>
+                <div class="settings-item-info">
+                  <div class="settings-item-name">Lembretes</div>
+                  <div class="settings-item-sub">Notificações de tarefas</div>
+                </div>
+                <div class="settings-toggle"></div>
+              </div>
+            </div>
+            <div class="settings-section">
+              <div class="settings-section-label">Dados</div>
+              <div class="settings-item">
+                <div class="settings-item-icon">💾</div>
+                <div class="settings-item-info">
+                  <div class="settings-item-name">Fazer backup</div>
+                  <div class="settings-item-sub">Último: hoje às 08:15</div>
+                </div>
+                <div class="settings-chevron">›</div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-item-icon">📥</div>
+                <div class="settings-item-info">
+                  <div class="settings-item-name">Restaurar dados</div>
+                  <div class="settings-item-sub">A partir de arquivo de backup</div>
+                </div>
+                <div class="settings-chevron">›</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone-label">Gerenciar Tarefas</div>
+      <div class="phone-sublabel">Criação de tarefas com narrativa embutida e responsável definido.</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="notch-cam"></div><div class="notch-speaker"></div></div>
+        <div class="phone-btn-side"></div><div class="phone-btn-side2"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+          <div class="settings-bg">
+            <div style="padding:10px 16px 0">
+              <div style="font-size:12px;color:var(--mist);margin-bottom:2px">← Configurações</div>
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#f5f0e8;margin-bottom:12px;">📋 Tarefas · Seg</div>
+              <!-- task edit card -->
+              <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(232,160,32,0.3);border-radius:14px;padding:12px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <div style="font-size:10px;color:var(--gold);font-weight:700">🔭 Ciências</div>
+                  <div style="font-size:9px;color:var(--mist)">✏️ editar</div>
+                </div>
+                <div style="font-size:11px;color:#f5f0e8;font-weight:700;margin-bottom:3px">Materiais do foguete</div>
+                <div style="font-size:9px;color:var(--teal-light);font-style:italic;margin-bottom:6px">"Escolher a liga metálica certa..."</div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <div style="font-size:18px">👧</div>
+                  <div style="font-size:9px;color:var(--mist)">Maria · Papai acompanha</div>
+                </div>
+              </div>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <div style="font-size:10px;color:var(--mist);font-weight:700">📚 Leitura</div>
+                  <div style="font-size:9px;color:var(--mist)">✏️ editar</div>
+                </div>
+                <div style="font-size:11px;color:#f5f0e8;font-weight:700;margin-bottom:3px">Capítulo 5 do livro</div>
+                <div style="font-size:9px;color:var(--teal-light);font-style:italic;margin-bottom:6px">"Ler o manual do motor da nave"</div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <div style="font-size:18px">🧒</div>
+                  <div style="font-size:9px;color:var(--mist)">Pedro · independente</div>
+                </div>
+              </div>
+              <div style="border:1.5px dashed rgba(232,160,32,0.3);border-radius:14px;padding:14px;text-align:center;color:var(--gold);font-size:11px;font-weight:700;">
+                ＋ Nova tarefa
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout-row">
+    <div class="callout">
+      <div class="callout-icon">💾</div>
+      <div class="callout-text"><strong>Backup local.</strong> Exporta todos os dados — tarefas, histórico, fotos — para um arquivo que pode ser enviado por WhatsApp ou salvo onde quiser. Funciona sem internet.</div>
+    </div>
+    <div class="callout teal">
+      <div class="callout-icon">🔒</div>
+      <div class="callout-text"><strong>Área protegida.</strong> Configurações ficam em uma área separada, de preferência acessada pelos pais. A criança não precisa — nem deve — mexer aqui.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PALETA E TIPOGRAFIA ══ -->
+<div class="section" style="padding-top:56px">
+  <div class="section-label">Design System</div>
+  <div class="section-title">Paleta & Tipografia</div>
+  <p class="section-desc">Visual que evoca aventura e mistério sem ser pesado para o cotidiano. Escuro, mas com calor dourado — como o interior de uma nave iluminada.</p>
+
+  <div class="palette-row">
+    <div class="swatch">
+      <div class="swatch-color" style="background:#e8a020;width:90px"></div>
+      <div class="swatch-label"><div class="swatch-name">Ouro</div><div class="swatch-hex">#E8A020</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#1a6b6b;width:90px"></div>
+      <div class="swatch-label"><div class="swatch-name">Teal</div><div class="swatch-hex">#1A6B6B</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#6b4fff;width:90px"></div>
+      <div class="swatch-label"><div class="swatch-name">Índigo</div><div class="swatch-hex">#6B4FFF</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#0f0e17;width:90px"></div>
+      <div class="swatch-label"><div class="swatch-name">Noite</div><div class="swatch-hex">#0F0E17</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#16213e;width:90px"></div>
+      <div class="swatch-label"><div class="swatch-name">Cosmos</div><div class="swatch-hex">#16213E</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#2d9e5a;width:90px"></div>
+      <div class="swatch-label"><div class="swatch-name">Conquista</div><div class="swatch-hex">#2D9E5A</div></div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px;display:flex;gap:24px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:10px;color:var(--mist);font-weight:600;letter-spacing:2px;margin-bottom:8px">TÍTULOS — SYNE 800</div>
+      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#f5f0e8;line-height:1">Família em Missão</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--mist);font-weight:600;letter-spacing:2px;margin-bottom:8px">CORPO — SPACE GROTESK 400/600</div>
+      <div style="font-size:14px;color:rgba(240,238,232,0.8);line-height:1.6;max-width:300px">
+        Cada tarefa realizada é um passo na aventura que a família vai guardar na memória.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="padding:60px 24px 0;max-width:1200px;margin:0 auto;">
+  <div style="background:rgba(232,160,32,0.06);border:1px solid rgba(232,160,32,0.2);border-radius:16px;padding:24px 28px;text-align:center;">
+    <div style="font-size:28px;margin-bottom:10px">🚀</div>
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#f5f0e8;margin-bottom:8px">10 telas · 1 princípio</div>
+    <div style="font-size:13px;color:var(--mist);max-width:480px;margin:0 auto;line-height:1.7">
+      O jogador é a família. A cooperação é mais importante que a competição. O app organiza — mas a aventura acontece presencialmente, entre pais e filhos.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
