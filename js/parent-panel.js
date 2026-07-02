@@ -12,6 +12,7 @@ import { updateHeaderStars, finalizeDay } from './missions.js';
 let currentEditDay = new Date().getDay();
 let activeSubTab = 'membros'; // membros | tarefas | ajustes
 let copySourceDay = null;
+let copyTargetDays = new Set();
 
 /* ════════════════════════════════════════════════════════════
    PIN — teclado numérico
@@ -207,109 +208,72 @@ function membrosHTML() {
    ─────────────────────────────────────────────────────────── */
 
 function tarefasHTML() {
-  const dayBtns = DAY_FULL.map((name, i) => `
-    <button class="pp-day-btn ${i === currentEditDay ? 'active' : ''}"
-            data-day-select="${i}">
-      ${name.slice(0, 3).toUpperCase()}
-    </button>
-  `).join('');
+  const dayBtns = DAY_FULL.map((name, i) => {
+    const isSource = copySourceDay === i;
+    const isTarget = copyTargetDays?.has(i);
+
+    let cls = 'pp-day-btn';
+    if (i === currentEditDay) cls += ' active';
+    if (isSource) cls += ' copy-source';
+    if (isTarget) cls += ' copy-target';
+
+    return `
+      <button class="${cls}" data-day-select="${i}">
+        ${name.slice(0, 3).toUpperCase()}
+      </button>
+    `;
+  }).join('');
 
   const dayMissions = state.config.missions[currentEditDay] || [];
 
-  const memberOptions = assignee => {
-    let html = `<option value="compartilhada"
-        ${assignee === 'compartilhada' ? 'selected' : ''}>
-        🤝 COMPARTILHADA
+  const memberOptions = (m) => {
+    let opts = `<option value="compartilhada" ${m === 'compartilhada' ? 'selected' : ''}>🤝 COMPARTILHADA</option>`;
+    state.config.members.forEach(mem => {
+      opts += `<option value="${mem.id}" ${m === mem.id ? 'selected' : ''}>
+        ${mem.avatar} ${mem.name}
       </option>`;
-
-    state.config.members.forEach(member => {
-      html += `
-        <option value="${member.id}"
-          ${assignee === member.id ? 'selected' : ''}>
-          ${member.avatar} ${member.name}
-        </option>`;
     });
-
-    return html;
+    return opts;
   };
 
-  const rows = dayMissions.map((mission, idx) => `
+  const rows = dayMissions.map((ms, idx) => `
     <div class="pp-mission-row" data-mission-idx="${idx}">
-
       <div class="pp-mission-row-top">
-        <input class="pp-input pp-time-input"
-               type="time"
-               data-msfield="start"
-               value="${mission.start}">
-
-        <input class="pp-input pp-time-input"
-               type="time"
-               data-msfield="end"
-               value="${mission.end}">
-
-        <input class="pp-input pp-emoji-input"
-               maxlength="2"
-               data-msfield="emoji"
-               value="${mission.emoji}">
-
-        <button class="pp-btn-remove"
-                data-remove-mission>✕</button>
+        <input class="pp-input pp-time-input" type="time" data-msfield="start" value="${ms.start}">
+        <input class="pp-input pp-time-input" type="time" data-msfield="end" value="${ms.end}">
+        <input class="pp-input pp-emoji-input" maxlength="2" data-msfield="emoji" value="${ms.emoji}">
+        <button class="pp-btn-remove" data-remove-mission>✕</button>
       </div>
 
-      <input class="pp-input pp-title-input"
-             data-msfield="title"
-             value="${mission.title}"
-             placeholder="TÍTULO">
+      <input class="pp-input pp-title-input" data-msfield="title" value="${ms.title}" placeholder="TÍTULO">
+      <input class="pp-input pp-desc-input" data-msfield="desc" value="${ms.desc}" placeholder="DESCRIÇÃO">
 
-      <input class="pp-input pp-desc-input"
-             data-msfield="desc"
-             value="${mission.desc}"
-             placeholder="DESCRIÇÃO">
-
-      <select class="pp-input pp-assignee-select"
-              data-msfield="assignee">
-        ${memberOptions(mission.assignee)}
+      <select class="pp-input pp-assignee-select" data-msfield="assignee">
+        ${memberOptions(ms.assignee)}
       </select>
-
     </div>
   `).join('');
 
-  const copyPanel = `
-    <details class="pp-copy-panel">
+  const hasCopyMode = copySourceDay !== null;
 
-      <summary class="pp-btn-secondary">
-        📋 COPIAR TAREFAS DE ${DAY_FULL[currentEditDay].toUpperCase()} PARA...
-      </summary>
+  const copyBanner = hasCopyMode ? `
+    <div class="pp-copy-mode-banner">
+      📋 Origem: <strong>${DAY_FULL[copySourceDay]}</strong>
+      | Destinos: <strong>${[...copyTargetDays].map(d => DAY_FULL[d]).join(', ') || 'nenhum'}</strong>
 
-      <div class="pp-copy-days">
-
-        ${DAY_FULL.map((name, i) => {
-
-          if (i === currentEditDay) return '';
-
-          return `
-            <label class="pp-copy-day">
-              <input
-                type="checkbox"
-                value="${i}"
-                class="pp-copy-target">
-              ${name}
-            </label>
-          `;
-
-        }).join('')}
-
-        <button
-          class="pp-btn-add"
-          data-confirm-copy-days>
-
-          📋 COPIAR PARA OS DIAS SELECIONADOS
-
+      <div style="margin-top:8px; display:flex; gap:8px;">
+        <button class="pp-btn-add" data-confirm-copy>
+          ✔ CONFIRMAR CÓPIA (OVERWRITE)
         </button>
-
+        <button class="pp-btn-remove" data-cancel-copy>
+          CANCELAR
+        </button>
       </div>
-
-    </details>
+    </div>
+  ` : `
+    <button class="pp-btn-secondary" data-start-copy>
+      📋 COPIAR TAREFAS DE OUTRO DIA
+    </button>
   `;
 
   return `
@@ -317,28 +281,18 @@ function tarefasHTML() {
       ${dayBtns}
     </div>
 
+    ${copyBanner}
+
     <div class="pp-section-title">
-      TAREFAS DE ${DAY_FULL[currentEditDay].toUpperCase()}
-      (${dayMissions.length})
+      TAREFAS DE ${DAY_FULL[currentEditDay].toUpperCase()} (${dayMissions.length})
     </div>
 
-    ${
-      rows ||
-      '<div class="pp-empty">NENHUMA TAREFA CADASTRADA</div>'
-    }
+    ${rows || '<div class="pp-empty">NENHUMA TAREFA CADASTRADA</div>'}
 
-    <button
-      class="pp-btn-add"
-      data-add-mission>
-
-      + ADICIONAR TAREFA
-
-    </button>
-
-    ${copyPanel}
+    <button class="pp-btn-add" data-add-mission>+ ADICIONAR TAREFA</button>
 
     <div class="pp-hint">
-      ⚠️ Os dias selecionados terão suas tarefas substituídas pelas tarefas deste dia.
+      ⚠️ Alterações em tarefas já concluídas podem afetar o progresso do dia.
     </div>
   `;
 }
@@ -463,34 +417,40 @@ export function wireParentPanelEvents() {
       return;
     }
 
-    /* ---------- selecionar dia ---------- */
+/* ---------- selecionar dia (NOVA UX COPY FLOW) ---------- */
 
-    if (e.target.matches('[data-day-select]')) {
+if (e.target.matches('[data-day-select]')) {
 
-      const selectedDay =
-        Number(e.target.dataset.daySelect);
+  const selectedDay = Number(e.target.dataset.daySelect);
 
-      if (copySourceDay !== null) {
+  // 1) ainda não escolheu origem
+  if (copySourceDay === null) {
+    copySourceDay = selectedDay;
+    copyTargetDays = new Set();
+    renderParentPanel();
+    return;
+  }
 
-        if (selectedDay === copySourceDay) {
-          alert('Escolha um dia diferente.');
-          return;
-        }
+  // 2) clicou na origem novamente → cancela modo copy
+  if (selectedDay === copySourceDay) {
+    copySourceDay = null;
+    copyTargetDays = new Set();
+    renderParentPanel();
+    return;
+  }
 
-        copyTasksFromDay(copySourceDay, selectedDay);
-
-        copySourceDay = null;
-        currentEditDay = selectedDay;
-
-        renderParentPanel();
-        return;
-      }
-
-      currentEditDay = selectedDay;
-      renderParentPanel();
-      return;
+  // 3) já tem origem → alterna seleção de destinos
+  if (copySourceDay !== null) {
+    if (copyTargetDays.has(selectedDay)) {
+      copyTargetDays.delete(selectedDay);
+    } else {
+      copyTargetDays.add(selectedDay);
     }
 
+    renderParentPanel();
+    return;
+  }
+}
     /* ---------- adicionar missão ---------- */
 
     if (e.target.matches('[data-add-mission]')) {
