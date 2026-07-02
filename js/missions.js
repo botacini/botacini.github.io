@@ -5,7 +5,6 @@ import {
 import { clearTodayState } from './storage.js';
 import { renderMissions, renderMembersBar, renderReport } from './render.js';
 import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti, stopConfetti } from './effects.js';
-
 /* ════════════════════════════════════════════════════════════
    MISSÕES — marcar feita/perdida
    ════════════════════════════════════════════════════════════ */
@@ -18,25 +17,47 @@ export function getTotalTeamStars() {
   return Object.values(state.memberStars).reduce((a, b) => a + b, 0);
 }
 
-export function setMissionStatus(idx, val) {
-  const prev = state.missionStatus[idx];
+function getMissionById(missionId) {
+  return state.missions.find(m => m.id === missionId);
+}
+
+function getMissionIndexById(missionId) {
+  return state.missions.findIndex(m => m.id === missionId);
+}
+
+export function setMissionStatus(missionId, val) {
+  const idx = getMissionIndexById(missionId);
+  if (idx === -1) return;
+
+  const m = state.missions[idx];
+  const prev = state.missionStatus[missionId];
 
   if (prev && prev.status === val) {
     // Toggle off
     if (prev.status === 'done') {
-      const m = state.missions[idx];
       const starsToRemove = prev.stars || 1;
+
       if (m.assignee === 'compartilhada') {
         state.config.members.forEach(mem => {
-          if (state.memberStars[mem.id]) state.memberStars[mem.id] = Math.max(0, (state.memberStars[mem.id] || 0) - starsToRemove);
+          state.memberStars[mem.id] = Math.max(
+            0,
+            (state.memberStars[mem.id] || 0) - starsToRemove
+          );
         });
       } else {
-        if (state.memberStars[m.assignee]) state.memberStars[m.assignee] = Math.max(0, (state.memberStars[m.assignee] || 0) - starsToRemove);
+        state.memberStars[m.assignee] = Math.max(
+          0,
+          (state.memberStars[m.assignee] || 0) - starsToRemove
+        );
       }
     }
-    state.missionStatus[idx] = null;
+
+    state.missionStatus[missionId] = null;
+
     persistDayState();
-    renderMissions(); renderMembersBar(); updateHeaderStars();
+    renderMissions();
+    renderMembersBar();
+    updateHeaderStars();
     return;
   }
 
