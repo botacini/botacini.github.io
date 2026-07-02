@@ -20,6 +20,12 @@ import { updateHeaderStars, finalizeDay } from './missions.js';
 let currentEditDay = new Date().getDay();
 let activeSubTab = 'membros';
 
+/*
+ * Estado de cópia — agora explícito e único.
+ * copyMode é a ÚNICA fonte de verdade sobre "estamos copiando?".
+ * copySourceDay e copyTargetDays só têm significado quando copyMode === true.
+ */
+let copyMode = false;
 let copySourceDay = null;
 let copyTargetDays = new Set();
 
@@ -43,6 +49,18 @@ function refreshAfterConfigChange() {
   updateHeaderStars();
 }
 
+function resetCopyState() {
+  copyMode = false;
+  copySourceDay = null;
+  copyTargetDays = new Set();
+}
+
+function startCopyMode() {
+  copyMode = true;
+  copySourceDay = currentEditDay;
+  copyTargetDays = new Set();
+}
+
 /* ───────────────────────────────────────────────────────────
    ABERTURA / FECHAMENTO
    ─────────────────────────────────────────────────────────── */
@@ -50,14 +68,16 @@ function refreshAfterConfigChange() {
 export function openParentPanel() {
   activeSubTab = 'membros';
   currentEditDay = new Date().getDay();
-  copySourceDay = null;
-  copyTargetDays = new Set();
+  resetCopyState();
 
   renderParentPanel();
   document.getElementById('parent-panel-overlay').style.display = 'flex';
 }
 
 export function closeParentPanel() {
+  // Sair do painel sempre encerra qualquer cópia pendente,
+  // evitando estado "fantasma" ao reabrir.
+  resetCopyState();
   document.getElementById('parent-panel-overlay').style.display = 'none';
 }
 
@@ -111,23 +131,23 @@ function membrosHTML() {
 function tarefasHTML() {
   const missions = state.config.missions[currentEditDay] || [];
 
-  const copyMode = copySourceDay !== null;
-
   return `
-    <div class="pp-day-selector">
-      ${DAY_FULL.map((d, i) => `
-        <button
-          class="pp-day-btn ${
-            i === currentEditDay ? 'active' : ''
-          } ${
-            i === copySourceDay ? 'copy-source' : ''
-          } ${
-            copyTargetDays.has(i) ? 'copy-target' : ''
-          }"
-          data-day="${i}">
-          ${d.slice(0,3).toUpperCase()}
-        </button>
-      `).join('')}
+    <div class="pp-day-selector ${copyMode ? 'pp-day-selector--copy' : ''}">
+      ${DAY_FULL.map((d, i) => {
+        const isSource = copyMode && i === copySourceDay;
+        const isTarget = copyMode && copyTargetDays.has(i);
+        const isCurrent = !copyMode && i === currentEditDay;
+
+        return `
+          <button
+            class="pp-day-btn ${isCurrent ? 'active' : ''} ${isSource ? 'copy-source' : ''} ${isTarget ? 'copy-target' : ''}"
+            data-day="${i}"
+            ${isSource ? 'disabled' : ''}
+            aria-pressed="${isTarget}">
+            ${d.slice(0, 3).toUpperCase()}
+          </button>
+        `;
+      }).join('')}
     </div>
 
     ${copyMode ? `
@@ -135,11 +155,11 @@ function tarefasHTML() {
         Origem: <b>${DAY_FULL[copySourceDay]}</b><br>
         Destinos: <b>${[...copyTargetDays].map(d => DAY_FULL[d]).join(', ') || 'nenhum'}</b>
 
-        <button data-confirm-copy>CONFIRMAR</button>
+        <button data-confirm-copy ${copyTargetDays.size === 0 ? 'disabled' : ''}>CONFIRMAR</button>
         <button data-cancel-copy>CANCELAR</button>
       </div>
     ` : `
-      <button data-start-copy>📋 COPIAR TAREFAS</button>
+      <button data-start-copy>📋 COPIAR TAREFAS DE OUTRO DIA</button>
     `}
 
     <div class="pp-section-title">
@@ -155,12 +175,12 @@ function tarefasHTML() {
         <input data-ms="desc" value="${m.desc}">
 
         <select data-ms="assignee">
-          <option value="compartilhada" ${m.assignee === 'compartilhada' ? 'selected':''}>
+          <option value="compartilhada" ${m.assignee === 'compartilhada' ? 'selected' : ''}>
             🤝 COMPARTILHADA
           </option>
 
           ${state.config.members.map(mem => `
-            <option value="${mem.id}" ${m.assignee === mem.id ? 'selected':''}>
+            <option value="${mem.id}" ${m.assignee === mem.id ? 'selected' : ''}>
               ${mem.avatar} ${mem.name}
             </option>
           `).join('')}
@@ -170,7 +190,7 @@ function tarefasHTML() {
       </div>
     `).join('')}
 
-    <button data-add-mission>+ ADICIONAR</button>
+    <button data-add-mission ${copyMode ? 'disabled' : ''}>+ ADICIONAR</button>
   `;
 }
 
@@ -202,9 +222,20 @@ function ajustesHTML() {
 export function wireParentPanelEvents() {
   const body = document.getElementById('parent-panel-body');
 
+  document.querySelectorAll('.pp-subtab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Trocar de aba também encerra qualquer cópia pendente.
+      if (activeSubTab === 'tarefas' && btn.dataset.sub !== 'tarefas') {
+        resetCopyState();
+      }
+      activeSubTab = btn.dataset.sub;
+      renderParentPanel();
+    });
+  });
+
   body.addEventListener('click', (e) => {
 
-    /* ───────── SUBTABS / MEMBROS / MISSÕES ───────── */
+    /* ───────── MEMBROS / MISSÕES ───────── */
 
     if (e.target.matches('[data-add-member]')) {
       state.config.members.push({
@@ -227,10 +258,14 @@ export function wireParentPanelEvents() {
     }
 
     if (e.target.matches('[data-add-mission]')) {
+      // Não permite adicionar missão durante o fluxo de cópia,
+      // evitando editar o dia de origem no meio da operação.
+      if (copyMode) return;
+
       state.config.missions[currentEditDay] ??= [];
       state.config.missions[currentEditDay].push({
-        start:'08:00', end:'08:30',
-        emoji:'⭐', title:'NOVA', desc:'', assignee:'compartilhada'
+        start: '08:00', end: '08:30',
+        emoji: '⭐', title: 'NOVA', desc: '', assignee: 'compartilhada'
       });
       refreshAfterConfigChange();
       renderParentPanel();
@@ -238,18 +273,21 @@ export function wireParentPanelEvents() {
     }
 
     if (e.target.matches('[data-remove-mission]')) {
+      if (copyMode) return;
+
       const idx = Number(e.target.closest('[data-mission]').dataset.mission);
-      state.config.missions[currentEditDay].splice(idx,1);
+      state.config.missions[currentEditDay].splice(idx, 1);
       refreshAfterConfigChange();
       renderParentPanel();
       return;
     }
 
-    /* ───────── COPY FLOW ───────── */
+    /* ───────── COPY FLOW ─────────
+       Único ponto de entrada/saída do modo de cópia.
+       Nenhuma outra parte do código altera copyMode diretamente. */
 
     if (e.target.matches('[data-start-copy]')) {
-      copySourceDay = currentEditDay;
-      copyTargetDays = new Set();
+      startCopyMode();
       renderParentPanel();
       return;
     }
@@ -257,17 +295,20 @@ export function wireParentPanelEvents() {
     if (e.target.matches('[data-day]')) {
       const day = Number(e.target.dataset.day);
 
-      if (copySourceDay === null) {
+      if (!copyMode) {
+        // Modo normal: navegação simples entre dias.
         currentEditDay = day;
       } else {
+        // Modo cópia: dias só funcionam como seleção de destino.
+        // O dia de origem é ignorado (não pode ser destino de si mesmo)
+        // e currentEditDay NUNCA muda enquanto copyMode estiver ativo.
         if (day === copySourceDay) {
-          copySourceDay = null;
-          copyTargetDays = new Set();
-        } else {
-          copyTargetDays.has(day)
-            ? copyTargetDays.delete(day)
-            : copyTargetDays.add(day);
+          return;
         }
+
+        copyTargetDays.has(day)
+          ? copyTargetDays.delete(day)
+          : copyTargetDays.add(day);
       }
 
       renderParentPanel();
@@ -275,14 +316,15 @@ export function wireParentPanelEvents() {
     }
 
     if (e.target.matches('[data-confirm-copy]')) {
-      const src = state.config.missions[copySourceDay];
+      if (!copyMode || copyTargetDays.size === 0) return;
+
+      const src = state.config.missions[copySourceDay] || [];
 
       copyTargetDays.forEach(d => {
         state.config.missions[d] = structuredClone(src);
       });
 
-      copySourceDay = null;
-      copyTargetDays = new Set();
+      resetCopyState();
 
       refreshAfterConfigChange();
       renderParentPanel();
@@ -290,8 +332,7 @@ export function wireParentPanelEvents() {
     }
 
     if (e.target.matches('[data-cancel-copy]')) {
-      copySourceDay = null;
-      copyTargetDays = new Set();
+      resetCopyState();
       renderParentPanel();
       return;
     }
@@ -310,6 +351,13 @@ export function wireParentPanelEvents() {
         location.reload();
       }
       return;
+    }
+  });
+
+  body.addEventListener('change', (e) => {
+    if (e.target.id === 'pp-require-approval') {
+      state.config.requireApproval = e.target.checked;
+      refreshAfterConfigChange();
     }
   });
 
