@@ -254,17 +254,20 @@ function tarefasHTML() {
     </div>
   `).join('');
 
-  const hasCopyMode = copySourceDay !== null;
-
-  const copyBanner = hasCopyMode ? `
+  const copyModeUI = copySourceDay !== null ? `
     <div class="pp-copy-mode-banner">
-      📋 Origem: <strong>${DAY_FULL[copySourceDay]}</strong>
-      | Destinos: <strong>${[...copyTargetDays].map(d => DAY_FULL[d]).join(', ') || 'nenhum'}</strong>
+      📋 Origem: <strong>${DAY_FULL[copySourceDay]}</strong><br>
 
-      <div style="margin-top:8px; display:flex; gap:8px;">
+      Destinos:
+      <strong>
+        ${[...copyTargetDays].map(d => DAY_FULL[d]).join(', ') || 'nenhum'}
+      </strong>
+
+      <div style="margin-top:10px; display:flex; gap:8px;">
         <button class="pp-btn-add" data-confirm-copy>
           ✔ CONFIRMAR CÓPIA (OVERWRITE)
         </button>
+
         <button class="pp-btn-remove" data-cancel-copy>
           CANCELAR
         </button>
@@ -281,7 +284,7 @@ function tarefasHTML() {
       ${dayBtns}
     </div>
 
-    ${copyBanner}
+    ${copyModeUI}
 
     <div class="pp-section-title">
       TAREFAS DE ${DAY_FULL[currentEditDay].toUpperCase()} (${dayMissions.length})
@@ -289,7 +292,9 @@ function tarefasHTML() {
 
     ${rows || '<div class="pp-empty">NENHUMA TAREFA CADASTRADA</div>'}
 
-    <button class="pp-btn-add" data-add-mission>+ ADICIONAR TAREFA</button>
+    <button class="pp-btn-add" data-add-mission>
+      + ADICIONAR TAREFA
+    </button>
 
     <div class="pp-hint">
       ⚠️ Alterações em tarefas já concluídas podem afetar o progresso do dia.
