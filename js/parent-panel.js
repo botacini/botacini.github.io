@@ -19,6 +19,7 @@ import { updateHeaderStars, finalizeDay } from './missions.js';
 
 let currentEditDay = new Date().getDay();
 let activeSubTab = 'membros'; // 'membros' | 'tarefas' | 'ajustes'
+let copySourceDay = null; // Day selected for copying tasks
 
 /* ════════════════════════════════════════════════════════════
    PIN — teclado numérico
@@ -85,6 +86,7 @@ export function pressPinBackspace() {
 export function openParentPanel() {
   activeSubTab = 'membros';
   currentEditDay = new Date().getDay();
+  copySourceDay = null;
   renderParentPanel();
   document.getElementById('parent-panel-overlay').style.display = 'flex';
 }
@@ -162,11 +164,21 @@ function tarefasHTML() {
       <select class="pp-input pp-assignee-select" data-msfield="assignee">${memberOptions(ms.assignee)}</select>
     </div>`).join('');
 
+  const copyModeClass = copySourceDay !== null ? 'pp-copy-mode-active' : '';
+  const copyModeUI = copySourceDay !== null ? `
+    <div class="pp-copy-mode-banner">
+      📋 Modo copiar ativado: Selecionado <strong>${DAY_FULL[copySourceDay]}</strong>
+      <button class="pp-btn-copy-cancel" data-cancel-copy>✕ Cancelar</button>
+    </div>
+  ` : '';
+
   return `
-    <div class="pp-day-selector">${dayBtns}</div>
+    <div class="pp-day-selector ${copyModeClass}">${dayBtns}</div>
+    ${copyModeUI}
     <div class="pp-section-title">TAREFAS DE ${DAY_FULL[currentEditDay].toUpperCase()} (${dayMissions.length})</div>
     ${rows || '<div class="pp-empty">NENHUMA TAREFA CADASTRADA</div>'}
     <button class="pp-btn-add" data-add-mission>+ ADICIONAR TAREFA</button>
+    <button class="pp-btn-secondary" data-copy-from-day>📋 COPIAR TAREFAS DE OUTRO DIA</button>
     <div class="pp-hint">⚠️ Editar as tarefas de hoje enquanto alguma já foi marcada pode bagunçar o progresso do dia. Prefira editar antes do dia começar, ou use "NOVO DIA" depois.</div>`;
 }
 
@@ -217,7 +229,21 @@ export function wireParentPanelEvents() {
       refreshAfterConfigChange();
       renderParentPanel();
     } else if (e.target.matches('[data-day-select]')) {
-      currentEditDay = Number(e.target.dataset.daySelect);
+      const selectedDay = Number(e.target.dataset.daySelect);
+      // If in copy mode, handle the selection differently
+      if (copySourceDay !== null) {
+        if (selectedDay === copySourceDay) {
+          // Deselect
+          copySourceDay = null;
+        } else {
+          // Copy tasks from copySourceDay to selectedDay
+          copTasksFromDay(copySourceDay, selectedDay);
+          copySourceDay = null;
+          currentEditDay = selectedDay;
+        }
+      } else {
+        currentEditDay = selectedDay;
+      }
       renderParentPanel();
     } else if (e.target.matches('[data-add-mission]')) {
       state.config.missions[currentEditDay] = state.config.missions[currentEditDay] || [];
@@ -231,6 +257,18 @@ export function wireParentPanelEvents() {
       const idx = Number(row.dataset.missionIdx);
       state.config.missions[currentEditDay].splice(idx, 1);
       refreshAfterConfigChange();
+      renderParentPanel();
+    } else if (e.target.matches('[data-copy-from-day]')) {
+      // Enter copy mode
+      if (copySourceDay === null) {
+        copySourceDay = currentEditDay;
+      } else {
+        copySourceDay = null;
+      }
+      renderParentPanel();
+    } else if (e.target.matches('[data-cancel-copy]')) {
+      // Cancel copy mode
+      copySourceDay = null;
       renderParentPanel();
     }
   });
@@ -277,4 +315,32 @@ export function wireParentPanelEvents() {
       }
     }
   });
+}
+
+/* ════════════════════════════════════════════════════════════
+   COPY TASKS FROM ANOTHER DAY
+   ════════════════════════════════════════════════════════════ */
+function copTasksFromDay(sourceDay, targetDay) {
+  const sourceMissions = state.config.missions[sourceDay];
+  if (!sourceMissions || sourceMissions.length === 0) {
+    alert(`Nenhuma tarefa em ${DAY_FULL[sourceDay]} para copiar.`);
+    return;
+  }
+
+  // Deep copy missions (without their IDs, so new ones are generated)
+  const copiedMissions = sourceMissions.map(m => ({
+    start: m.start,
+    end: m.end,
+    emoji: m.emoji,
+    title: m.title,
+    desc: m.desc,
+    assignee: m.assignee
+    // Note: NOT copying the ID, so ensureMissionIds will generate new ones
+  }));
+
+  state.config.missions[targetDay] = state.config.missions[targetDay] || [];
+  state.config.missions[targetDay].push(...copiedMissions);
+
+  refreshAfterConfigChange();
+  alert(`✓ ${copiedMissions.length} tarefa(s) copiada(s) de ${DAY_FULL[sourceDay]} para ${DAY_FULL[targetDay]}!`);
 }
