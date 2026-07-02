@@ -7,53 +7,101 @@ import { getMemberById, getTotalTeamStars, setMissionStatus } from './missions.j
 export function updateClock() {
   const n = new Date();
   document.getElementById('live-clock').textContent =
-    String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+    String(n.getHours()).padStart(2, '0') + ':' +
+    String(n.getMinutes()).padStart(2, '0');
 }
-export function timeToMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+
+export function timeToMin(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
 export function getCurrentIdx() {
-  const n = new Date(), cur = n.getHours() * 60 + n.getMinutes();
-  for (let i = 0; i < state.missions.length; i++)
-    if (cur >= timeToMin(state.missions[i].start) && cur < timeToMin(state.missions[i].end)) return i;
-  if (state.missions.length > 0 && cur < timeToMin(state.missions[0].start)) return 0;
+  const n = new Date();
+  const cur = n.getHours() * 60 + n.getMinutes();
+
+  for (let i = 0; i < state.missions.length; i++) {
+    if (
+      cur >= timeToMin(state.missions[i].start) &&
+      cur < timeToMin(state.missions[i].end)
+    ) {
+      return i;
+    }
+  }
+
+  if (state.missions.length > 0 && cur < timeToMin(state.missions[0].start))
+    return 0;
+
   return state.missions.length - 1;
 }
 
 /* ════════════════════════════════════════════════════════════
    ABAS
    ════════════════════════════════════════════════════════════ */
+
 export function switchTab(tab) {
   ['missions', 'stars', 'team', 'badges', 'week'].forEach(t => {
     const p = document.getElementById('panel-' + t);
     const b = document.getElementById('tab-' + t);
+
     if (p) p.style.display = t === tab ? '' : 'none';
     if (b) b.classList.toggle('active', t === tab);
   });
+
   if (tab === 'week') renderWeek();
   if (tab === 'badges') renderBadges();
   if (tab === 'stars') renderStarsTab();
   if (tab === 'team') renderTeamTab();
 }
+
 window.addEventListener('gp:switch-tab', e => switchTab(e.detail));
 
 /* ════════════════════════════════════════════════════════════
    BARRA DE MEMBROS
    ════════════════════════════════════════════════════════════ */
+
 export function renderMembersBar() {
   const bar = document.getElementById('members-bar');
   bar.innerHTML = '';
 
   const allPill = document.createElement('div');
-  allPill.className = 'member-pill member-all-pill' + (state.filterMember === 'all' ? ' active' : '');
-  allPill.onclick = () => { state.filterMember = 'all'; renderMembersBar(); renderMissions(); };
-  allPill.innerHTML = `<span class="pill-avatar">👨‍👩‍👧‍👦</span><span class="pill-name">TODOS</span><span class="pill-stars">⭐ ${getTotalTeamStars()}</span>`;
+  allPill.className =
+    'member-pill member-all-pill' +
+    (state.filterMember === 'all' ? ' active' : '');
+
+  allPill.onclick = () => {
+    state.filterMember = 'all';
+    renderMembersBar();
+    renderMissions();
+  };
+
+  allPill.innerHTML = `
+    <span class="pill-avatar">👨‍👩‍👧‍👦</span>
+    <span class="pill-name">TODOS</span>
+    <span class="pill-stars">⭐ ${getTotalTeamStars()}</span>
+  `;
+
   bar.appendChild(allPill);
 
-  state.config.members.forEach(m => {
+  state.config.members.forEach(member => {
     const pill = document.createElement('div');
-    pill.className = 'member-pill' + (state.filterMember === m.id ? ' active' : '');
-    pill.onclick = () => { state.filterMember = m.id; renderMembersBar(); renderMissions(); };
-    const stars = state.memberStars[m.id] || 0;
-    pill.innerHTML = `<span class="pill-avatar">${m.avatar}</span><span class="pill-name">${m.name}</span><span class="pill-stars">⭐ ${stars}</span>`;
+
+    pill.className =
+      'member-pill' +
+      (state.filterMember === member.id ? ' active' : '');
+
+    pill.onclick = () => {
+      state.filterMember = member.id;
+      renderMembersBar();
+      renderMissions();
+    };
+
+    pill.innerHTML = `
+      <span class="pill-avatar">${member.avatar}</span>
+      <span class="pill-name">${member.name}</span>
+      <span class="pill-stars">⭐ ${state.memberStars[member.id] || 0}</span>
+    `;
+
     bar.appendChild(pill);
   });
 }
@@ -61,77 +109,138 @@ export function renderMembersBar() {
 /* ════════════════════════════════════════════════════════════
    LISTA DE MISSÕES
    ════════════════════════════════════════════════════════════ */
+
 export function renderMissions() {
+
   const curIdx = getCurrentIdx();
+
   const total = state.missions.length;
-  const done = state.missions.filter((_, i) => state.missionStatus[i] && state.missionStatus[i].status === 'done').length;
-  const pct = total > 0 ? Math.round(done / total * 100) : 0;
-  document.getElementById('prog-label').textContent = done + ' DE ' + total + ' TAREFAS ✅';
-  document.getElementById('prog-pct').textContent = pct + '%';
-  document.getElementById('prog-bar').style.width = Math.max(pct, 3) + '%';
+
+  const done = state.missions.filter(
+    mission =>
+      state.missionStatus[mission.id] &&
+      state.missionStatus[mission.id].status === 'done'
+  ).length;
+
+  const pct =
+    total > 0
+      ? Math.round(done / total * 100)
+      : 0;
+
+  document.getElementById('prog-label').textContent =
+    `${done} DE ${total} TAREFAS ✅`;
+
+  document.getElementById('prog-pct').textContent =
+    `${pct}%`;
+
+  document.getElementById('prog-bar').style.width =
+    Math.max(pct, 3) + '%';
 
   const firstMember = state.config.members[0];
-  document.getElementById('car-avatar').textContent = firstMember ? firstMember.avatar : '🏎️';
+
+  document.getElementById('car-avatar').textContent =
+    firstMember ? firstMember.avatar : '🏎️';
 
   const list = document.getElementById('mission-list');
   list.innerHTML = '';
 
-  let visibleMissions = state.missions.map((m, i) => ({ m, i }));
+  let visible = state.missions.map((mission, index) => ({
+    mission,
+    index
+  }));
+
   if (state.filterMember !== 'all') {
-    visibleMissions = visibleMissions.filter(({ m }) => m.assignee === state.filterMember || m.assignee === 'compartilhada');
+    visible = visible.filter(({ mission }) =>
+      mission.assignee === state.filterMember ||
+      mission.assignee === 'compartilhada'
+    );
   }
 
-  if (visibleMissions.length === 0) {
-    list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🔍</span>NENHUMA TAREFA<br>PARA ESTE MEMBRO HOJE</div>`;
+  if (!visible.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-icon">🔍</span>
+        NENHUMA TAREFA<br>PARA ESTE MEMBRO HOJE
+      </div>`;
     return;
   }
 
-  visibleMissions.forEach(({ m, i }) => {
-    const st = state.missionStatus[i];
-    const status = st ? st.status : null;
-    const isCur = i === curIdx;
-    const member = getMemberById(m.assignee);
-    const isShared = m.assignee === 'compartilhada';
+  visible.forEach(({ mission, index }) => {
 
-    const d = document.createElement('div');
+    const st = state.missionStatus[mission.id];
+    const status = st?.status ?? null;
+
+    const member = getMemberById(mission.assignee);
+    const isShared = mission.assignee === 'compartilhada';
+    const isCurrent = index === curIdx;
+
+    const card = document.createElement('div');
+
     let cls = 'mission-card';
-    if (status === 'done') cls += ' done';
-    else if (status === 'fail') cls += ' fail';
-    else if (isShared) cls += ' shared';
-    if (isCur && !status) cls += ' current';
-    d.className = cls;
 
-    const stars = st && st.stars > 0 ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;font-weight:900">⭐ +${st.stars} estrela${st.stars > 1 ? 's' : ''}</div>` : '';
-    const assigneeTag = isShared
-      ? `<span class="assignee-tag shared-tag">🤝 COMPARTILHADA</span>`
-      : `<span class="assignee-tag">${member.avatar} ${member.name}</span>`;
+    if (status === 'done')
+      cls += ' done';
+    else if (status === 'fail')
+      cls += ' fail';
+    else if (isShared)
+      cls += ' shared';
 
-    d.innerHTML = `
+    if (isCurrent && !status)
+      cls += ' current';
+
+    card.className = cls;
+
+    const stars =
+      st && st.stars > 0
+        ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;font-weight:900">
+             ⭐ +${st.stars} estrela${st.stars > 1 ? 's' : ''}
+           </div>`
+        : '';
+
+    const assignee =
+      isShared
+        ? `<span class="assignee-tag shared-tag">🤝 COMPARTILHADA</span>`
+        : `<span class="assignee-tag">${member.avatar} ${member.name}</span>`;
+
+    card.innerHTML = `
       <div class="time-col">
-        <span class="t-start">${m.start}</span>
-        <span class="t-end">${m.end}</span>
+        <span class="t-start">${mission.start}</span>
+        <span class="t-end">${mission.end}</span>
       </div>
-      <div class="m-emoji">${m.emoji}</div>
+
+      <div class="m-emoji">${mission.emoji}</div>
+
       <div class="m-info">
-        <div class="m-title">${m.title}</div>
-        <div class="m-desc">${m.desc}</div>
-        <div class="m-assignee">${assigneeTag}</div>
+        <div class="m-title">${mission.title}</div>
+        <div class="m-desc">${mission.desc}</div>
+        <div class="m-assignee">${assignee}</div>
         ${stars}
       </div>
+
       <div class="btn-group">
-        <button class="btn-check btn-done ${status === 'done' ? 'active' : ''}">✓</button>
-        <button class="btn-check btn-fail ${status === 'fail' ? 'active' : ''}">✗</button>
-      </div>`;
+        <button class="btn-check btn-done ${status === 'done' ? 'active' : ''}">
+          ✓
+        </button>
 
-    // Antes era onclick="setMissionStatus(...)" inline no HTML (só funciona
-    // com funções globais). Como agora tudo é módulo ES, ligamos o clique
-    // aqui direto — mesmo comportamento, sem depender de `window.*`.
-    d.querySelector('.btn-done').addEventListener('click', () => setMissionStatus(i, 'done'));
-    d.querySelector('.btn-fail').addEventListener('click', () => setMissionStatus(i, 'fail'));
+        <button class="btn-check btn-fail ${status === 'fail' ? 'active' : ''}">
+          ✗
+        </button>
+      </div>
+    `;
 
-    list.appendChild(d);
+    card
+      .querySelector('.btn-done')
+      .addEventListener('click', () => setMissionStatus(mission.id, 'done'));
+
+    card
+      .querySelector('.btn-fail')
+      .addEventListener('click', () => setMissionStatus(mission.id, 'fail'));
+
+    list.appendChild(card);
   });
+
 }
+
 
 /* ════════════════════════════════════════════════════════════
    ABA ESTRELAS
