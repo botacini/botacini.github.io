@@ -208,9 +208,8 @@ function membrosHTML() {
 
 function tarefasHTML() {
   const dayBtns = DAY_FULL.map((name, i) => `
-    <button
-      class="pp-day-btn ${i === currentEditDay ? 'active' : ''}"
-      data-day-select="${i}">
+    <button class="pp-day-btn ${i === currentEditDay ? 'active' : ''}"
+            data-day-select="${i}">
       ${name.slice(0, 3).toUpperCase()}
     </button>
   `).join('');
@@ -218,21 +217,17 @@ function tarefasHTML() {
   const dayMissions = state.config.missions[currentEditDay] || [];
 
   const memberOptions = assignee => {
-    let html = `
-      <option value="compartilhada"
+    let html = `<option value="compartilhada"
         ${assignee === 'compartilhada' ? 'selected' : ''}>
         🤝 COMPARTILHADA
-      </option>
-    `;
+      </option>`;
 
     state.config.members.forEach(member => {
       html += `
-        <option
-          value="${member.id}"
+        <option value="${member.id}"
           ${assignee === member.id ? 'selected' : ''}>
           ${member.avatar} ${member.name}
-        </option>
-      `;
+        </option>`;
     });
 
     return html;
@@ -242,77 +237,85 @@ function tarefasHTML() {
     <div class="pp-mission-row" data-mission-idx="${idx}">
 
       <div class="pp-mission-row-top">
+        <input class="pp-input pp-time-input"
+               type="time"
+               data-msfield="start"
+               value="${mission.start}">
 
-        <input
-          class="pp-input pp-time-input"
-          type="time"
-          data-msfield="start"
-          value="${mission.start}">
+        <input class="pp-input pp-time-input"
+               type="time"
+               data-msfield="end"
+               value="${mission.end}">
 
-        <input
-          class="pp-input pp-time-input"
-          type="time"
-          data-msfield="end"
-          value="${mission.end}">
+        <input class="pp-input pp-emoji-input"
+               maxlength="2"
+               data-msfield="emoji"
+               value="${mission.emoji}">
 
-        <input
-          class="pp-input pp-emoji-input"
-          maxlength="2"
-          data-msfield="emoji"
-          value="${mission.emoji}">
-
-        <button
-          class="pp-btn-remove"
-          data-remove-mission>
-          ✕
-        </button>
-
+        <button class="pp-btn-remove"
+                data-remove-mission>✕</button>
       </div>
 
-      <input
-        class="pp-input pp-title-input"
-        data-msfield="title"
-        value="${mission.title}"
-        placeholder="TÍTULO">
+      <input class="pp-input pp-title-input"
+             data-msfield="title"
+             value="${mission.title}"
+             placeholder="TÍTULO">
 
-      <input
-        class="pp-input pp-desc-input"
-        data-msfield="desc"
-        value="${mission.desc}"
-        placeholder="DESCRIÇÃO">
+      <input class="pp-input pp-desc-input"
+             data-msfield="desc"
+             value="${mission.desc}"
+             placeholder="DESCRIÇÃO">
 
-      <select
-        class="pp-input pp-assignee-select"
-        data-msfield="assignee">
-
+      <select class="pp-input pp-assignee-select"
+              data-msfield="assignee">
         ${memberOptions(mission.assignee)}
-
       </select>
 
     </div>
   `).join('');
 
-  const copyBanner = copySourceDay !== null
-    ? `
-      <div class="pp-copy-mode-banner">
-        📋 Copiando tarefas de
-        <strong>${DAY_FULL[copySourceDay]}</strong>
+  const copyPanel = `
+    <details class="pp-copy-panel">
+
+      <summary class="pp-btn-secondary">
+        📋 COPIAR TAREFAS DE ${DAY_FULL[currentEditDay].toUpperCase()} PARA...
+      </summary>
+
+      <div class="pp-copy-days">
+
+        ${DAY_FULL.map((name, i) => {
+
+          if (i === currentEditDay) return '';
+
+          return `
+            <label class="pp-copy-day">
+              <input
+                type="checkbox"
+                value="${i}"
+                class="pp-copy-target">
+              ${name}
+            </label>
+          `;
+
+        }).join('')}
 
         <button
-          class="pp-btn-copy-cancel"
-          data-cancel-copy>
-          Cancelar
+          class="pp-btn-add"
+          data-confirm-copy-days>
+
+          📋 COPIAR PARA OS DIAS SELECIONADOS
+
         </button>
+
       </div>
-    `
-    : '';
+
+    </details>
+  `;
 
   return `
     <div class="pp-day-selector">
       ${dayBtns}
     </div>
-
-    ${copyBanner}
 
     <div class="pp-section-title">
       TAREFAS DE ${DAY_FULL[currentEditDay].toUpperCase()}
@@ -327,21 +330,15 @@ function tarefasHTML() {
     <button
       class="pp-btn-add"
       data-add-mission>
+
       + ADICIONAR TAREFA
-    </button>
-
-    <button
-      class="pp-btn-secondary"
-      data-copy-from-day>
-
-      📋 COPIAR TAREFAS DE OUTRO DIA
 
     </button>
+
+    ${copyPanel}
 
     <div class="pp-hint">
-      ⚠️ Editar as tarefas de hoje enquanto alguma já foi marcada pode
-      bagunçar o progresso do dia. Prefira editar antes do dia começar
-      ou utilize "NOVO DIA" após alterações grandes.
+      ⚠️ Os dias selecionados terão suas tarefas substituídas pelas tarefas deste dia.
     </div>
   `;
 }
