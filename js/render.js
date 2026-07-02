@@ -245,135 +245,318 @@ export function renderMissions() {
 /* ════════════════════════════════════════════════════════════
    ABA ESTRELAS
    ════════════════════════════════════════════════════════════ */
+
 export function renderStarsTab() {
+
   const total = getTotalTeamStars();
-  const maxPossible = state.missions.length * 4; // 1 base + 3 bônus
-  const pct = Math.min(100, Math.round(total / Math.max(maxPossible, 1) * 100));
+  const maxPossible = state.missions.length * 4;
+  const pct = Math.min(
+    100,
+    Math.round(total / Math.max(maxPossible, 1) * 100)
+  );
 
   document.getElementById('team-stars-count').textContent = total;
   document.getElementById('stars-goal-bar').style.width = pct + '%';
 
-  const done = state.missions.filter((_, i) => state.missionStatus[i] && state.missionStatus[i].status === 'done').length;
+  const done = state.missions.filter(
+    mission =>
+      state.missionStatus[mission.id] &&
+      state.missionStatus[mission.id].status === 'done'
+  ).length;
+
   document.getElementById('team-stars-goal').textContent =
-    done === state.missions.length ? `🏁 DIA COMPLETO! ${total} ESTRELAS DO TIME!` : `META: COMPLETAR ${state.missions.length - done} TAREFAS AINDA!`;
+    done === state.missions.length
+      ? `🏁 DIA COMPLETO! ${total} ESTRELAS DO TIME!`
+      : `META: COMPLETAR ${state.missions.length - done} TAREFAS AINDA!`;
 
   const grid = document.getElementById('member-stars-grid');
   grid.innerHTML = '';
-  state.config.members.forEach(m => {
-    const stars = state.memberStars[m.id] || 0;
+
+  state.config.members.forEach(member => {
+
+    const stars = state.memberStars[member.id] || 0;
+
     const card = document.createElement('div');
     card.className = 'member-star-card';
-    const roleLabel = m.role === 'pai' ? '👨 PAI' : m.role === 'mae' ? '👩 MÃE' : '🧒 CRIANÇA';
+
+    const roleLabel =
+      member.role === 'pai'
+        ? '👨 PAI'
+        : member.role === 'mae'
+        ? '👩 MÃE'
+        : '🧒 CRIANÇA';
+
     card.innerHTML = `
-      <span class="member-star-avatar">${m.avatar}</span>
-      <div class="member-star-name">${m.name}</div>
+      <span class="member-star-avatar">${member.avatar}</span>
+      <div class="member-star-name">${member.name}</div>
       <div class="member-star-count">${stars}</div>
-      <div class="member-star-sub">${roleLabel}</div>`;
+      <div class="member-star-sub">${roleLabel}</div>
+    `;
+
     grid.appendChild(card);
+
   });
+
 }
 
 /* ════════════════════════════════════════════════════════════
    ABA TIME
    ════════════════════════════════════════════════════════════ */
+
 export function renderTeamTab() {
+
   const container = document.getElementById('team-cards');
   container.innerHTML = '';
-  state.config.members.forEach(m => {
-    const stars = state.memberStars[m.id] || 0;
-    const myMissions = state.missions.filter(ms => ms.assignee === m.id || ms.assignee === 'compartilhada');
-    const myDone = myMissions.filter(ms => {
-      const realIdx = state.missions.indexOf(ms);
-      return state.missionStatus[realIdx] && state.missionStatus[realIdx].status === 'done';
-    }).length;
 
-    const roleLbl = m.role === 'pai' ? 'PAI' : m.role === 'mae' ? 'MÃE' : 'FILHO(A)';
-    const roleCls = m.role === 'pai' ? 'role-pai' : m.role === 'mae' ? 'role-mae' : 'role-crianca';
+  state.config.members.forEach(member => {
+
+    const stars = state.memberStars[member.id] || 0;
+
+    const myMissions = state.missions.filter(
+      mission =>
+        mission.assignee === member.id ||
+        mission.assignee === 'compartilhada'
+    );
+
+    const myDone = myMissions.filter(
+      mission =>
+        state.missionStatus[mission.id] &&
+        state.missionStatus[mission.id].status === 'done'
+    ).length;
+
+    const roleLbl =
+      member.role === 'pai'
+        ? 'PAI'
+        : member.role === 'mae'
+        ? 'MÃE'
+        : 'FILHO(A)';
+
+    const roleCls =
+      member.role === 'pai'
+        ? 'role-pai'
+        : member.role === 'mae'
+        ? 'role-mae'
+        : 'role-crianca';
 
     const card = document.createElement('div');
     card.className = 'team-member-card';
+
     card.innerHTML = `
-      <div class="team-member-avatar">${m.avatar}</div>
+      <div class="team-member-avatar">${member.avatar}</div>
+
       <div class="team-member-info">
-        <div class="team-member-name">${m.name}</div>
-        <span class="role-badge ${roleCls}">${roleLbl}</span>
-        <div class="team-member-done" style="margin-top:6px;color:#666;font-size:10px;font-weight:900">${myDone} TAREFAS CONCLUÍDAS</div>
+        <div class="team-member-name">${member.name}</div>
+
+        <span class="role-badge ${roleCls}">
+          ${roleLbl}
+        </span>
+
+        <div
+          class="team-member-done"
+          style="margin-top:6px;color:#666;font-size:10px;font-weight:900"
+        >
+          ${myDone} TAREFAS CONCLUÍDAS
+        </div>
       </div>
+
       <div class="team-member-stats">
-        <div class="team-member-stars">⭐ ${stars}</div>
-        <div class="team-member-done">ESTRELAS HOJE</div>
-      </div>`;
+        <div class="team-member-stars">
+          ⭐ ${stars}
+        </div>
+
+        <div class="team-member-done">
+          ESTRELAS HOJE
+        </div>
+      </div>
+    `;
+
     container.appendChild(card);
+
   });
+
 }
 
 /* ════════════════════════════════════════════════════════════
    ABA CONQUISTAS
    ════════════════════════════════════════════════════════════ */
+
 export function renderBadges() {
+
   const grid = document.getElementById('badge-grid');
   grid.innerHTML = '';
-  ALL_BADGES.forEach(b => {
+
+  ALL_BADGES.forEach(badge => {
+
+    const unlocked =
+      state.unlockedBadges.includes(badge.id);
+
     const card = document.createElement('div');
-    card.className = 'badge-card' + (state.unlockedBadges.includes(b.id) ? ' unlocked' : '');
+
+    card.className =
+      'badge-card' +
+      (unlocked ? ' unlocked' : '');
+
     card.innerHTML = `
-      <span class="badge-icon">${b.icon}</span>
-      <div class="badge-name">${b.name}</div>
-      <div class="badge-desc">${state.unlockedBadges.includes(b.id) ? b.desc : '???'}</div>`;
+      <span class="badge-icon">${badge.icon}</span>
+
+      <div class="badge-name">
+        ${badge.name}
+      </div>
+
+      <div class="badge-desc">
+        ${unlocked ? badge.desc : '???'}
+      </div>
+    `;
+
     grid.appendChild(card);
+
   });
+
 }
 
 /* ════════════════════════════════════════════════════════════
    ABA SEMANA
    ════════════════════════════════════════════════════════════ */
+
 export function renderWeek() {
-  const now = new Date(), dow = now.getDay();
-  const mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
-  const container = document.getElementById('week-days'); container.innerHTML = '';
-  let sum = 0, count = 0;
+
+  const now = new Date();
+  const dow = now.getDay();
+
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+
+  const container = document.getElementById('week-days');
+  container.innerHTML = '';
+
+  let sum = 0;
+  let count = 0;
+
   for (let i = 0; i < 7; i++) {
-    const d = new Date(mon); d.setDate(mon.getDate() + i);
+
+    const d = new Date(mon);
+    d.setDate(mon.getDate() + i);
+
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    const score = state.weekData[key], isToday = d.toDateString() === now.toDateString();
-    if (score !== undefined) { sum += score; count++; }
-    const barCol = score === undefined ? '#333' : score >= 90 ? '#5cb832' : score >= 70 ? '#e8b800' : score >= 50 ? '#378ADD' : '#cb3232';
-    const flag = score === 100 ? '🏆' : score >= 90 ? '🥇' : score >= 70 ? '🥈' : score >= 50 ? '🏅' : score !== undefined ? '🚗' : '';
-    const sc = score !== undefined ? score + '%' : isToday ? 'HOJE' : '--';
-    const scCol = score >= 90 ? '#e8b800' : score >= 70 ? '#5cb832' : score !== undefined ? '#aaa' : '#555';
+
+    const score = state.weekData[key];
+    const isToday = d.toDateString() === now.toDateString();
+
+    if (score !== undefined) {
+      sum += score;
+      count++;
+    }
+
+    const barCol =
+      score === undefined ? '#333' :
+      score >= 90 ? '#5cb832' :
+      score >= 70 ? '#e8b800' :
+      score >= 50 ? '#378ADD' :
+      '#cb3232';
+
+    const flag =
+      score === 100 ? '🏆' :
+      score >= 90 ? '🥇' :
+      score >= 70 ? '🥈' :
+      score >= 50 ? '🏅' :
+      score !== undefined ? '🚗' : '';
+
+    const sc =
+      score !== undefined
+        ? score + '%'
+        : isToday
+        ? 'HOJE'
+        : '--';
+
+    const scCol =
+      score >= 90 ? '#e8b800' :
+      score >= 70 ? '#5cb832' :
+      score !== undefined ? '#aaa' :
+      '#555';
+
     const row = document.createElement('div');
     row.className = 'day-row';
-    if (isToday) row.style.cssText = 'display:flex;align-items:center;gap:8px;background:#1a2d1a;border:2px solid var(--gold);border-radius:14px;padding:10px 12px;margin-bottom:6px;';
+
+    if (isToday) {
+      row.style.cssText =
+        'display:flex;align-items:center;gap:8px;background:#1a2d1a;border:2px solid var(--gold);border-radius:14px;padding:10px 12px;margin-bottom:6px;';
+    }
+
     row.innerHTML = `
-      <span class="day-name" style="${isToday ? 'color:var(--gold);' : ''}">${DAY_NAMES[d.getDay()]}</span>
+      <span class="day-name" style="${isToday ? 'color:var(--gold);' : ''}">
+        ${DAY_NAMES[d.getDay()]}
+      </span>
+
       <div style="flex:1;background:var(--card2);border-radius:6px;height:14px;overflow:hidden;border:1px solid #222;">
-        <div style="height:100%;width:${score || 0}%;background:${barCol};border-radius:6px;transition:width 0.6s;"></div>
+        <div style="height:100%;width:${score || 0}%;background:${barCol};border-radius:6px;transition:width .6s;"></div>
       </div>
-      <span style="font-size:13px;font-weight:900;min-width:46px;text-align:right;color:${scCol}">${sc}</span>
-      <span style="font-size:16px">${flag}</span>`;
+
+      <span style="font-size:13px;font-weight:900;min-width:46px;text-align:right;color:${scCol}">
+        ${sc}
+      </span>
+
+      <span style="font-size:16px">
+        ${flag}
+      </span>
+    `;
+
     container.appendChild(row);
   }
+
   const avgBox = document.getElementById('week-avg-box');
+
   if (count > 0) {
+
     const avg = Math.round(sum / count);
+
     avgBox.style.display = '';
-    document.getElementById('week-avg-num').textContent = avg + '%';
-    const sub = avg === 100 ? '🏆 SEMANA PERFEITA!' : avg >= 90 ? '🥇 SEMANA INCRÍVEL!' : avg >= 70 ? '🥈 BOA SEMANA!' : avg >= 50 ? '🏅 CHEGANDO LÁ!' : '🚦 TREINANDO!';
-    document.getElementById('week-avg-sub').textContent = sub;
-  } else { avgBox.style.display = 'none'; }
+
+    document.getElementById('week-avg-num').textContent =
+      avg + '%';
+
+    document.getElementById('week-avg-sub').textContent =
+      avg === 100 ? '🏆 SEMANA PERFEITA!' :
+      avg >= 90 ? '🥇 SEMANA INCRÍVEL!' :
+      avg >= 70 ? '🥈 BOA SEMANA!' :
+      avg >= 50 ? '🏅 CHEGANDO LÁ!' :
+      '🚦 TREINANDO!';
+
+  } else {
+
+    avgBox.style.display = 'none';
+
+  }
+
 }
 
 /* ════════════════════════════════════════════════════════════
    RELATÓRIO DE FIM DE DIA
-   (a parte de DOM de finalizeDay(); a lógica/salvamento fica em missions.js)
    ════════════════════════════════════════════════════════════ */
+
 export function renderReport(pct, totalStars, done, total) {
-  const emojis = pct === 100 ? '🏆' : pct >= 90 ? '🥇' : pct >= 70 ? '🥈' : pct >= 50 ? '🏅' : '🚗';
-  const titles = pct === 100 ? 'DIA PERFEITO DO TIME!' : pct >= 90 ? 'TIME NO PÓDIO!' : pct >= 70 ? 'MUITO BEM, FAMÍLIA!' : pct >= 50 ? 'CHEGANDO LÁ!' : 'AMANHÃ A GENTE TREINA!';
-  const msgs = pct === 100 ? `FAMÍLIA INCRÍVEL! DIA PERFEITO! 🏆` :
-    pct >= 90 ? `QUE DIA INCRÍVEL, FAMÍLIA! ARRASARAM! 🚀` :
-    pct >= 70 ? `BOA CORRIDA EM EQUIPE! QUASE NO TOPO! 💪` :
-    `TODO DIA É NOVO COMEÇO! AMANHÃ VOCÊS CONSEGUEM! 💫`;
+
+  const emojis =
+    pct === 100 ? '🏆' :
+    pct >= 90 ? '🥇' :
+    pct >= 70 ? '🥈' :
+    pct >= 50 ? '🏅' :
+    '🚗';
+
+  const titles =
+    pct === 100 ? 'DIA PERFEITO DO TIME!' :
+    pct >= 90 ? 'TIME NO PÓDIO!' :
+    pct >= 70 ? 'MUITO BEM, FAMÍLIA!' :
+    pct >= 50 ? 'CHEGANDO LÁ!' :
+    'AMANHÃ A GENTE TREINA!';
+
+  const msgs =
+    pct === 100
+      ? 'FAMÍLIA INCRÍVEL! DIA PERFEITO! 🏆'
+      : pct >= 90
+      ? 'QUE DIA INCRÍVEL, FAMÍLIA! ARRASARAM! 🚀'
+      : pct >= 70
+      ? 'BOA CORRIDA EM EQUIPE! QUASE NO TOPO! 💪'
+      : 'TODO DIA É NOVO COMEÇO! AMANHÃ VOCÊS CONSEGUEM! 💫';
 
   document.getElementById('rep-emoji').textContent = emojis;
   document.getElementById('rep-title').textContent = titles;
@@ -381,21 +564,70 @@ export function renderReport(pct, totalStars, done, total) {
   document.getElementById('rep-msg').textContent = msgs;
   document.getElementById('rep-stars-val').textContent = '+' + totalStars;
 
-  let mhtml = `<div style="font-size:12px;font-weight:900;color:var(--gold);margin-bottom:8px">⭐ ESTRELAS POR MEMBRO</div>`;
-  state.config.members.forEach(m => {
-    const st = state.memberStars[m.id] || 0;
-    mhtml += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#ddd;">
-      <span>${m.avatar} ${m.name}</span><span style="color:var(--gold);font-weight:900">⭐ ${st}</span></div>`;
+  let membersHtml =
+    `<div style="font-size:12px;font-weight:900;color:var(--gold);margin-bottom:8px">
+      ⭐ ESTRELAS POR MEMBRO
+    </div>`;
+
+  state.config.members.forEach(member => {
+
+    membersHtml += `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#ddd;">
+        <span>${member.avatar} ${member.name}</span>
+        <span style="color:var(--gold);font-weight:900">
+          ⭐ ${state.memberStars[member.id] || 0}
+        </span>
+      </div>
+    `;
+
   });
-  document.getElementById('rep-member-box').innerHTML = mhtml;
 
-  const doneM = state.missions.filter((_, i) => state.missionStatus[i] && state.missionStatus[i].status === 'done');
-  const failM = state.missions.filter((_, i) => state.missionStatus[i] && state.missionStatus[i].status === 'fail');
-  let dhtml = `<div style="font-size:12px;font-weight:900;color:var(--gold);margin-bottom:8px">🏎️ TAREFAS: ${done}/${total}</div>`;
-  if (doneM.length) dhtml += `<div style="color:#5cb832;font-size:12px;margin-bottom:4px">✅ CONCLUÍDAS: ${doneM.map(m => m.emoji + m.title).join(', ')}</div>`;
-  if (failM.length) dhtml += `<div style="color:var(--red);font-size:12px">❌ PERDIDAS: ${failM.map(m => m.emoji + m.title).join(', ')}</div>`;
-  document.getElementById('rep-details').innerHTML = dhtml;
+  document.getElementById('rep-member-box').innerHTML =
+    membersHtml;
 
-  document.getElementById('report-overlay').style.display = 'flex';
-                               }
-                                      
+  const doneM = state.missions.filter(
+    mission =>
+      state.missionStatus[mission.id] &&
+      state.missionStatus[mission.id].status === 'done'
+  );
+
+  const failM = state.missions.filter(
+    mission =>
+      state.missionStatus[mission.id] &&
+      state.missionStatus[mission.id].status === 'fail'
+  );
+
+  let detailsHtml =
+    `<div style="font-size:12px;font-weight:900;color:var(--gold);margin-bottom:8px">
+      🏎️ TAREFAS: ${done}/${total}
+    </div>`;
+
+  if (doneM.length) {
+
+    detailsHtml += `
+      <div style="color:#5cb832;font-size:12px;margin-bottom:4px">
+        ✅ CONCLUÍDAS:
+        ${doneM.map(m => `${m.emoji} ${m.title}`).join(', ')}
+      </div>
+    `;
+
+  }
+
+  if (failM.length) {
+
+    detailsHtml += `
+      <div style="color:var(--red);font-size:12px">
+        ❌ PERDIDAS:
+        ${failM.map(m => `${m.emoji} ${m.title}`).join(', ')}
+      </div>
+    `;
+
+  }
+
+  document.getElementById('rep-details').innerHTML =
+    detailsHtml;
+
+  document.getElementById('report-overlay').style.display =
+    'flex';
+
+}
