@@ -26,10 +26,9 @@ function getMissionIndexById(missionId) {
 }
 
 export function setMissionStatus(missionId, val) {
-  const idx = getMissionIndexById(missionId);
-  if (idx === -1) return;
+  const m = getMissionById(missionId);
+  if (!m) return;
 
-  const m = state.missions[idx];
   const prev = state.missionStatus[missionId];
 
   if (prev && prev.status === val) {
@@ -62,10 +61,9 @@ export function setMissionStatus(missionId, val) {
   }
 
   if (val === 'done') {
-    openBonusPopup(idx);
+    openBonusPopup(missionId);
   } else {
     if (prev && prev.status === 'done') {
-      const m = state.missions[idx];
       const starsToRemove = prev.stars || 1;
       if (m.assignee === 'compartilhada') {
         state.config.members.forEach(mem => { state.memberStars[mem.id] = Math.max(0, (state.memberStars[mem.id] || 0) - starsToRemove); });
@@ -73,7 +71,7 @@ export function setMissionStatus(missionId, val) {
         state.memberStars[m.assignee] = Math.max(0, (state.memberStars[m.assignee] || 0) - starsToRemove);
       }
     }
-    state.missionStatus[idx] = { status: 'fail', stars: 0 };
+    state.missionStatus[missionId] = { status: 'fail', stars: 0 };
     persistDayState();
     renderMissions(); renderMembersBar(); updateHeaderStars();
   }
@@ -82,15 +80,16 @@ export function setMissionStatus(missionId, val) {
 /* ════════════════════════════════════════════════════════════
    POPUP DE BÔNUS
    ════════════════════════════════════════════════════════════ */
-export function openBonusPopup(idx) {
-  state.bonusPending = idx;
+export function openBonusPopup(missionId) {
+  state.bonusPending = missionId;
   state.bonusChecks = { capricho: false, pontual: false, semreclamar: false };
-  renderBonusPopup(idx);
+  renderBonusPopup(missionId);
   document.getElementById('bonus-overlay').style.display = 'flex';
 }
 
-export function renderBonusPopup(idx) {
-  const m = state.missions[idx];
+export function renderBonusPopup(missionId) {
+  const m = getMissionById(missionId);
+  if (!m) return;
   document.getElementById('bonus-emoji').textContent = m.emoji;
   document.getElementById('bonus-mission-name').textContent = m.title;
   ['capricho', 'pontual', 'semreclamar'].forEach(k => {
@@ -116,13 +115,14 @@ export function updateBonusPreview() {
 }
 
 export function confirmBonus() {
-  const idx = state.bonusPending;
-  if (idx === null || idx === undefined) return;
-  const m = state.missions[idx];
+  const missionId = state.bonusPending;
+  if (missionId === null || missionId === undefined) return;
+  const m = getMissionById(missionId);
+  if (!m) return;
   const bonusCount = Object.values(state.bonusChecks).filter(Boolean).length;
   const stars = 1 + bonusCount;
 
-  state.missionStatus[idx] = {
+  state.missionStatus[missionId] = {
     status: 'done', stars,
     capricho: state.bonusChecks.capricho,
     pontual: state.bonusChecks.pontual,
@@ -144,7 +144,7 @@ export function confirmBonus() {
   vibrate([30, 30, 60]);
 
   if (Object.keys(state.missionStatus).filter(k => state.missionStatus[k] && state.missionStatus[k].status === 'done').length === 1) checkBadge('first_done');
-  const allDone = state.missions.every((_, i) => state.missionStatus[i] && state.missionStatus[i].status === 'done');
+  const allDone = state.missions.every((m) => state.missionStatus[m.id] && state.missionStatus[m.id].status === 'done');
   if (allDone) checkBadge('missions_all');
   const todayStars = getTotalTeamStars();
   if (todayStars >= 10) checkBadge('stars10');
@@ -170,7 +170,7 @@ export function tryFinalize() {
 }
 
 export function finalizeDay() {
-  const done = state.missions.filter((_, i) => state.missionStatus[i] && state.missionStatus[i].status === 'done').length;
+  const done = state.missions.filter((m) => state.missionStatus[m.id] && state.missionStatus[m.id].status === 'done').length;
   const total = state.missions.length;
   const pct = total > 0 ? Math.round(done / total * 100) : 0;
   const totalStars = getTotalTeamStars();
@@ -242,5 +242,4 @@ export function restartDay() {
   renderMembersBar();
   updateHeaderStars();
   window.dispatchEvent(new CustomEvent('gp:switch-tab', { detail: 'missions' }));
-    }
-
+}
