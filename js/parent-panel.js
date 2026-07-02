@@ -422,41 +422,8 @@ export function wireParentPanelEvents() {
       return;
     }
 
-/* ---------- selecionar dia (NOVA UX COPY FLOW) ---------- */
-
-if (e.target.matches('[data-day-select]')) {
-
-  const selectedDay = Number(e.target.dataset.daySelect);
-
-  // 1) ainda não escolheu origem
-  if (copySourceDay === null) {
-    copySourceDay = selectedDay;
-    copyTargetDays = new Set();
-    renderParentPanel();
-    return;
-  }
-
-  // 2) clicou na origem novamente → cancela modo copy
-  if (selectedDay === copySourceDay) {
-    copySourceDay = null;
-    copyTargetDays = new Set();
-    renderParentPanel();
-    return;
-  }
-
-  // 3) já tem origem → alterna seleção de destinos
-  if (copySourceDay !== null) {
-    if (copyTargetDays.has(selectedDay)) {
-      copyTargetDays.delete(selectedDay);
-    } else {
-      copyTargetDays.add(selectedDay);
-    }
-
-    renderParentPanel();
-    return;
-  }
-}
-    /* ---------- adicionar missão ---------- */
+  
+     /* ---------- adicionar missão ---------- */
 
     if (e.target.matches('[data-add-mission]')) {
 
@@ -584,75 +551,201 @@ if (e.target.matches('[data-day-select]')) {
      BOTÕES
      --------------------------------------------------------- */
 
-  body.addEventListener('click', (e) => {
+body.addEventListener('click', (e) => {
 
-    if (e.target.id === 'pp-save-pin') {
+  /* ─────────────────────────────
+     PIN / RESET
+     ───────────────────────────── */
 
-      const value =
-        document.getElementById('pp-pin-input')
-          .value
-          .trim();
+  if (e.target.id === 'pp-save-pin') {
 
-      if (!/^\d{4,8}$/.test(value)) {
-        alert('O PIN deve conter de 4 a 8 números.');
-        return;
-      }
+    const value = document.getElementById('pp-pin-input').value.trim();
 
-      state.config.pin = value;
-
-      refreshAfterConfigChange();
-
-      alert('PIN atualizado!');
+    if (!/^\d{4,8}$/.test(value)) {
+      alert('O PIN deve conter de 4 a 8 números.');
       return;
     }
 
-    if (e.target.id === 'pp-reset-data') {
+    state.config.pin = value;
+    refreshAfterConfigChange();
 
-      if (!confirm(
-        'Isso apagará TODOS os dados salvos. Continuar?'
-      )) {
-        return;
-      }
+    alert('PIN atualizado!');
+    return;
+  }
 
-      resetAllData();
-      location.reload();
+  if (e.target.id === 'pp-reset-data') {
+
+    if (!confirm('Isso apagará TODOS os dados salvos. Continuar?')) {
+      return;
     }
 
-  });
-
-}
-
-/* ════════════════════════════════════════════════════════════
-   COPIAR TAREFAS DE OUTRO DIA
-   ════════════════════════════════════════════════════════════ */
-
-function copyTasksFromDay(sourceDay, targetDay) {
-
-  const sourceMissions = state.config.missions[sourceDay] || [];
-
-  if (sourceMissions.length === 0) {
-    alert(`Nenhuma tarefa cadastrada em ${DAY_FULL[sourceDay]}.`);
+    resetAllData();
+    location.reload();
     return;
   }
 
-  if (
-    state.config.missions[targetDay]?.length &&
-    !confirm(
-      `Substituir todas as tarefas de ${DAY_FULL[targetDay]} pelas tarefas de ${DAY_FULL[sourceDay]}?`
-    )
-  ) {
+  /* ─────────────────────────────
+     MEMBROS
+     ───────────────────────────── */
+
+  if (e.target.matches('[data-add-member]')) {
+
+    const id = 'm_' + Date.now().toString(36);
+
+    state.config.members.push({
+      id,
+      name: 'NOVO MEMBRO',
+      avatar: '🧒',
+      role: 'crianca'
+    });
+
+    refreshAfterConfigChange();
+    renderParentPanel();
     return;
   }
 
-  const copiedMissions = sourceMissions.map(({ id, ...mission }) => ({
-    ...mission
-  }));
+  if (e.target.matches('[data-remove-member]')) {
 
-  state.config.missions[targetDay] = copiedMissions;
+    const row = e.target.closest('[data-member-id]');
+    const id = row.dataset.memberId;
 
-  refreshAfterConfigChange();
+    if (state.config.members.length <= 1) {
+      alert('Precisa existir ao menos um membro.');
+      return;
+    }
 
-  alert(
-    `✅ ${copiedMissions.length} tarefa(s) copiadas de ${DAY_FULL[sourceDay]} para ${DAY_FULL[targetDay]}.`
-  );
-}
+    if (!confirm('Remover este membro da família?')) {
+      return;
+    }
+
+    state.config.members =
+      state.config.members.filter(m => m.id !== id);
+
+    delete state.memberStars[id];
+
+    refreshAfterConfigChange();
+    renderParentPanel();
+    return;
+  }
+
+  /* ─────────────────────────────
+     MISSÕES
+     ───────────────────────────── */
+
+  if (e.target.matches('[data-add-mission]')) {
+
+    state.config.missions[currentEditDay] ??= [];
+
+    state.config.missions[currentEditDay].push({
+      start: '08:00',
+      end: '08:30',
+      emoji: '⭐',
+      title: 'NOVA TAREFA',
+      desc: 'DESCRIÇÃO',
+      assignee: 'compartilhada'
+    });
+
+    refreshAfterConfigChange();
+    renderParentPanel();
+    return;
+  }
+
+  if (e.target.matches('[data-remove-mission]')) {
+
+    const row = e.target.closest('[data-mission-idx]');
+    const idx = Number(row.dataset.missionIdx);
+
+    state.config.missions[currentEditDay].splice(idx, 1);
+
+    refreshAfterConfigChange();
+    renderParentPanel();
+    return;
+  }
+
+  /* ─────────────────────────────
+     COPY FLOW (NOVO)
+     ───────────────────────────── */
+
+  if (e.target.matches('[data-day-select]')) {
+
+    const selectedDay = Number(e.target.dataset.daySelect);
+
+    if (copySourceDay === null) {
+      currentEditDay = selectedDay;
+      renderParentPanel();
+      return;
+    }
+
+    if (selectedDay === copySourceDay) {
+      copySourceDay = null;
+      copyTargetDays = new Set();
+      renderParentPanel();
+      return;
+    }
+
+    if (copyTargetDays.has(selectedDay)) {
+      copyTargetDays.delete(selectedDay);
+    } else {
+      copyTargetDays.add(selectedDay);
+    }
+
+    renderParentPanel();
+    return;
+  }
+
+  if (e.target.matches('[data-confirm-copy]')) {
+
+    if (copySourceDay === null) {
+      alert('Nenhum dia de origem selecionado.');
+      return;
+    }
+
+    if (!copyTargetDays || copyTargetDays.size === 0) {
+      alert('Selecione pelo menos um dia de destino.');
+      return;
+    }
+
+    const source = state.config.missions[copySourceDay];
+
+    if (!source || source.length === 0) {
+      alert('Dia de origem não possui tarefas.');
+      return;
+    }
+
+    const confirmed = confirm(
+      `Copiar ${source.length} tarefa(s) de ${DAY_FULL[copySourceDay]} para ${copyTargetDays.size} dia(s)?`
+    );
+
+    if (!confirmed) return;
+
+    copyTargetDays.forEach(day => {
+
+      const cloned = source.map(m => ({
+        start: m.start,
+        end: m.end,
+        emoji: m.emoji,
+        title: m.title,
+        desc: m.desc,
+        assignee: m.assignee
+      }));
+
+      state.config.missions[day] = cloned;
+    });
+
+    copySourceDay = null;
+    copyTargetDays = new Set();
+
+    refreshAfterConfigChange();
+    renderParentPanel();
+
+    alert('✔ Tarefas copiadas com sucesso!');
+    return;
+  }
+
+  if (e.target.matches('[data-cancel-copy]')) {
+    copySourceDay = null;
+    copyTargetDays = new Set();
+    renderParentPanel();
+    return;
+  }
+});
