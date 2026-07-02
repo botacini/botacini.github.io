@@ -155,11 +155,19 @@ export const state = {
 // Ensure all missions in config have IDs
 state.config.missions = ensureMissionIdsInAllDays(state.config.missions);
 
+/* ════════════════════════════════════════════════════════════
+   CRITICAL FIX: Save config with IDs after ensuring they exist
+   This makes mission IDs persistent in localStorage so they don't
+   regenerate on every page load.
+   ════════════════════════════════════════════════════════════ */
+saveConfig(state.config);
+
 export function getTodayMissions() {
   const dow = new Date().getDay();
   const dayMs = state.config.missions[dow];
+  // Return missions with their stable IDs (already set in config)
   const missions = dayMs ? dayMs.map(m => ({ ...m })) : DEFAULT_MISSIONS_TEMPLATE.map(m => ({ ...m }));
-  // Guarantee IDs on today's missions
+  // Ensure any new missions also have IDs (but existing ones keep theirs)
   return ensureMissionIds(missions);
 }
 state.missions = getTodayMissions();
