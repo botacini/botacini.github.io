@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🏁 GP DA FAMÍLIA</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap');
+
+:root {
+  --gold: #e8b800;
+  --gold-light: #ffe033;
+  --orange: #ff6b35;
+  --green: #5cb832;
+  --red: #cb3232;
+  --blue: #378ADD;
+  --purple: #9b59b6;
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --card2: #0f0f1a;
+  --border: #2a2a3e;
+  --shared: #e8b800;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Fredoka One', 'Nunito', -apple-system, sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  padding: 0 0 70px 0;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  overscroll-behavior: none;
+}
+
+/* ═══ HEADER ═══ */
+.race-header {
+  background: linear-gradient(160deg, #0f0f1a 0%, #1a1a2e 40%, #16213e 100%);
+  border-bottom: 4px solid var(--gold);
+  padding: 14px 16px 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.race-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(232,184,0,0.06) 18px, rgba(232,184,0,0.06) 20px);
+  pointer-events: none;
+}
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.flag-row { font-size: 20px; letter-spacing: 3px; }
+.race-title { font-size: 24px; font-weight: 900; color: var(--gold); letter-spacing: 3px; text-shadow: 0 0 24px rgba(232,184,0,0.5); flex: 1; text-align: center; }
+.btn-parent {
+  background: rgba(232,184,0,0.15); border: 2px solid var(--gold);
+  border-radius: 10px; padding: 6px 12px; color: var(--gold);
+  font-size: 11px; font-weight: 900; cursor: pointer;
+  font-family: 'Fredoka One', sans-serif; letter-spacing: 1px;
+  white-space: nowrap;
+}
+.race-subtitle { font-size: 12px; color: #ffdd88; letter-spacing: 1px; }
+.header-info-row { display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.clock-wrap { display: inline-flex; align-items: center; gap: 8px; background: rgba(232,184,0,0.14); border: 2px solid var(--gold); border-radius: 12px; padding: 6px 16px; }
+.clock-display { font-size: 22px; font-weight: 900; color: var(--gold); letter-spacing: 4px; font-variant-numeric: tabular-nums; }
+.lap-badge { background: var(--gold); color: #000; font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 6px; }
+
+/* ═══ TEAM STARS HEADER ═══ */
+.team-stars-header {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(232,184,0,0.12); border: 2px solid var(--gold);
+  border-radius: 12px; padding: 6px 14px; cursor: default;
+}
+.team-stars-val { font-size: 20px; font-weight: 900; color: var(--gold); }
+.team-stars-lbl { font-size: 10px; color: #aaa; font-weight: 900; }
+
+/* ═══ TRACK ═══ */
+.track-section { padding: 12px 16px 0; }
+.track-label { display: flex; justify-content: space-between; font-size: 13px; color: #ffdd88; margin-bottom: 5px; font-weight: 900; }
+.track-bar-bg { background: var(--card2); border-radius: 12px; height: 22px; overflow: hidden; border: 2px solid #333; position: relative; }
+.track-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--orange), var(--gold)); border-radius: 12px; transition: width 0.6s cubic-bezier(.4,0,.2,1); position: relative; min-width: 26px; }
+.car-icon { position: absolute; right: -4px; top: 50%; transform: translateY(-50%); font-size: 20px; filter: drop-shadow(0 0 8px var(--gold)); }
+.track-markers { display: flex; justify-content: space-between; margin-top: 3px; }
+.track-markers span { font-size: 10px; color: #555; }
+
+/* ═══ MEMBER PILLS ═══ */
+.members-bar {
+  display: flex; gap: 8px; padding: 10px 14px 4px; overflow-x: auto; align-items: center;
+}
+.members-bar::-webkit-scrollbar { display: none; }
+.member-pill {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--card); border: 2px solid var(--border); border-radius: 14px;
+  padding: 6px 10px; cursor: pointer; transition: all 0.2s; min-width: 58px;
+  position: relative;
+}
+.member-pill.active { border-color: var(--gold); background: rgba(232,184,0,0.1); }
+.member-pill .pill-avatar { font-size: 22px; line-height: 1; }
+.member-pill .pill-name { font-size: 9px; font-weight: 900; color: #aaa; letter-spacing: 0.5px; }
+.member-pill.active .pill-name { color: var(--gold); }
+.member-pill .pill-stars { font-size: 9px; color: var(--gold); font-weight: 900; }
+.member-all-pill { border-color: var(--blue); }
+.member-all-pill.active { border-color: var(--blue); background: rgba(55,138,221,0.15); }
+.member-all-pill.active .pill-name { color: var(--blue); }
+
+/* ═══ TABS ═══ */
+.tabs { display: flex; gap: 6px; padding: 10px 12px 0; overflow-x: auto; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex: 1; min-width: 60px; padding: 9px 4px; border-radius: 12px; border: 2px solid #333;
+  background: transparent; color: #888; font-size: 10px; font-weight: 900;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+  font-family: 'Fredoka One', sans-serif; white-space: nowrap;
+}
+.tab-btn.active { background: var(--gold); color: #000; border-color: var(--gold); }
+
+/* ═══ MISSION CARDS ═══ */
+.missions-wrap { padding: 10px 14px; }
+.section-title { font-size: 12px; color: #ffdd88; font-weight: 900; letter-spacing: 2px; margin: 10px 0 8px; display: flex; align-items: center; gap: 6px; }
+.section-title::before, .section-title::after { content: ''; flex: 1; height: 1px; background: #2a2a3e; }
+.mission-card {
+  border-radius: 18px; border: 2px solid var(--border); background: var(--card);
+  padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+  transition: all 0.25s; position: relative; overflow: hidden;
+}
+.mission-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #333; border-radius: 4px 0 0 4px; }
+.mission-card.done { background: #0b2a0b; border-color: #3a7d1e; }
+.mission-card.done::before { background: var(--green); }
+.mission-card.fail { background: #2d0b0b; border-color: #7d1e1e; }
+.mission-card.fail::before { background: var(--red); }
+.mission-card.current { border-color: var(--gold); box-shadow: 0 0 18px rgba(232,184,0,0.3); }
+.mission-card.current::before { background: var(--gold); }
+.mission-card.shared { border-color: var(--purple); }
+.mission-card.shared::before { background: var(--purple); }
+.mission-card.shared.done { border-color: #3a7d1e; }
+
+.time-col { min-width: 52px; text-align: center; }
+.t-start { background: var(--gold); color: #000; border-radius: 6px; font-size: 11px; font-weight: 900; padding: 3px 6px; display: block; margin-bottom: 2px; }
+.t-end { background: #333; color: #aaa; border-radius: 5px; font-size: 10px; padding: 2px 6px; display: block; }
+
+.m-emoji { font-size: 34px; min-width: 40px; text-align: center; line-height: 1; }
+.m-info { flex: 1; min-width: 0; }
+.m-title { font-size: 14px; font-weight: 900; color: #fff; }
+.m-desc { font-size: 11px; color: #aaa; margin-top: 2px; }
+.m-assignee { font-size: 10px; color: #aaa; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+.assignee-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: rgba(232,184,0,0.15); border: 1px solid rgba(232,184,0,0.4);
+  border-radius: 6px; padding: 2px 6px; font-size: 9px; color: var(--gold); font-weight: 900;
+}
+.assignee-tag.shared-tag { background: rgba(155,89,182,0.15); border-color: rgba(155,89,182,0.5); color: #c39bd3; }
+
+.btn-group { display: flex; flex-direction: column; gap: 5px; }
+.btn-check {
+  width: 40px; height: 40px; border-radius: 50%; border: 3px solid;
+  background: transparent; cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; font-weight: 900;
+}
+.btn-done { border-color: var(--green); color: var(--green); }
+.btn-done.active { background: var(--green); color: #fff; transform: scale(1.15); }
+.btn-fail { border-color: var(--red); color: var(--red); }
+.btn-fail.active { background: var(--red); color: #fff; transform: scale(1.15); }
+
+/* ═══ BONUS POPUP ═══ */
+.bonus-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 950; display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.bonus-card {
+  background: var(--card); border: 3px solid var(--gold);
+  border-radius: 28px; padding: 0 24px 28px; max-width: 360px; width: 100%;
+  text-align: center;
+  animation: bonusPop 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes bonusPop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.bonus-checker { height: 14px; background: repeating-linear-gradient(90deg,#fff 0,#fff 14px,#000 14px,#000 28px); border-radius: 25px 25px 0 0; margin-bottom: 18px; }
+.bonus-mission-emoji { font-size: 52px; margin-bottom: 6px; display: block; }
+.bonus-title { font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 4px; }
+.bonus-subtitle { font-size: 12px; color: #aaa; margin-bottom: 18px; }
+.bonus-checks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.bonus-check-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card2); border: 2px solid #333;
+  border-radius: 14px; padding: 12px 14px; cursor: pointer; transition: all 0.2s;
+}
+.bonus-check-item.checked { border-color: var(--gold); background: rgba(232,184,0,0.1); }
+.bonus-check-box {
+  width: 30px; height: 30px; border-radius: 50%; border: 3px solid #555;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all 0.2s; background: transparent; flex-shrink: 0;
+}
+.bonus-check-item.checked .bonus-check-box { background: var(--gold); border-color: var(--gold); }
+.bonus-check-label { font-size: 13px; font-weight: 900; color: #ddd; flex: 1; text-align: left; }
+.bonus-check-item.checked .bonus-check-label { color: #fff; }
+.bonus-star-preview { font-size: 11px; color: var(--gold); font-weight: 900; margin-bottom: 16px; }
+.btn-bonus-confirm {
+  width: 100%; padding: 16px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  border: none; color: #000; font-size: 16px; font-weight: 900;
+  cursor: pointer; font-family: 'Fredoka One', sans-serif; letter-spacing: 1px;
+}
+
+/* ═══ ESTRELAS TAB ═══ */
+.stars-wrap { padding: 10px 14px; }
+.stars-team-box {
+  background: linear-gradient(135deg, rgba(232,184,0,0.08), rgba(255,107,53,0.05));
+  border: 3px solid var(--gold); border-radius: 24px;
+  padding: 20px; text-align: center; margin-bottom: 16px;
+  box-shadow: 0 0 30px rgba(232,184,0,0.12);
+}
+.stars-team-count { font-size: 54px; font-weight: 900; color: var(--gold); line-height: 1; }
+.stars-team-label { font-size: 12px; color: #aaa; margin-top: 4px; }
+.stars-team-goal { font-size: 13px; color: #ffdd88; margin-top: 8px; font-weight: 900; }
+.stars-goal-bar-bg { background: var(--card2); border-radius: 8px; height: 16px; overflow: hidden; border: 1px solid #333; margin-top: 8px; }
+.stars-goal-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--orange)); border-radius: 8px; transition: width 0.6s ease; }
+
+.member-stars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.member-star-card {
+  background: var(--card); border: 2px solid var(--border); border-radius: 18px;
+  padding: 14px; text-align: center;
+}
+.member-star-avatar { font-size: 36px; margin-bottom: 6px; display: block; }
+.member-star-name { font-size: 12px; font-weight: 900; color: #aaa; margin-bottom: 4px; }
+.member-star-count { font-size: 28px; font-weight: 900; color: var(--gold); }
+.member-star-sub { font-size: 10px; color: #666; margin-top: 2px; }
+
+/* ═══ TEAM TAB ═══ */
+.team-wrap { padding: 10px 14px; }
+.team-member-card {
+  background: var(--card); border: 2px solid var(--border); border-radius: 18px;
+  padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+}
+.team-member-avatar { font-size: 40px; line-height: 1; }
+.team-member-info { flex: 1; }
+.team-member-name { font-size: 16px; font-weight: 900; color: #fff; }
+.team-member-role { font-size: 10px; color: #aaa; font-weight: 900; }
+.team-member-stats { text-align: right; }
+.team-member-stars { font-size: 18px; font-weight: 900; color: var(--gold); }
+.team-member-done { font-size: 10px; color: #aaa; margin-top: 2px; }
+.role-badge { display: inline-block; border-radius: 6px; padding: 2px 7px; font-size: 9px; font-weight: 900; margin-top: 3px; }
+.role-pai { background: rgba(55,138,221,0.2); color: var(--blue); border: 1px solid var(--blue); }
+.role-mae { background: rgba(155,89,182,0.2); color: #c39bd3; border: 1px solid #9b59b6; }
+.role-crianca { background: rgba(232,184,0,0.15); color: var(--gold); border: 1px solid var(--gold); }
+
+/* ═══ SEMANA ═══ */
+.week-wrap { padding: 10px 14px; }
+.week-title { font-size: 15px; font-weight: 900; color: var(--gold); text-align: center; margin-bottom: 14px; }
+.day-row { display: flex; align-items: center; gap: 8px; background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; margin-bottom: 6px; }
+.day-name { font-size: 13px; font-weight: 900; color: #aaa; min-width: 38px; }
+.week-avg { background: var(--card); border: 3px solid var(--gold); border-radius: 18px; padding: 18px; margin-top: 14px; text-align: center; }
+.avg-label { font-size: 13px; color: #aaa; }
+.avg-num { font-size: 50px; font-weight: 900; color: var(--gold); line-height: 1; margin: 6px 0 4px; }
+
+/* ═══ FINALIZE BTN ═══ */
+.finalize-wrap { padding: 14px; }
+.btn-finalize {
+  width: 100%; padding: 18px; border-radius: 18px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  border: none; color: #000; font-size: 18px; font-weight: 900;
+  cursor: pointer; letter-spacing: 2px;
+  box-shadow: 0 4px 20px rgba(232,184,0,0.4);
+  font-family: 'Fredoka One', sans-serif;
+}
+
+/* ═══ OVERLAY BASE ═══ */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.88);
+  display: flex; align-items: flex-start; justify-content: center;
+  z-index: 900; overflow-y: auto; padding: 14px;
+}
+.modal-card {
+  background: var(--card); border-radius: 24px; border: 2px solid #333;
+  padding: 0 20px 24px; max-width: 440px; width: 100%; text-align: center; margin: auto;
+}
+.modal-checker { height: 14px; background: repeating-linear-gradient(90deg,#fff 0,#fff 14px,#000 14px,#000 28px); border-radius: 22px 22px 0 0; margin-bottom: 18px; }
+
+/* ═══ REPORT ═══ */
+.rep-emoji { font-size: 64px; margin-bottom: 4px; }
+.rep-title { font-size: 20px; font-weight: 900; color: var(--gold); }
+.speed-score { font-size: 52px; font-weight: 900; color: var(--gold); line-height: 1; margin: 6px 0 2px; }
+.speed-unit { font-size: 12px; color: #888; margin-bottom: 10px; }
+.rep-msg { font-size: 14px; color: #ffdd88; margin: 8px 0 14px; line-height: 1.6; font-weight: 900; }
+.rep-box { background: var(--card2); border-radius: 14px; padding: 12px; margin-bottom: 10px; font-size: 13px; text-align: left; }
+.rep-stars-earned { background: rgba(232,184,0,0.1); border: 2px solid var(--gold); border-radius: 14px; padding: 14px; margin-bottom: 10px; text-align: center; }
+.rep-stars-val { font-size: 40px; font-weight: 900; color: var(--gold); }
+.btn-restart {
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  border: none; border-radius: 16px; padding: 16px;
+  font-size: 17px; color: #000; cursor: pointer; font-weight: 900;
+  width: 100%; margin-top: 6px;
+  font-family: 'Fredoka One', sans-serif;
+}
+
+/* ═══ PAINEL DOS PAIS ═══ */
+.parent-panel {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+  z-index: 1000; overflow-y: auto; padding: 0;
+}
+.parent-header {
+  background: linear-gradient(135deg, #0f0f1a, #16213e);
+  border-bottom: 3px solid var(--gold);
+  padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10;
+}
+.parent-title { font-size: 18px; font-weight: 900; color: var(--gold); }
+.btn-close-parent {
+  background: rgba(255,255,255,0.1); border: 2px solid #555;
+  border-radius: 10px; padding: 6px 14px; color: #aaa;
+  font-size: 13px; cursor: pointer; font-family: 'Fredoka One', sans-serif;
+}
+.parent-body { padding: 16px 16px 40px; max-width: 480px; margin: 0 auto; }
+.parent-section { background: var(--card); border: 2px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+.parent-section-title { font-size: 14px; font-weight: 900; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.form-row { margin-bottom: 12px; }
+.form-label { font-size: 11px; color: #aaa; font-weight: 900; margin-bottom: 4px; display: block; letter-spacing: 1px; }
+.form-input {
+  width: 100%; background: var(--card2); border: 2px solid #333;
+  border-radius: 10px; padding: 10px 12px; color: #fff; font-size: 14px;
+  font-family: 'Fredoka One', sans-serif; letter-spacing: 0.5px;
+  outline: none; text-transform: uppercase;
+}
+.form-input:focus { border-color: var(--gold); }
+.form-input-lower { text-transform: none; }
+.form-row-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+
+.member-edit-card {
+  background: var(--card2); border: 1px solid #333; border-radius: 12px;
+  padding: 10px; margin-bottom: 8px;
+}
+.member-edit-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.member-edit-label { font-size: 12px; color: var(--gold); font-weight: 900; }
+.btn-remove-member { background: rgba(203,50,50,0.2); border: 1px solid var(--red); border-radius: 8px; padding: 4px 10px; color: var(--red); font-size: 11px; cursor: pointer; font-family: 'Fredoka One', sans-serif; }
+
+.mission-edit-card {
+  background: var(--card2); border: 1px solid #333; border-radius: 12px;
+  padding: 10px; margin-bottom: 8px;
+}
+.mission-edit-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.mission-edit-label { font-size: 12px; color: var(--gold); font-weight: 900; }
+.btn-remove-mission { background: rgba(203,50,50,0.2); border: 1px solid var(--red); border-radius: 8px; padding: 4px 10px; color: var(--red); font-size: 11px; cursor: pointer; font-family: 'Fredoka One', sans-serif; }
+.btn-add-mission {
+  width: 100%; padding: 12px; border-radius: 12px;
+  background: rgba(232,184,0,0.1); border: 2px dashed var(--gold);
+  color: var(--gold); font-size: 13px; font-weight: 900;
+  cursor: pointer; font-family: 'Fredoka One', sans-serif;
+  margin-top: 4px;
+}
+.toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.toggle-label { font-size: 13px; color: #ddd; font-weight: 900; }
+.toggle-switch {
+  width: 48px; height: 26px; border-radius: 13px; border: none;
+  cursor: pointer; transition: all 0.3s; position: relative;
+  background: #333;
+}
+.toggle-switch.on { background: var(--green); }
+.toggle-switch::after {
+  content: ''; position: absolute; width: 20px; height: 20px;
+  background: #fff; border-radius: 50%; top: 3px; left: 3px;
+  transition: all 0.3s;
+}
+.toggle-switch.on::after { left: 25px; }
+
+.role-select { display: flex; gap: 6px; }
+.role-opt {
+  flex: 1; padding: 8px 6px; border-radius: 10px; border: 2px solid #333;
+  background: transparent; color: #666; font-size: 11px; font-weight: 900;
+  cursor: pointer; font-family: 'Fredoka One', sans-serif; transition: all 0.2s; text-align: center;
+}
+.role-opt.sel-pai { border-color: var(--blue); color: var(--blue); background: rgba(55,138,221,0.1); }
+.role-opt.sel-mae { border-color: #9b59b6; color: #c39bd3; background: rgba(155,89,182,0.1); }
+.role-opt.sel-crianca { border-color: var(--gold); color: var(--gold); background: rgba(232,184,0,0.1); }
+
+.assignee-select { display: flex; gap: 6px; flex-wrap: wrap; }
+.assignee-opt {
+  padding: 6px 10px; border-radius: 10px; border: 2px solid #333;
+  background: transparent; color: #666; font-size: 11px; font-weight: 900;
+  cursor: pointer; font-family: 'Fredoka One', sans-serif; transition: all 0.2s;
+}
+.assignee-opt.active { border-color: var(--gold); color: var(--gold); background: rgba(232,184,0,0.1); }
+.assignee-opt.shared-opt.active { border-color: #9b59b6; color: #c39bd3; background: rgba(155,89,182,0.1); }
+
+.btn-save-parent {
+  width: 100%; padding: 16px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  border: none; color: #000; font-size: 16px; font-weight: 900;
+  cursor: pointer; font-family: 'Fredoka One', sans-serif; margin-top: 6px;
+}
+.btn-reset-data { 
+  width: 100%; padding: 12px; border-radius: 12px;
+  background: rgba(203,50,50,0.1); border: 2px solid var(--red);
+  color: var(--red); font-size: 13px; font-weight: 900;
+  cursor: pointer; font-family: 'Fredoka One', sans-serif; margin-top: 8px;
+}
+
+/* ═══ PIN SCREEN ═══ */
+.pin-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+  z-index: 999; display: flex; align-items: center; justify-content: center;
+}
+.pin-card { background: var(--card); border: 2px solid var(--gold); border-radius: 24px; padding: 28px 24px; max-width: 300px; width: 100%; text-align: center; }
+.pin-title { font-size: 20px; font-weight: 900; color: var(--gold); margin-bottom: 6px; }
+.pin-sub { font-size: 12px; color: #888; margin-bottom: 20px; }
+.pin-dots { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
+.pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; transition: all 0.2s; }
+.pin-dot.filled { background: var(--gold); }
+.pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pin-key {
+  padding: 14px; border-radius: 12px; border: 2px solid #333;
+  background: var(--card2); color: #fff; font-size: 20px; font-weight: 900;
+  cursor: pointer; font-family: 'Fredoka One', sans-serif; transition: all 0.15s;
+}
+.pin-key:active { background: var(--gold); color: #000; transform: scale(0.95); }
+.pin-error { color: var(--red); font-size: 12px; font-weight: 900; margin-top: 10px; height: 16px; }
+.pin-key-del { background: rgba(203,50,50,0.15); border-color: var(--red); color: var(--red); }
+.pin-key-ok { background: rgba(92,184,50,0.15); border-color: var(--green); color: var(--green); }
+
+/* ═══ TOAST ═══ */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--card); border: 2px solid var(--gold); border-radius: 14px;
+  padding: 10px 20px; font-size: 14px; color: var(--gold); font-weight: 900;
+  z-index: 9990; opacity: 0; transition: all 0.3s; white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ═══ BADGE UNLOCK ═══ */
+.badge-unlock-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  z-index: 9980; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.badge-unlock-overlay.show { opacity: 1; pointer-events: all; }
+.badge-unlock-card { background: var(--card); border: 3px solid var(--gold); border-radius: 24px; padding: 30px 24px; text-align: center; max-width: 280px; animation: badgePop 0.4s cubic-bezier(.34,1.56,.64,1); }
+@keyframes badgePop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.badge-unlock-icon { font-size: 72px; display: block; margin-bottom: 10px; }
+.badge-unlock-title { font-size: 16px; font-weight: 900; color: var(--gold); margin-bottom: 4px; }
+.badge-unlock-name { font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 10px; }
+.badge-unlock-btn { background: var(--gold); border: none; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 900; color: #000; cursor: pointer; font-family: 'Fredoka One', sans-serif; }
+
+/* ═══ CONFETTI ═══ */
+#confetti-canvas { position:fixed; inset:0; pointer-events:none; z-index:9999; }
+
+.empty-state { text-align: center; padding: 30px 20px; color: #555; font-size: 13px; font-weight: 900; }
+.empty-state-icon { font-size: 48px; display: block; margin-bottom: 10px; }
+
+/* ═══ BADGES ═══ */
+.badges-wrap { padding: 0 14px; }
+.badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.badge-card {
+  background: var(--card); border: 2px solid var(--border); border-radius: 16px;
+  padding: 12px 8px; text-align: center; transition: all 0.3s;
+}
+.badge-card.unlocked { border-color: var(--gold); background: rgba(232,184,0,0.08); box-shadow: 0 0 12px rgba(232,184,0,0.2); }
+.badge-icon { font-size: 36px; display: block; margin-bottom: 6px; filter: grayscale(1); opacity: 0.3; transition: all 0.3s; }
+.badge-card.unlocked .badge-icon { filter: none; opacity: 1; }
+.badge-name { font-size: 10px; font-weight: 900; color: #aaa; line-height: 1.3; }
+.badge-card.unlocked .badge-name { color: var(--gold); }
+.badge-desc { font-size: 9px; color: #555; margin-top: 2px; line-height: 1.3; }
+.badge-card.unlocked .badge-desc { color: #888; }
+
+.history-list::-webkit-scrollbar { width: 4px; }
+.history-list::-webkit-scrollbar-track { background: transparent; }
+.history-list::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div class="toast" id="toast"></div>
+
+<!-- BADGE UNLOCK -->
+<div class="badge-unlock-overlay" id="badge-unlock-overlay" onclick="closeBadgeUnlock()">
+  <div class="badge-unlock-card">
+    <span class="badge-unlock-icon" id="badge-unlock-icon">🏆</span>
+    <div class="badge-unlock-title">🎉 CONQUISTA DESBLOQUEADA!</div>
+    <div class="badge-unlock-name" id="badge-unlock-name">CAMPEÃO</div>
+    <button class="badge-unlock-btn" onclick="closeBadgeUnlock()">ARRASOU! 🚀</button>
+  </div>
+</div>
+
+<!-- PIN OVERLAY -->
+<div class="pin-overlay" id="pin-overlay" style="display:none">
+  <div class="pin-card">
+    <div class="pin-title">🔒 ÁREA DOS PAIS</div>
+    <div class="pin-sub" id="pin-sub">DIGITE O PIN DE 4 DÍGITOS</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key pin-key-del" onclick="pinDel()">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key pin-key-ok" onclick="pinOk()">✓</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <button style="margin-top:14px;background:transparent;border:none;color:#555;font-size:11px;cursor:pointer;font-family:'Fredoka One',sans-serif;" onclick="closePinOverlay()">CANCELAR</button>
+  </div>
+</div>
+
+<!-- BONUS POPUP -->
+<div class="bonus-overlay" id="bonus-overlay" style="display:none">
+  <div class="bonus-card">
+    <div class="bonus-checker"></div>
+    <span class="bonus-mission-emoji" id="bonus-emoji">⭐</span>
+    <div class="bonus-title" id="bonus-mission-name">MISSÃO CONCLUÍDA!</div>
+    <div class="bonus-subtitle">GANHE ESTRELAS EXTRAS! ⭐</div>
+    <div class="bonus-checks">
+      <div class="bonus-check-item" id="bci-capricho" onclick="toggleBonus('capricho')">
+        <div class="bonus-check-box" id="bcb-capricho"></div>
+        <div class="bonus-check-label">✨ FEZ COM CAPRICHO</div>
+      </div>
+      <div class="bonus-check-item" id="bci-pontual" onclick="toggleBonus('pontual')">
+        <div class="bonus-check-box" id="bcb-pontual"></div>
+        <div class="bonus-check-label">⏰ FOI PONTUAL</div>
+      </div>
+      <div class="bonus-check-item" id="bci-semreclamar" onclick="toggleBonus('semreclamar')">
+        <div class="bonus-check-box" id="bcb-semreclamar"></div>
+        <div class="bonus-check-label">😄 SEM RECLAMAR</div>
+      </div>
+    </div>
+    <div class="bonus-star-preview" id="bonus-star-preview">⭐ +1 ESTRELA GARANTIDA</div>
+    <button class="btn-bonus-confirm" onclick="confirmBonus()">✅ CONFIRMAR!</button>
+  </div>
+</div>
+
+<!-- PAINEL DOS PAIS -->
+<div class="parent-panel" id="parent-panel" style="display:none">
+  <div class="parent-header">
+    <div class="parent-title">⚙️ PAINEL DOS PAIS</div>
+    <button class="btn-close-parent" onclick="closeParentPanel()">✕ FECHAR</button>
+  </div>
+  <div class="parent-body">
+
+    <!-- Membros da Família -->
+    <div class="parent-section">
+      <div class="parent-section-title">👨‍👩‍👧‍👦 MEMBROS DA FAMÍLIA</div>
+      <div id="members-editor"></div>
+      <button class="btn-add-mission" onclick="addMemberEditor()">＋ ADICIONAR MEMBRO</button>
+    </div>
+
+    <!-- Segurança -->
+    <div class="parent-section">
+      <div class="parent-section-title">🔒 SEGURANÇA</div>
+      <div class="form-row">
+        <label class="form-label">PIN DE 4 DÍGITOS</label>
+        <input class="form-input form-input-lower" id="cfg-pin" type="number" min="1000" max="9999" placeholder="1234">
+      </div>
+    </div>
+
+    <!-- Missões -->
+    <div class="parent-section">
+      <div class="parent-section-title">🏎️ TAREFAS DO DIA</div>
+      <div class="form-row">
+        <label class="form-label">DIA DA SEMANA</label>
+        <select class="form-input form-input-lower" id="cfg-day-select" onchange="loadDayMissions()">
+          <option value="0">Domingo</option>
+          <option value="1">Segunda-feira</option>
+          <option value="2">Terça-feira</option>
+          <option value="3">Quarta-feira</option>
+          <option value="4">Quinta-feira</option>
+          <option value="5">Sexta-feira</option>
+          <option value="6">Sábado</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">COPIAR TAREFAS DE OUTRO DIA</label>
+        <select class="form-input form-input-lower" id="cfg-copy-from" style="margin-bottom:6px">
+          <option value="">Selecionar dia...</option>
+          <option value="0">Domingo</option>
+          <option value="1">Segunda-feira</option>
+          <option value="2">Terça-feira</option>
+          <option value="3">Quarta-feira</option>
+          <option value="4">Quinta-feira</option>
+          <option value="5">Sexta-feira</option>
+          <option value="6">Sábado</option>
+        </select>
+        <button class="btn-add-mission" style="border-style:solid;background:rgba(55,138,221,0.1);color:var(--blue);border-color:var(--blue)" onclick="copyDayMissions()">📋 COPIAR TAREFAS</button>
+      </div>
+      <div id="missions-editor"></div>
+      <button class="btn-add-mission" onclick="addMissionEditor()">＋ ADICIONAR TAREFA</button>
+    </div>
+
+    <!-- Aprovação -->
+    <div class="parent-section">
+      <div class="parent-section-title">✅ APROVAÇÃO DO DIA</div>
+      <div class="toggle-row">
+        <span class="toggle-label">EXIGIR APROVAÇÃO DOS PAIS</span>
+        <button class="toggle-switch" id="cfg-approval-toggle" onclick="toggleConfig('approval')"></button>
+      </div>
+      <p style="font-size:11px;color:#666;text-transform:none;font-weight:700;margin-top:8px;">Quando ativado, os pais precisam confirmar o encerramento do dia.</p>
+    </div>
+
+    <button class="btn-save-parent" onclick="saveParentConfig()">💾 SALVAR TUDO</button>
+    <button class="btn-reset-data" onclick="confirmResetData()">🗑️ ZERAR TODOS OS DADOS</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="race-header">
+  <div class="header-top">
+    <div class="flag-row">🏁🏁</div>
+    <div class="race-title">🏎️ GP DA FAMÍLIA</div>
+    <button class="btn-parent" onclick="openPinOverlay()">⚙️ PAIS</button>
+  </div>
+  <div class="race-subtitle">🤝 TIME UNIDO, FAMÍLIA CAMPEÃ! 🤝</div>
+  <div class="header-info-row">
+    <div class="clock-wrap">
+      <span class="lap-badge">⏱ HORA</span>
+      <span class="clock-display" id="live-clock">--:--</span>
+    </div>
+    <div class="team-stars-header">
+      <span>⭐</span>
+      <div>
+        <div class="team-stars-lbl">ESTRELAS DO TIME</div>
+        <div class="team-stars-val" id="header-team-stars">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRACK -->
+<div class="track-section">
+  <div class="track-label">
+    <span id="prog-label">🚦 VAMOS LÁ!</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="track-bar-bg">
+    <div class="track-bar" id="prog-bar" style="width:0%">
+      <span class="car-icon" id="car-avatar">🏎️</span>
+    </div>
+  </div>
+  <div class="track-markers">
+    <span>🚦</span><span>25%</span><span>50%</span><span>75%</span><span>🏁</span>
+  </div>
+</div>
+
+<!-- MEMBER FILTER BAR -->
+<div class="members-bar" id="members-bar"></div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('missions')" id="tab-missions">🏎️<br>TAREFAS</button>
+  <button class="tab-btn" onclick="switchTab('stars')" id="tab-stars">⭐<br>ESTRELAS</button>
+  <button class="tab-btn" onclick="switchTab('team')" id="tab-team">👥<br>TIME</button>
+  <button class="tab-btn" onclick="switchTab('badges')" id="tab-badges">🏆<br>TROFÉUS</button>
+  <button class="tab-btn" onclick="switchTab('week')" id="tab-week">📊<br>SEMANA</button>
+</div>
+
+<!-- MISSIONS TAB -->
+<div id="panel-missions">
+  <div class="missions-wrap" id="mission-list"></div>
+</div>
+
+<!-- STARS TAB -->
+<div id="panel-stars" style="display:none">
+  <div class="stars-wrap">
+    <div class="stars-team-box">
+      <div style="font-size:13px;color:#ffdd88;font-weight:900;margin-bottom:8px;">🌟 ESTRELAS DO TIME HOJE 🌟</div>
+      <div class="stars-team-count" id="team-stars-count">0</div>
+      <div class="stars-team-label">ESTRELAS CONQUISTADAS</div>
+      <div class="stars-team-goal" id="team-stars-goal">META: COMPLETE TODAS AS TAREFAS!</div>
+      <div class="stars-goal-bar-bg">
+        <div class="stars-goal-bar" id="stars-goal-bar" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="section-title">🏅 POR MEMBRO</div>
+    <div class="member-stars-grid" id="member-stars-grid"></div>
+  </div>
+  <div class="finalize-wrap">
+    <button class="btn-finalize" onclick="tryFinalize()">🏁 ENCERRAR O DIA! 🏁</button>
+  </div>
+</div>
+
+<!-- TEAM TAB -->
+<div id="panel-team" style="display:none">
+  <div class="team-wrap">
+    <div style="font-size:14px;font-weight:900;color:var(--gold);text-align:center;margin-bottom:14px;">👨‍👩‍👧‍👦 NOSSA EQUIPE</div>
+    <div id="team-cards"></div>
+  </div>
+</div>
+
+<!-- BADGES TAB -->
+<div id="panel-badges" style="display:none">
+  <div class="badges-wrap" style="padding:12px 14px">
+    <div style="font-size:14px;font-weight:900;color:var(--gold);text-align:center;margin-bottom:14px;">🏆 CONQUISTAS DO TIME 🏆</div>
+    <div class="badge-grid" id="badge-grid"></div>
+  </div>
+</div>
+
+<!-- WEEK TAB -->
+<div id="panel-week" style="display:none">
+  <div class="week-wrap">
+    <div class="week-title">📊 SEMANA DO TIME</div>
+    <div id="week-days"></div>
+    <div class="week-avg" id="week-avg-box" style="display:none">
+      <div class="avg-label">MÉDIA DA SEMANA</div>
+      <div class="avg-num" id="week-avg-num">--</div>
+      <div style="font-size:13px;color:#ffdd88;margin-top:5px;font-weight:900" id="week-avg-sub"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT OVERLAY -->
+<div class="overlay" id="report-overlay" style="display:none">
+  <div class="modal-card">
+    <div class="modal-checker"></div>
+    <div class="rep-emoji" id="rep-emoji"></div>
+    <div class="rep-title" id="rep-title"></div>
+    <div class="speed-score" id="rep-score">0</div>
+    <div class="speed-unit">% TAREFAS CONCLUÍDAS HOJE</div>
+    <p class="rep-msg" id="rep-msg"></p>
+    <div class="rep-stars-earned" id="rep-stars-section">
+      <div style="font-size:20px;margin-bottom:4px">⭐</div>
+      <div class="rep-stars-val" id="rep-stars-val">+0</div>
+      <div style="font-size:12px;color:#aaa;margin-top:2px">ESTRELAS CONQUISTADAS HOJE!</div>
+    </div>
+    <div class="rep-box" id="rep-member-box"></div>
+    <div class="rep-box" id="rep-details"></div>
+    <button class="btn-restart" onclick="restartDay()">🚦 NOVO DIA AMANHÃ! 🚦</button>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════
+   DEFAULTS
+════════════════════════════════════ */
+const DEFAULT_MEMBERS = [
+  { id:'pai',  name:'PAI',  avatar:'👨', role:'pai' },
+  { id:'mae',  name:'MÃE',  avatar:'👩', role:'mae' },
+  { id:'filho1', name:'FILHO', avatar:'🧒', role:'crianca' }
+];
+
+const DEFAULT_MISSIONS_TEMPLATE = [
+  { start:"08:00", end:"08:15", emoji:"☀️", title:"ACORDAR!", desc:"HORA DE LEVANTAR!", assignee:"compartilhada" },
+  { start:"08:15", end:"08:30", emoji:"🙏", title:"ORAÇÃO EM FAMÍLIA", desc:"FALAR COM DEUS JUNTOS", assignee:"compartilhada" },
+  { start:"08:30", end:"09:10", emoji:"🥛", title:"CAFÉ DA MANHÃ", desc:"COMER BEM PARA O DIA!", assignee:"compartilhada" },
+  { start:"09:10", end:"10:10", emoji:"✏️", title:"ESTUDO / ESCOLA", desc:"APRENDER COISAS LEGAIS!", assignee:"filho1" },
+  { start:"10:30", end:"11:10", emoji:"🧹", title:"ARRUMAR A CASA", desc:"CADA UM NO SEU CANTO!", assignee:"compartilhada" },
+  { start:"11:30", end:"13:30", emoji:"🎮", title:"TEMPO LIVRE", desc:"DESCANSO E BRINCADEIRA!", assignee:"filho1" },
+  { start:"13:30", end:"14:30", emoji:"🍗", title:"ALMOÇO", desc:"HORA DE COMER JUNTOS!", assignee:"compartilhada" },
+  { start:"17:00", end:"17:40", emoji:"🍰", title:"LANCHE", desc:"LANCHINHO GOSTOSO!", assignee:"compartilhada" },
+  { start:"19:00", end:"19:40", emoji:"🍜", title:"JANTAR", desc:"JANTAR EM FAMÍLIA!", assignee:"compartilhada" },
+  { start:"19:40", end:"20:00", emoji:"🛁", title:"BANHO!", desc:"FICANDO LIMPINHO!", assignee:"filho1" },
+  { start:"20:00", end:"20:30", emoji:"📚", title:"LER UMA HISTÓRIA", desc:"HISTÓRIA NA CAMINHA!", assignee:"compartilhada" },
+  { start:"20:30", end:"21:00", emoji:"🌙", title:"ORAR E DORMIR", desc:"SONO GOSTOSO!", assignee:"compartilhada" }
+];
+
+function buildDefaultDayMissions() {
+  const days = {};
+  for (let d = 0; d < 7; d++) {
+    if (d === 0 || d === 6) {
+      days[d] = [
+        { start:"09:00", end:"09:30", emoji:"☀️", title:"ACORDAR!", desc:"BOM DIA FAMÍLIA!", assignee:"compartilhada" },
+        { start:"09:30", end:"10:00", emoji:"🥛", title:"CAFÉ DA MANHÃ", desc:"CAFÉ REFORÇADO JUNTOS!", assignee:"compartilhada" },
+        { start:"10:00", end:"12:00", emoji:"🎮", title:"TEMPO LIVRE", desc:"DIVERSÃO TOTAL!", assignee:"compartilhada" },
+        { start:"12:00", end:"13:00", emoji:"🍗", title:"ALMOÇO", desc:"MESA DA FAMÍLIA!", assignee:"compartilhada" },
+        { start:"14:00", end:"17:00", emoji:"🏰", title:"PASSEIO OU PARQUE", desc:"APROVEITAR O FINAL DE SEMANA!", assignee:"compartilhada" },
+        { start:"19:30", end:"20:00", emoji:"🍜", title:"JANTAR", desc:"JANTAR EM FAMÍLIA!", assignee:"compartilhada" },
+        { start:"20:30", end:"21:00", emoji:"📚", title:"HISTÓRIA E DORMIR", desc:"FIM DE DIA PERFEITO!", assignee:"compartilhada" }
+      ];
+    } else {
+      days[d] = DEFAULT_MISSIONS_TEMPLATE.map(m => ({...m}));
+    }
+  }
+  return days;
+}
+
+const ALL_BADGES = [
+  { id:'first_done',   icon:'🌟', name:'PRIMEIRA TAREFA', desc:'Completou a 1ª tarefa do dia' },
+  { id:'perfect_day',  icon:'🏆', name:'DIA PERFEITO',    desc:'100% das tarefas concluídas' },
+  { id:'podium',       icon:'🥇', name:'NO PÓDIO',        desc:'90%+ num dia' },
+  { id:'streak3',      icon:'🔥', name:'SEQUÊNCIA 3',     desc:'3 dias seguidos no pódio' },
+  { id:'streak7',      icon:'💎', name:'UMA SEMANA SHOW', desc:'7 dias seguidos no pódio' },
+  { id:'team_bonus',   icon:'⭐', name:'TIME PERFEITO',   desc:'Todos os bônus de um dia' },
+  { id:'missions_all', icon:'🚀', name:'MISSÃO COMPLETA', desc:'Todas as tarefas concluídas' },
+  { id:'collector',    icon:'🎖️', name:'COLECIONADOR',   desc:'5 conquistas desbloqueadas' },
+  { id:'stars10',      icon:'💫', name:'10 ESTRELAS',     desc:'10 estrelas num dia' },
+  { id:'stars50',      icon:'🌠', name:'50 ESTRELAS',     desc:'50 estrelas no total' },
+  { id:'family_week',  icon:'👨‍👩‍👧‍👦', name:'FAMÍLIA UNIDA',  desc:'Semana completa em família' },
+];
+
+const DAY_NAMES = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
+const DAY_FULL  = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+
+/* ════════════════════════════════════
+   STATE
+════════════════════════════════════ */
+let config = loadConfig();
+let missions = getTodayMissions();
+let missionStatus = {}; // { missionIdx: { status:'done'|'fail', stars:0, bonusCapricho, bonusPontual, bonusSemReclamar } }
+let weekData = loadWeek();
+let unlockedBadges = loadBadges();
+let memberStars = {}; // { memberId: totalStarsToday }
+let filterMember = 'all'; // 'all' or memberId
+let bonusPending = null; // { missionIdx, resolve }
+let bonusChecks = { capricho: false, pontual: false, semreclamar: false };
+let pinBuffer = '';
+let pinMode = 'parent';
+
+/* ════════════════════════════════════
+   STORAGE
+════════════════════════════════════ */
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem('gpfamilia_config');
+    const def = {
+      pin: '1234',
+      requireApproval: false,
+      members: DEFAULT_MEMBERS.map(m => ({...m})),
+      missions: buildDefaultDayMissions()
+    };
+    if (!raw) return def;
+    return { ...def, ...JSON.parse(raw) };
+  } catch(e) { return loadConfig._def || { pin:'1234', requireApproval:false, members:DEFAULT_MEMBERS.map(m=>({...m})), missions:buildDefaultDayMissions() }; }
+}
+function saveConfig() {
+  try { localStorage.setItem('gpfamilia_config', JSON.stringify(config)); } catch(e) {}
+}
+function getWeekKey() {
+  const n = new Date(), dw = n.getDay(), m = new Date(n);
+  m.setDate(n.getDate() - (dw === 0 ? 6 : dw - 1));
+  return `gpfamilia_week_${m.getFullYear()}_${m.getMonth()}_${m.getDate()}`;
+}
+function loadWeek() { try { const r = localStorage.getItem(getWeekKey()); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
+function saveDay(score) {
+  const n = new Date(), k = `${n.getFullYear()}-${n.getMonth()}-${n.getDate()}`;
+  weekData[k] = score;
+  try { localStorage.setItem(getWeekKey(), JSON.stringify(weekData)); } catch(e) {}
+}
+function loadBadges() { try { const r = localStorage.getItem('gpfamilia_badges'); return r ? JSON.parse(r) : []; } catch(e) { return []; } }
+function saveBadges() { try { localStorage.setItem('gpfamilia_badges', JSON.stringify(unlockedBadges)); } catch(e) {} }
+function loadTotalStars() { try { const r = localStorage.getItem('gpfamilia_totalstars'); return r ? JSON.parse(r) : { total:0, byMember:{} }; } catch(e) { return {total:0,byMember:{}}; } }
+function saveTotalStars(data) { try { localStorage.setItem('gpfamilia_totalstars', JSON.stringify(data)); } catch(e) {} }
+
+function getTodayMissions() {
+  const dow = new Date().getDay();
+  const dayMs = config.missions[dow];
+  return dayMs ? dayMs.map(m => ({...m})) : DEFAULT_MISSIONS_TEMPLATE.map(m => ({...m}));
+}
+
+/* ════════════════════════════════════
+   INIT MEMBER STARS
+════════════════════════════════════ */
+function initMemberStars() {
+  memberStars = {};
+  config.members.forEach(m => { memberStars[m.id] = 0; });
+}
+
+/* ════════════════════════════════════
+   CLOCK
+════════════════════════════════════ */
+function updateClock() {
+  const n = new Date();
+  document.getElementById('live-clock').textContent =
+    String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+function timeToMin(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+function getCurrentIdx() {
+  const n = new Date(), cur = n.getHours()*60 + n.getMinutes();
+  for (let i = 0; i < missions.length; i++)
+    if (cur >= timeToMin(missions[i].start) && cur < timeToMin(missions[i].end)) return i;
+  if (missions.length > 0 && cur < timeToMin(missions[0].start)) return 0;
+  return missions.length - 1;
+}
+
+/* ════════════════════════════════════
+   TABS
+════════════════════════════════════ */
+function switchTab(tab) {
+  ['missions','stars','team','badges','week'].forEach(t => {
+    const p = document.getElementById('panel-'+t);
+    const b = document.getElementById('tab-'+t);
+    if (p) p.style.display = t === tab ? '' : 'none';
+    if (b) b.classList.toggle('active', t === tab);
+  });
+  if (tab === 'week') renderWeek();
+  if (tab === 'badges') renderBadges();
+  if (tab === 'stars') renderStarsTab();
+  if (tab === 'team') renderTeamTab();
+}
+
+/* ════════════════════════════════════
+   MEMBER FILTER BAR
+════════════════════════════════════ */
+function renderMembersBar() {
+  const bar = document.getElementById('members-bar');
+  bar.innerHTML = '';
+
+  // "TODOS" pill
+  const allPill = document.createElement('div');
+  allPill.className = 'member-pill member-all-pill' + (filterMember === 'all' ? ' active' : '');
+  allPill.onclick = () => { filterMember = 'all'; renderMembersBar(); renderMissions(); };
+  allPill.innerHTML = `<span class="pill-avatar">👨‍👩‍👧‍👦</span><span class="pill-name">TODOS</span><span class="pill-stars">⭐ ${getTotalTeamStars()}</span>`;
+  bar.appendChild(allPill);
+
+  config.members.forEach(m => {
+    const pill = document.createElement('div');
+    pill.className = 'member-pill' + (filterMember === m.id ? ' active' : '');
+    pill.onclick = () => { filterMember = m.id; renderMembersBar(); renderMissions(); };
+    const stars = memberStars[m.id] || 0;
+    pill.innerHTML = `<span class="pill-avatar">${m.avatar}</span><span class="pill-name">${m.name}</span><span class="pill-stars">⭐ ${stars}</span>`;
+    bar.appendChild(pill);
+  });
+}
+
+function getTotalTeamStars() {
+  return Object.values(memberStars).reduce((a,b) => a+b, 0);
+}
+
+/* ════════════════════════════════════
+   MISSIONS
+════════════════════════════════════ */
+function getMemberById(id) {
+  if (id === 'compartilhada') return { name:'COMPARTILHADA', avatar:'🤝', role:'shared' };
+  return config.members.find(m => m.id === id) || { name:'?', avatar:'❓', role:'crianca' };
+}
+
+function setMissionStatus(idx, val) {
+  const prev = missionStatus[idx];
+  if (prev && prev.status === val) {
+    // Toggle off
+    if (prev.status === 'done') {
+      // Remove stars from member
+      const m = missions[idx];
+      const mem = getMemberById(m.assignee);
+      const starsToRemove = prev.stars || 1;
+      if (m.assignee === 'compartilhada') {
+        config.members.forEach(mem => { if (memberStars[mem.id]) memberStars[mem.id] = Math.max(0, (memberStars[mem.id]||0) - starsToRemove); });
+      } else {
+        if (memberStars[m.assignee]) memberStars[m.assignee] = Math.max(0, (memberStars[m.assignee]||0) - starsToRemove);
+      }
+    }
+    missionStatus[idx] = null;
+    renderMissions(); renderMembersBar(); updateHeaderStars();
+    return;
+  }
+
+  if (val === 'done') {
+    // Show bonus popup
+    openBonusPopup(idx);
+  } else {
+    if (prev && prev.status === 'done') {
+      // Was done, now failing — remove stars
+      const m = missions[idx];
+      const starsToRemove = prev.stars || 1;
+      if (m.assignee === 'compartilhada') {
+        config.members.forEach(mem => { memberStars[mem.id] = Math.max(0, (memberStars[mem.id]||0) - starsToRemove); });
+      } else {
+        memberStars[m.assignee] = Math.max(0, (memberStars[m.assignee]||0) - starsToRemove);
+      }
+    }
+    missionStatus[idx] = { status: 'fail', stars: 0 };
+    renderMissions(); renderMembersBar(); updateHeaderStars();
+  }
+}
+
+/* ════════════════════════════════════
+   BONUS POPUP
+════════════════════════════════════ */
+function openBonusPopup(idx) {
+  bonusPending = idx;
+  bonusChecks = { capricho: false, pontual: false, semreclamar: false };
+  renderBonusPopup(idx);
+  document.getElementById('bonus-overlay').style.display = 'flex';
+}
+
+function renderBonusPopup(idx) {
+  const m = missions[idx];
+  document.getElementById('bonus-emoji').textContent = m.emoji;
+  document.getElementById('bonus-mission-name').textContent = m.title;
+  ['capricho','pontual','semreclamar'].forEach(k => {
+    document.getElementById('bci-'+k).classList.remove('checked');
+    document.getElementById('bcb-'+k).textContent = '';
+  });
+  updateBonusPreview();
+}
+
+function toggleBonus(key) {
+  bonusChecks[key] = !bonusChecks[key];
+  const item = document.getElementById('bci-'+key);
+  const box = document.getElementById('bcb-'+key);
+  item.classList.toggle('checked', bonusChecks[key]);
+  box.textContent = bonusChecks[key] ? '✓' : '';
+  updateBonusPreview();
+}
+
+function updateBonusPreview() {
+  const bonusCount = Object.values(bonusChecks).filter(Boolean).length;
+  const total = 1 + bonusCount;
+  const preview = document.getElementById('bonus-star-preview');
+  preview.textContent = `⭐ +${total} ESTRELA${total>1?'S':''} PARA O TIME!`;
+}
+
+function confirmBonus() {
+  const idx = bonusPending;
+  if (idx === null || idx === undefined) return;
+  const m = missions[idx];
+  const bonusCount = Object.values(bonusChecks).filter(Boolean).length;
+  const stars = 1 + bonusCount;
+
+  missionStatus[idx] = { status:'done', stars, capricho:bonusChecks.capricho, pontual:bonusChecks.pontual, semreclamar:bonusChecks.semreclamar };
+
+  // Award stars to member(s)
+  if (m.assignee === 'compartilhada') {
+    config.members.forEach(mem => { memberStars[mem.id] = (memberStars[mem.id]||0) + stars; });
+  } else {
+    memberStars[m.assignee] = (memberStars[m.assignee]||0) + stars;
+  }
+
+  document.getElementById('bonus-overlay').style.display = 'none';
+  bonusPending = null;
+
+  playSound('done');
+  vibrate([30,30,60]);
+
+  if (Object.keys(missionStatus).filter(k=>missionStatus[k]&&missionStatus[k].status==='done').length === 1) checkBadge('first_done');
+  const allDone = missions.every((_,i) => missionStatus[i]&&missionStatus[i].status==='done');
+  if (allDone) checkBadge('missions_all');
+  const todayStars = getTotalTeamStars();
+  if (todayStars >= 10) checkBadge('stars10');
+
+  renderMissions(); renderMembersBar(); updateHeaderStars();
+  showToast(`⭐ +${stars} ESTRELA${stars>1?'S':''}! ARRASOU!`);
+}
+
+function updateHeaderStars() {
+  const total = getTotalTeamStars();
+  document.getElementById('header-team-stars').textContent = total;
+}
+
+function renderMissions() {
+  const curIdx = getCurrentIdx();
+  const total = missions.length;
+  const done = missions.filter((_,i) => missionStatus[i]&&missionStatus[i].status==='done').length;
+  const pct = Math.round(done / total * 100);
+  document.getElementById('prog-label').textContent = done + ' DE ' + total + ' TAREFAS ✅';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-bar').style.width = Math.max(pct, 3) + '%';
+
+  // Update car avatar to first member avatar
+  const firstMember = config.members[0];
+  document.getElementById('car-avatar').textContent = firstMember ? firstMember.avatar : '🏎️';
+
+  const list = document.getElementById('mission-list');
+  list.innerHTML = '';
+
+  // Filter missions
+  let visibleMissions = missions.map((m, i) => ({m, i}));
+  if (filterMember !== 'all') {
+    visibleMissions = visibleMissions.filter(({m}) => m.assignee === filterMember || m.assignee === 'compartilhada');
+  }
+
+  if (visibleMissions.length === 0) {
+    list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🔍</span>NENHUMA TAREFA<br>PARA ESTE MEMBRO HOJE</div>`;
+    return;
+  }
+
+  visibleMissions.forEach(({m, i}) => {
+    const st = missionStatus[i];
+    const status = st ? st.status : null;
+    const isCur = i === curIdx;
+    const member = getMemberById(m.assignee);
+    const isShared = m.assignee === 'compartilhada';
+
+    const d = document.createElement('div');
+    let cls = 'mission-card';
+    if (status === 'done') cls += ' done';
+    else if (status === 'fail') cls += ' fail';
+    else if (isShared) cls += ' shared';
+    if (isCur && !status) cls += ' current';
+    d.className = cls;
+
+    const stars = st && st.stars > 0 ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;font-weight:900">⭐ +${st.stars} estrela${st.stars>1?'s':''}</div>` : '';
+    const assigneeTag = isShared
+      ? `<span class="assignee-tag shared-tag">🤝 COMPARTILHADA</span>`
+      : `<span class="assignee-tag">${member.avatar} ${member.name}</span>`;
+
+    d.innerHTML = `
+      <div class="time-col">
+        <span class="t-start">${m.start}</span>
+        <span class="t-end">${m.end}</span>
+      </div>
+      <div class="m-emoji">${m.emoji}</div>
+      <div class="m-info">
+        <div class="m-title">${m.title}</div>
+        <div class="m-desc">${m.desc}</div>
+        <div class="m-assignee">${assigneeTag}</div>
+        ${stars}
+      </div>
+      <div class="btn-group">
+        <button class="btn-check btn-done ${status==='done'?'active':''}" onclick="setMissionStatus(${i},'done')">✓</button>
+        <button class="btn-check btn-fail ${status==='fail'?'active':''}" onclick="setMissionStatus(${i},'fail')">✗</button>
+      </div>`;
+    list.appendChild(d);
+  });
+}
+
+/* ════════════════════════════════════
+   STARS TAB
+════════════════════════════════════ */
+function renderStarsTab() {
+  const total = getTotalTeamStars();
+  const maxPossible = missions.length * 4; // 1 base + 3 bonus
+  const pct = Math.min(100, Math.round(total / Math.max(maxPossible, 1) * 100));
+
+  document.getElementById('team-stars-count').textContent = total;
+  document.getElementById('stars-goal-bar').style.width = pct + '%';
+
+  const done = missions.filter((_,i) => missionStatus[i]&&missionStatus[i].status==='done').length;
+  document.getElementById('team-stars-goal').textContent =
+    done === missions.length ? `🏁 DIA COMPLETO! ${total} ESTRELAS DO TIME!` : `META: COMPLETAR ${missions.length - done} TAREFAS AINDA!`;
+
+  const grid = document.getElementById('member-stars-grid');
+  grid.innerHTML = '';
+  config.members.forEach(m => {
+    const stars = memberStars[m.id] || 0;
+    const card = document.createElement('div');
+    card.className = 'member-star-card';
+    const roleLabel = m.role === 'pai' ? '👨 PAI' : m.role === 'mae' ? '👩 MÃE' : '🧒 CRIANÇA';
+    card.innerHTML = `
+      <span class="member-star-avatar">${m.avatar}</span>
+      <div class="member-star-name">${m.name}</div>
+      <div class="member-star-count">${stars}</div>
+      <div class="member-star-sub">${roleLabel}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ════════════════════════════════════
+   TEAM TAB
+════════════════════════════════════ */
+function renderTeamTab() {
+  const container = document.getElementById('team-cards');
+  container.innerHTML = '';
+  config.members.forEach(m => {
+    const stars = memberStars[m.id] || 0;
+    const myMissions = missions.filter(ms => ms.assignee === m.id || ms.assignee === 'compartilhada');
+    const myDone = myMissions.filter((ms, ri) => {
+      const realIdx = missions.indexOf(ms);
+      return missionStatus[realIdx] && missionStatus[realIdx].status === 'done';
+    }).length;
+
+    const roleLbl = m.role === 'pai' ? 'PAI' : m.role === 'mae' ? 'MÃE' : 'FILHO(A)';
+    const roleCls = m.role === 'pai' ? 'role-pai' : m.role === 'mae' ? 'role-mae' : 'role-crianca';
+
+    const card = document.createElement('div');
+    card.className = 'team-member-card';
+    card.innerHTML = `
+      <div class="team-member-avatar">${m.avatar}</div>
+      <div class="team-member-info">
+        <div class="team-member-name">${m.name}</div>
+        <span class="role-badge ${roleCls}">${roleLbl}</span>
+        <div class="team-member-done" style="margin-top:6px;color:#666;font-size:10px;font-weight:900">${myDone} TAREFAS CONCLUÍDAS</div>
+      </div>
+      <div class="team-member-stats">
+        <div class="team-member-stars">⭐ ${stars}</div>
+        <div class="team-member-done">ESTRELAS HOJE</div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+/* ════════════════════════════════════
+   FINALIZE
+════════════════════════════════════ */
+function tryFinalize() {
+  if (config.requireApproval) {
+    openPinOverlay('approve');
+  } else {
+    finalizeDay();
+  }
+}
+
+function finalizeDay() {
+  const done = missions.filter((_,i) => missionStatus[i]&&missionStatus[i].status==='done').length;
+  const total = missions.length;
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  const totalStars = getTotalTeamStars();
+
+  // Save cumulative stars
+  const stored = loadTotalStars();
+  stored.total = (stored.total || 0) + totalStars;
+  config.members.forEach(m => {
+    stored.byMember[m.id] = (stored.byMember[m.id]||0) + (memberStars[m.id]||0);
+  });
+  saveTotalStars(stored);
+
+  saveDay(pct);
+  checkAllBadges(pct, totalStars, stored.total);
+
+  const emojis = pct === 100 ? '🏆' : pct >= 90 ? '🥇' : pct >= 70 ? '🥈' : pct >= 50 ? '🏅' : '🚗';
+  const titles = pct === 100 ? 'DIA PERFEITO DO TIME!' : pct >= 90 ? 'TIME NO PÓDIO!' : pct >= 70 ? 'MUITO BEM, FAMÍLIA!' : pct >= 50 ? 'CHEGANDO LÁ!' : 'AMANHÃ A GENTE TREINA!';
+  const msgs = pct === 100 ? `FAMÍLIA INCRÍVEL! DIA PERFEITO! 🏆` :
+    pct >= 90 ? `QUE DIA INCRÍVEL, FAMÍLIA! ARRASARAM! 🚀` :
+    pct >= 70 ? `BOA CORRIDA EM EQUIPE! QUASE NO TOPO! 💪` :
+    `TODO DIA É NOVO COMEÇO! AMANHÃ VOCÊS CONSEGUEM! 💫`;
+
+  document.getElementById('rep-emoji').textContent = emojis;
+  document.getElementById('rep-title').textContent = titles;
+  document.getElementById('rep-score').textContent = pct;
+  document.getElementById('rep-msg').textContent = msgs;
+
+  document.getElementById('rep-stars-val').textContent = '+' + totalStars;
+
+  // Member breakdown
+  let mhtml = `<div style="font-size:12px;font-weight:900;color:var(--gold);margin-bottom:8px">⭐ ESTRELAS POR MEMBRO</div>`;
+  config.members.forEach(m => {
+    const st = memberStars[m.id] || 0;
+    mhtml += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#ddd;">
+      <span>${m.avatar} ${m.name}</span><span style="color:var(--gold);font-weight:900">⭐ ${st}</span></div>`;
+  });
+  document.getElementById('rep-member-box').innerHTML = mhtml;
+
+  const doneM = missions.filter((_,i) => missionStatus[i]&&missionStatus[i].status==='done');
+  const failM = missions.filter((_,i) => missionStatus[i]&&missionStatus[i].status==='fail');
+  let dhtml = `<div style="font-size:12px;font-weight:900;color:var(--gold);margin-bottom:8px">🏎️ TAREFAS: ${done}/${total}</div>`;
+  if (doneM.length) dhtml += `<div style="color:#5cb832;font-size:12px;margin-bottom:4px">✅ CONCLUÍDAS: ${doneM.map(m=>m.emoji+m.title).join(', ')}</div>`;
+  if (failM.length) dhtml += `<div style="color:var(--red);font-size:12px">❌ PERDIDAS: ${failM.map(m=>m.emoji+m.title).join(', ')}</div>`;
+  document.getElementById('rep-details').innerHTML = dhtml;
+
+  document.getElementById('report-overlay').style.display = 'flex';
+  if (pct === 100) setTimeout(startConfetti, 400);
+}
+
+/* ════════════════════════════════════
+   BADGES
+════════════════════════════════════ */
+function checkBadge(id) {
+  if (unlockedBadges.includes(id)) return;
+  unlockedBadges.push(id);
+  saveBadges();
+  const badge = ALL_BADGES.find(b => b.id === id);
+  if (badge) showBadgeUnlock(badge);
+  if (unlockedBadges.length >= 5) setTimeout(() => checkBadge('collector'), 400);
+}
+
+function checkAllBadges(pct, todayStars, totalStars) {
+  if (pct === 100) checkBadge('perfect_day');
+  if (pct >= 90) checkBadge('podium');
+  if (todayStars >= 10) checkBadge('stars10');
+  if (totalStars >= 50) checkBadge('stars50');
+  // Check if all bonus checks are filled for at least one mission
+  const hasPerfect = Object.values(missionStatus).some(s => s && s.capricho && s.pontual && s.semreclamar);
+  if (hasPerfect) checkBadge('team_bonus');
+  checkStreaks();
+}
+
+function checkStreaks() {
+  const now = new Date();
+  let streak = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(now); d.setDate(now.getDate() - i);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if (weekData[key] !== undefined && weekData[key] >= 90) streak++;
+    else break;
+  }
+  if (streak >= 3) checkBadge('streak3');
+  if (streak >= 7) checkBadge('streak7');
+}
+
+function showBadgeUnlock(badge) {
+  document.getElementById('badge-unlock-icon').textContent = badge.icon;
+  document.getElementById('badge-unlock-name').textContent = badge.name;
+  document.getElementById('badge-unlock-overlay').classList.add('show');
+  playSound('badge');
+  vibrate([50, 50, 100, 50, 200]);
+}
+function closeBadgeUnlock() { document.getElementById('badge-unlock-overlay').classList.remove('show'); }
+
+function renderBadges() {
+  const grid = document.getElementById('badge-grid');
+  grid.innerHTML = '';
+  ALL_BADGES.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'badge-card' + (unlockedBadges.includes(b.id) ? ' unlocked' : '');
+    card.innerHTML = `
+      <span class="badge-icon">${b.icon}</span>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${unlockedBadges.includes(b.id) ? b.desc : '???'}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ════════════════════════════════════
+   WEEK
+════════════════════════════════════ */
+function renderWeek() {
+  const now = new Date(), dow = now.getDay();
+  const mon = new Date(now); mon.setDate(now.getDate() - (dow===0?6:dow-1));
+  const container = document.getElementById('week-days'); container.innerHTML = '';
+  let sum=0, count=0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const score = weekData[key], isToday = d.toDateString() === now.toDateString();
+    if (score !== undefined) { sum += score; count++; }
+    const barCol = score===undefined?'#333':score>=90?'#5cb832':score>=70?'#e8b800':score>=50?'#378ADD':'#cb3232';
+    const flag = score===100?'🏆':score>=90?'🥇':score>=70?'🥈':score>=50?'🏅':score!==undefined?'🚗':'';
+    const sc = score!==undefined?score+'%':isToday?'HOJE':'--';
+    const scCol = score>=90?'#e8b800':score>=70?'#5cb832':score!==undefined?'#aaa':'#555';
+    const row = document.createElement('div');
+    row.className = 'day-row';
+    if (isToday) row.style.cssText = 'display:flex;align-items:center;gap:8px;background:#1a2d1a;border:2px solid var(--gold);border-radius:14px;padding:10px 12px;margin-bottom:6px;';
+    row.innerHTML = `
+      <span class="day-name" style="${isToday?'color:var(--gold);':''}">${DAY_NAMES[d.getDay()]}</span>
+      <div style="flex:1;background:var(--card2);border-radius:6px;height:14px;overflow:hidden;border:1px solid #222;">
+        <div style="height:100%;width:${score||0}%;background:${barCol};border-radius:6px;transition:width 0.6s;"></div>
+      </div>
+      <span style="font-size:13px;font-weight:900;min-width:46px;text-align:right;color:${scCol}">${sc}</span>
+      <span style="font-size:16px">${flag}</span>`;
+    container.appendChild(row);
+  }
+  const avgBox = document.getElementById('week-avg-box');
+  if (count > 0) {
+    const avg = Math.round(sum/count);
+    avgBox.style.display = '';
+    document.getElementById('week-avg-num').textContent = avg + '%';
+    const sub = avg===100?'🏆 SEMANA PERFEITA!':avg>=90?'🥇 SEMANA INCRÍVEL!':avg>=70?'🥈 BOA SEMANA!':avg>=50?'🏅 CHEGANDO LÁ!':'🚦 TREINANDO!';
+    document.getElementById('week-avg-sub').textContent = sub;
+  } else { avgBox.style.display = 'none'; }
+}
+
+/* ════════════════════════════════════
+   PIN / PARENT
+════════════════════════════════════ */
+function openPinOverlay(mode='parent') {
+  pinMode = mode;
+  pinBuffer = '';
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-sub').textContent = mode==='approve' ? 'CONFIRME COM O PIN DOS PAIS' : 'DIGITE O PIN DE 4 DÍGITOS';
+  updatePinDots();
+  document.getElementById('pin-overlay').style.display = 'flex';
+}
+function closePinOverlay() { document.getElementById('pin-overlay').style.display = 'none'; pinBuffer = ''; }
+function pinKey(k) { if (pinBuffer.length < 4) { pinBuffer += k; updatePinDots(); } }
+function pinDel() { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); document.getElementById('pin-error').textContent = ''; }
+function updatePinDots() { for (let i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('filled', i < pinBuffer.length); }
+function pinOk() {
+  if (pinBuffer.length < 4) { document.getElementById('pin-error').textContent = 'DIGITE 4 DÍGITOS'; return; }
+  if (pinBuffer === (config.pin || '1234')) {
+    closePinOverlay();
+    if (pinMode === 'approve') finalizeDay();
+    else openParentPanel();
+  } else {
+    document.getElementById('pin-error').textContent = '❌ PIN ERRADO!';
+    pinBuffer = '';
+    updatePinDots();
+    vibrate([100,50,100]);
+  }
+}
+
+function openParentPanel() {
+  loadParentForm();
+  document.getElementById('parent-panel').style.display = '';
+  document.getElementById('cfg-day-select').value = new Date().getDay();
+  loadDayMissions();
+}
+function closeParentPanel() { document.getElementById('parent-panel').style.display = 'none'; }
+
+function loadParentForm() {
+  document.getElementById('cfg-pin').value = config.pin || '1234';
+  updateToggleUI('approval', config.requireApproval);
+  loadMembersEditor();
+}
+
+function toggleConfig(key) {
+  if (key === 'approval') { config.requireApproval = !config.requireApproval; updateToggleUI('approval', config.requireApproval); }
+}
+function updateToggleUI(key, val) {
+  const btn = document.getElementById('cfg-'+key+'-toggle');
+  if (btn) btn.className = 'toggle-switch' + (val ? ' on' : '');
+}
+
+/* ════════════════════════════════════
+   MEMBER EDITOR
+════════════════════════════════════ */
+function loadMembersEditor() {
+  const container = document.getElementById('members-editor');
+  container.innerHTML = '';
+  config.members.forEach((m, i) => addMemberEditorRow(container, m, i));
+}
+
+function addMemberEditorRow(container, m, i) {
+  const card = document.createElement('div');
+  card.className = 'member-edit-card';
+  card.innerHTML = `
+    <div class="member-edit-header">
+      <span class="member-edit-label">${m.avatar} ${m.name}</span>
+      <button class="btn-remove-member" onclick="removeMember(${i})">✕ REMOVER</button>
+    </div>
+    <div class="form-row-split">
+      <div><label class="form-label">NOME</label><input class="form-input" type="text" value="${m.name}" maxlength="14" onchange="updateMember(${i},'name',this.value.toUpperCase())"></div>
+      <div><label class="form-label">AVATAR (EMOJI)</label><input class="form-input" type="text" value="${m.avatar}" maxlength="4" onchange="updateMember(${i},'avatar',this.value)"></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">PAPEL NA FAMÍLIA</label>
+      <div class="role-select" id="role-sel-${i}">
+        <button class="role-opt ${m.role==='pai'?'sel-pai':''}" onclick="selectRole(${i},'pai')">👨 PAI</button>
+        <button class="role-opt ${m.role==='mae'?'sel-mae':''}" onclick="selectRole(${i},'mae')">👩 MÃE</button>
+        <button class="role-opt ${m.role==='crianca'?'sel-crianca':''}" onclick="selectRole(${i},'crianca')">🧒 FILHO(A)</button>
+      </div>
+    </div>`;
+  container.appendChild(card);
+}
+
+function addMemberEditor() {
+  const newId = 'mem_' + Date.now();
+  config.members.push({ id: newId, name: 'NOVO', avatar: '😊', role: 'crianca' });
+  loadMembersEditor();
+}
+
+function updateMember(i, field, val) {
+  if (config.members[i]) config.members[i][field] = val;
+}
+
+function selectRole(i, role) {
+  if (!config.members[i]) return;
+  config.members[i].role = role;
+  // Re-render just that card's buttons
+  const sel = document.getElementById('role-sel-'+i);
+  if (!sel) return;
+  sel.querySelectorAll('.role-opt').forEach(btn => btn.className = 'role-opt');
+  const idx = ['pai','mae','crianca'].indexOf(role);
+  const classes = ['sel-pai','sel-mae','sel-crianca'];
+  if (idx >= 0) sel.querySelectorAll('.role-opt')[idx].className = 'role-opt ' + classes[idx];
+}
+
+function removeMember(i) {
+  if (config.members.length <= 1) { showToast('⚠️ PRECISA DE PELO MENOS 1 MEMBRO!'); return; }
+  config.members.splice(i, 1);
+  loadMembersEditor();
+}
+
+/* ════════════════════════════════════
+   MISSION EDITOR
+════════════════════════════════════ */
+function loadDayMissions() {
+  const day = parseInt(document.getElementById('cfg-day-select').value);
+  const dayMs = config.missions[day] || [];
+  const container = document.getElementById('missions-editor');
+  container.innerHTML = '';
+  dayMs.forEach((m, i) => addMissionEditorRow(container, m, i, day));
+}
+
+function addMissionEditor() {
+  const day = parseInt(document.getElementById('cfg-day-select').value);
+  if (!config.missions[day]) config.missions[day] = [];
+  const defaultMember = config.members[0] ? config.members[0].id : 'compartilhada';
+  config.missions[day].push({ start:'08:00', end:'09:00', emoji:'⭐', title:'NOVA TAREFA', desc:'DESCRIÇÃO', assignee:'compartilhada' });
+  loadDayMissions();
+}
+
+function addMissionEditorRow(container, m, i, day) {
+  const card = document.createElement('div');
+  card.className = 'mission-edit-card';
+
+  // Build assignee options
+  let assigneeOpts = `<button class="assignee-opt shared-opt${m.assignee==='compartilhada'?' active':''}" onclick="updateMissionAssignee(${day},${i},'compartilhada',this)">🤝 Compartilhada</button>`;
+  config.members.forEach(mem => {
+    assigneeOpts += `<button class="assignee-opt${m.assignee===mem.id?' active':''}" onclick="updateMissionAssignee(${day},${i},'${mem.id}',this)">${mem.avatar} ${mem.name}</button>`;
+  });
+
+  card.innerHTML = `
+    <div class="mission-edit-header">
+      <span class="mission-edit-label">#${i+1} ${m.emoji} ${m.title}</span>
+      <button class="btn-remove-mission" onclick="removeMission(${day},${i})">✕ REMOVER</button>
+    </div>
+    <div class="form-row-split">
+      <div><label class="form-label">INÍCIO</label><input class="form-input form-input-lower" type="time" value="${m.start}" onchange="updateMission(${day},${i},'start',this.value)"></div>
+      <div><label class="form-label">FIM</label><input class="form-input form-input-lower" type="time" value="${m.end}" onchange="updateMission(${day},${i},'end',this.value)"></div>
+    </div>
+    <div class="form-row-split">
+      <div><label class="form-label">EMOJI</label><input class="form-input" type="text" value="${m.emoji}" maxlength="4" onchange="updateMission(${day},${i},'emoji',this.value)"></div>
+      <div><label class="form-label">TÍTULO</label><input class="form-input" type="text" value="${m.title}" onchange="updateMission(${day},${i},'title',this.value)"></div>
+    </div>
+    <div class="form-row"><label class="form-label">DESCRIÇÃO</label><input class="form-input" type="text" value="${m.desc}" onchange="updateMission(${day},${i},'desc',this.value)"></div>
+    <div class="form-row">
+      <label class="form-label">RESPONSÁVEL</label>
+      <div class="assignee-select" id="asgn-${day}-${i}">${assigneeOpts}</div>
+    </div>`;
+  container.appendChild(card);
+}
+
+function updateMissionAssignee(day, i, val, btn) {
+  if (config.missions[day] && config.missions[day][i] !== undefined) {
+    config.missions[day][i].assignee = val;
+  }
+  const container = document.getElementById(`asgn-${day}-${i}`);
+  if (container) {
+    container.querySelectorAll('.assignee-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+}
+
+function updateMission(day, i, field, val) {
+  if (config.missions[day] && config.missions[day][i] !== undefined) {
+    config.missions[day][i][field] = val;
+  }
+}
+function removeMission(day, i) { config.missions[day].splice(i,1); loadDayMissions(); }
+function copyDayMissions() {
+  const fromDay = document.getElementById('cfg-copy-from').value;
+  const toDay = parseInt(document.getElementById('cfg-day-select').value);
+  if (fromDay === '' || parseInt(fromDay) === toDay) { showToast('⚠️ SELECIONE UM DIA DIFERENTE!'); return; }
+  const src = config.missions[parseInt(fromDay)];
+  if (!src || src.length === 0) { showToast('⚠️ DIA DE ORIGEM SEM TAREFAS!'); return; }
+  config.missions[toDay] = src.map(m => ({...m}));
+  loadDayMissions();
+  showToast('✅ TAREFAS COPIADAS!');
+}
+
+function saveParentConfig() {
+  const newPin = String(document.getElementById('cfg-pin').value).trim();
+  if (newPin.length === 4 && /^\d{4}$/.test(newPin)) config.pin = newPin;
+
+  saveConfig();
+  missions = getTodayMissions();
+  missionStatus = {};
+  initMemberStars();
+  renderMembersBar();
+  renderMissions();
+  updateHeaderStars();
+  closeParentPanel();
+  showToast('✅ CONFIGURAÇÕES SALVAS!');
+}
+
+function confirmResetData() {
+  if (confirm('⚠️ ZERAR TODOS OS DADOS? O histórico do time será perdido!')) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function restartDay() {
+  stopConfetti();
+  missions = getTodayMissions();
+  missionStatus = {};
+  initMemberStars();
+  document.getElementById('report-overlay').style.display = 'none';
+  renderMissions();
+  renderMembersBar();
+  updateHeaderStars();
+  switchTab('missions');
+}
+
+/* ════════════════════════════════════
+   SOUND
+════════════════════════════════════ */
+function playSound(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === 'done') {
+      osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(); osc.stop(ctx.currentTime + 0.5);
+    } else if (type === 'badge') {
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(1320, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.4, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.start(); osc.stop(ctx.currentTime + 0.6);
+    }
+  } catch(e) {}
+}
+
+function vibrate(pattern) {
+  try { if ('vibrate' in navigator) navigator.vibrate(pattern); } catch(e) {}
+}
+
+/* ════════════════════════════════════
+   TOAST
+════════════════════════════════════ */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ════════════════════════════════════
+   CONFETTI
+════════════════════════════════════ */
+let confettiAnimId = null;
+const confettiColors = ['#e8b800','#ff6b35','#5cb832','#378ADD','#e83535','#ffffff','#ff69b4','#00e5ff','#ff00ff','#ffaa00'];
+function startConfetti() {
+  const canvas = document.getElementById('confetti-canvas'), ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const pieces = [];
+  for (let i=0;i<200;i++) pieces.push({
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height-canvas.height,
+    w:6+Math.random()*10, h:4+Math.random()*6,
+    color:confettiColors[Math.floor(Math.random()*confettiColors.length)],
+    rot:Math.random()*360, rotSpeed:(Math.random()-0.5)*9,
+    vx:(Math.random()-0.5)*4, vy:2.5+Math.random()*4, alpha:1,
+    shape:Math.random()>0.5?'rect':'circle'
+  });
+  let startTime=null; const duration=6000;
+  function draw(ts) {
+    if(!startTime) startTime=ts;
+    const elapsed=ts-startTime;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let alive=false;
+    pieces.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rotSpeed;
+      if(elapsed>duration*0.65) p.alpha=Math.max(0,p.alpha-0.01);
+      if(p.y<canvas.height+20&&p.alpha>0) alive=true;
+      ctx.save(); ctx.globalAlpha=p.alpha; ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color;
+      if(p.shape==='circle'){ctx.beginPath();ctx.ellipse(0,0,p.w/2,p.h/2,0,0,Math.PI*2);ctx.fill();}
+      else{ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);}
+      ctx.restore();
+    });
+    if(alive&&elapsed<duration+2000){confettiAnimId=requestAnimationFrame(draw);}
+    else{ctx.clearRect(0,0,canvas.width,canvas.height);confettiAnimId=null;}
+  }
+  if(confettiAnimId) cancelAnimationFrame(confettiAnimId);
+  confettiAnimId=requestAnimationFrame(draw);
+}
+function stopConfetti(){if(confettiAnimId){cancelAnimationFrame(confettiAnimId);confettiAnimId=null;}const c=document.getElementById('confetti-canvas');c.getContext('2d').clearRect(0,0,c.width,c.height);}
+
+/* ════════════════════════════════════
+   WAKE LOCK
+════════════════════════════════════ */
+let wakeLock=null;
+async function keepScreenOn(){try{if('wakeLock'in navigator)wakeLock=await navigator.wakeLock.request('screen');}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepScreenOn();});
+keepScreenOn();
+
+/* ════════════════════════════════════
+   INIT
+════════════════════════════════════ */
+initMemberStars();
+updateClock(); setInterval(updateClock, 10000);
+renderMembersBar();
+renderMissions();
+updateHeaderStars();
+</script>
+</body>
+</html>
