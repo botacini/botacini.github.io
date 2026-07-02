@@ -134,14 +134,27 @@ function tarefasHTML() {
   return `
     <div class="pp-day-selector ${copyMode ? 'pp-day-selector--copy' : ''}">
       ${DAY_FULL.map((d, i) => {
+        /*
+         * Separação estrutural (não só lógica) entre os dois fluxos:
+         * - Fora de copyMode, o botão só carrega [data-day-select] →
+         *   só pode disparar navegação, nunca lógica de cópia.
+         * - Dentro de copyMode, o botão só carrega [data-day-target] →
+         *   só pode disparar seleção de destino, nunca navegação.
+         * O dia de origem, em copyMode, não recebe nenhum data-attribute
+         * "clicável": fica travado por markup, não por condicional em runtime.
+         */
         const isSource = copyMode && i === copySourceDay;
         const isTarget = copyMode && copyTargetDays.has(i);
         const isCurrent = !copyMode && i === currentEditDay;
 
+        const dataAttr = copyMode
+          ? (isSource ? '' : `data-day-target="${i}"`)
+          : `data-day-select="${i}"`;
+
         return `
           <button
             class="pp-day-btn ${isCurrent ? 'active' : ''} ${isSource ? 'copy-source' : ''} ${isTarget ? 'copy-target' : ''}"
-            data-day="${i}"
+            ${dataAttr}
             ${isSource ? 'disabled' : ''}
             aria-pressed="${isTarget}">
             ${d.slice(0, 3).toUpperCase()}
@@ -287,29 +300,38 @@ export function wireParentPanelEvents() {
        Nenhuma outra parte do código altera copyMode diretamente. */
 
     if (e.target.matches('[data-start-copy]')) {
+      // Só existe fora de copyMode (garantido pelo render), mas a guarda
+      // fica aqui também por segurança — nunca deve reabrir copy mode
+      // se por algum motivo já estiver ativo.
+      if (copyMode) return;
+
       startCopyMode();
       renderParentPanel();
       return;
     }
 
-    if (e.target.matches('[data-day]')) {
-      const day = Number(e.target.dataset.day);
+    /* FLUXO 1 — NAVEGAÇÃO NORMAL (visualizar/editar dia)
+       Só existe no markup quando !copyMode. Nunca mexe em copySourceDay
+       ou copyTargetDays — é fisicamente incapaz de acionar lógica de cópia. */
+    if (e.target.matches('[data-day-select]')) {
+      if (copyMode) return; // defesa extra: nunca navega durante cópia
 
-      if (!copyMode) {
-        // Modo normal: navegação simples entre dias.
-        currentEditDay = day;
-      } else {
-        // Modo cópia: dias só funcionam como seleção de destino.
-        // O dia de origem é ignorado (não pode ser destino de si mesmo)
-        // e currentEditDay NUNCA muda enquanto copyMode estiver ativo.
-        if (day === copySourceDay) {
-          return;
-        }
+      currentEditDay = Number(e.target.dataset.daySelect);
+      renderParentPanel();
+      return;
+    }
 
-        copyTargetDays.has(day)
-          ? copyTargetDays.delete(day)
-          : copyTargetDays.add(day);
-      }
+    /* FLUXO 2 — SELEÇÃO DE DESTINOS (copy mode)
+       Só existe no markup quando copyMode === true, e nunca é renderizado
+       para o dia de origem. Nunca mexe em currentEditDay. */
+    if (e.target.matches('[data-day-target]')) {
+      if (!copyMode) return; // defesa extra: nunca seleciona destino fora de cópia
+
+      const day = Number(e.target.dataset.dayTarget);
+
+      copyTargetDays.has(day)
+        ? copyTargetDays.delete(day)
+        : copyTargetDays.add(day);
 
       renderParentPanel();
       return;
@@ -332,6 +354,8 @@ export function wireParentPanelEvents() {
     }
 
     if (e.target.matches('[data-cancel-copy]')) {
+      if (!copyMode) return;
+
       resetCopyState();
       renderParentPanel();
       return;
