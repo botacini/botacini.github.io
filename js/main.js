@@ -79,6 +79,10 @@ function wireFinalizeButton() {
 
 /* ════════════════════════════════════════════════════════════
    POPUP DE BÔNUS (checklist de capricho/pontualidade/sem reclamar)
+   
+   FIXED: Uses event delegation on the overlay instead of static
+   button reference, so listeners persist even if the bonus popup
+   is dynamically re-rendered.
    ════════════════════════════════════════════════════════════ */
 function wireBonusPopup() {
   ['capricho', 'pontual', 'semreclamar'].forEach(key => {
@@ -86,14 +90,15 @@ function wireBonusPopup() {
     if (item) item.addEventListener('click', () => toggleBonus(key));
   });
 
-  const confirmBtn = document.getElementById('btn-bonus-confirm');
-  if (confirmBtn) confirmBtn.addEventListener('click', confirmBonus);
-
-  const cancelBtn = document.getElementById('btn-bonus-cancel');
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', () => {
-      state.bonusPending = null;
-      document.getElementById('bonus-overlay').style.display = 'none';
+  // Use event delegation on the overlay parent
+  const overlay = document.getElementById('bonus-overlay');
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-bonus-confirm') confirmBonus();
+      if (e.target.id === 'btn-bonus-cancel') {
+        state.bonusPending = null;
+        document.getElementById('bonus-overlay').style.display = 'none';
+      }
     });
   }
 }
