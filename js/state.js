@@ -68,6 +68,62 @@ export const ALL_BADGES = [
 export const DAY_NAMES = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
 export const DAY_FULL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
+/* ════════════════════════════════════════════════════════════
+   MISSION ID GUARANTOR — Data Integrity Layer
+   ════════════════════════════════════════════════════════════
+   Ensures every mission in the system has a stable, unique ID.
+   
+   - If mission.id is missing or invalid (falsy), generates a new one
+   - Uses crypto.randomUUID() when available, fallback to timestamp + random
+   - Does NOT modify existing IDs if already present (stable across reloads)
+   - Returns updated array without mutating originals during the copy process
+   
+   This prevents:
+   - Missions without IDs
+   - missionStatus desync (can't rely on index alone)
+   - Index-based fallback bugs
+   ════════════════════════════════════════════════════════════ */
+function generateMissionId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback para ambientes sem crypto.randomUUID
+  return `mission_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+export function ensureMissionIds(missions) {
+  if (!missions || !Array.isArray(missions)) {
+    return missions;
+  }
+  
+  return missions.map(mission => {
+    if (!mission.id || typeof mission.id !== 'string' || mission.id.trim() === '') {
+      // Mission missing or has invalid ID: assign a stable unique one
+      return {
+        ...mission,
+        id: generateMissionId()
+      };
+    }
+    // Mission already has a valid ID: keep it (stable across reloads)
+    return mission;
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   Integration: ensures all day missions get IDs
+   ════════════════════════════════════════════════════════════ */
+function ensureMissionIdsInAllDays(missionsByDay) {
+  if (!missionsByDay || typeof missionsByDay !== 'object') {
+    return missionsByDay;
+  }
+  
+  const result = {};
+  for (const day in missionsByDay) {
+    result[day] = ensureMissionIds(missionsByDay[day]);
+  }
+  return result;
+}
+
 const DEFAULT_CONFIG = {
   pin: '1234',
   requireApproval: false,
@@ -96,10 +152,15 @@ export const state = {
   pinMode: 'parent'
 };
 
+// Ensure all missions in config have IDs
+state.config.missions = ensureMissionIdsInAllDays(state.config.missions);
+
 export function getTodayMissions() {
   const dow = new Date().getDay();
   const dayMs = state.config.missions[dow];
-  return dayMs ? dayMs.map(m => ({ ...m })) : DEFAULT_MISSIONS_TEMPLATE.map(m => ({ ...m }));
+  const missions = dayMs ? dayMs.map(m => ({ ...m })) : DEFAULT_MISSIONS_TEMPLATE.map(m => ({ ...m }));
+  // Guarantee IDs on today's missions
+  return ensureMissionIds(missions);
 }
 state.missions = getTodayMissions();
 
@@ -143,4 +204,3 @@ export function persistDayState() {
    saber que storage.js existe.
    ════════════════════════════════════════════════════════════ */
 export { saveConfig, saveDay, saveBadges, loadTotalStars, saveTotalStars };
-    
