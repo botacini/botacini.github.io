@@ -377,6 +377,13 @@ export function wireParentPanelEvents() {
      --------------------------------------------------------- */
 
   body.addEventListener('click', (e) => {
+     
+     if (e.target.matches('[data-start-copy]')) {
+  copySourceDay = currentEditDay;
+  copyTargetDays = new Set();
+  renderParentPanel();
+  return;
+}
 
     /* ---------- adicionar membro ---------- */
 
