@@ -12,12 +12,12 @@
    liga as duas pontas é o main.js.
    ════════════════════════════════════════════════════════════ */
 
-import { state, saveConfig, getTodayMissions, persistDayState, persistTotals, persistBonusLog, timeToMin, DAY_FULL, MEMBER_COLOR_PALETTE } from './state.js';
+import { state, saveConfig, getTodayMissions, persistDayState, persistTotals, persistBonusLog, timeToMin, DAY_FULL, MEMBER_COLOR_PALETTE, dateFromKey, todayKey } from './state.js';
 import { resetAllData, exportAllData, importAllData } from './storage.js';
-import { renderMembersBar, renderMissions } from './render.js';
+import { renderDashboard } from './render.js';
 import { checkAndUnlockBadges } from './missions.js';
 
-let currentEditDay = new Date().getDay();
+let currentEditDay = todayDow();
 let activeSubTab = 'membros'; // 'membros' | 'tarefas' | 'extras' | 'bonus' | 'ajustes'
 let copyTargets = new Set();
 
@@ -25,7 +25,7 @@ function genId(prefix) {
   return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 function todayDow() {
-  return new Date().getDay();
+  return dateFromKey(state.selectedDate || state.today || todayKey()).getDay();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -101,8 +101,7 @@ function commitMembersChange() {
     if (!(mem.id in state.memberStars)) state.memberStars[mem.id] = 0;
   });
   persistDayState();
-  renderMembersBar();
-  renderMissions();
+  renderDashboard();
 }
 
 // Espelha a lógica de reversão de estrelas de missions.js. Duplicada de
@@ -136,8 +135,7 @@ function commitMissionsChange() {
     persistDayState();
     persistTotals();
   }
-  renderMembersBar();
-  renderMissions();
+  renderDashboard();
 }
 
 function sortDay(dow) {
@@ -467,8 +465,7 @@ export function wireParentPanelEvents() {
       document.getElementById('pp-bonus-stars').value = '1';
       document.getElementById('pp-bonus-reason').value = '';
       renderParentPanel();
-      renderMembersBar();
-      renderMissions();
+      renderDashboard();
       alert(`✨ Bônus de ${starsVal} ⭐ concedido a ${state.config.members.find(m => m.id === memberId)?.name}!`);
     }
   });

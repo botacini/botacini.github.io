@@ -182,6 +182,28 @@ button { font-family: inherit; cursor: pointer; }
 /* lista de missões */
 .mission-list { display: flex; flex-direction: column; gap: 8px; }
 
+.day-nav {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 10px;
+}
+.day-nav-btn {
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  padding: 8px 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .4px;
+}
+.day-nav-btn.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: #2a2306;
+}
+
 /* NOVO: Quadro kanban por membro */
 .missions-board {
   display: flex;
@@ -195,6 +217,9 @@ button { font-family: inherit; cursor: pointer; }
 
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+}
+.missions-board.consultation-mode .task-cell {
+  opacity: .62;
 }
 
 .board-column {
@@ -272,6 +297,10 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 9px;
   font-weight: 700;
   cursor: pointer;
+}
+.task-btn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
 }
 
 .task-done.active { background: var(--green); border-color: var(--green); color: #06280a; }
@@ -360,6 +389,11 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 900;
   font-size: 14px;
   letter-spacing: 1px;
+}
+.btn-finalize:disabled,
+.btn-finalize-week:disabled {
+  opacity: .45;
+  cursor: not-allowed;
 }
 
 .day-banner {

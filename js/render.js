@@ -9,7 +9,10 @@
    persistidas.
    ════════════════════════════════════════════════════════════ */
 
-import { state, DAY_FULL, ALL_BADGES, timeToMin, assigneeIds } from './state.js';
+import {
+  state, DAY_FULL, DAY_NAMES, ALL_BADGES,
+  timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
+} from './state.js';
 
 /* ════════════════ RELÓGIO ════════════════ */
 export function updateClock() {
@@ -31,6 +34,36 @@ function getCurrentMissionId() {
     if (n >= timeToMin(ms.start) && n < timeToMin(ms.end)) current = ms.id;
   });
   return current;
+}
+
+function selectedDateKey() {
+  return state.selectedDate || state.today || todayKey();
+}
+
+function selectedDateLabel() {
+  const day = dateFromKey(selectedDateKey()).getDay();
+  return DAY_FULL[day].toUpperCase();
+}
+
+function renderDateNav() {
+  const selected = dateFromKey(selectedDateKey());
+  const sunday = new Date(selected);
+  sunday.setDate(selected.getDate() - selected.getDay());
+
+  return `
+    <div class="day-nav" aria-label="Navegação por data">
+      ${DAY_NAMES.map((label, index) => {
+        const day = new Date(sunday);
+        day.setDate(sunday.getDate() + index);
+        const key = todayKey(day);
+        const active = key === selectedDateKey();
+        return `<button class="day-nav-btn${active ? ' active' : ''}" data-date-key="${key}" aria-pressed="${active ? 'true' : 'false'}">${label}</button>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderDayBanner() {
+  return `<div class="day-banner">${selectedDateLabel()}</div>`;
 }
 
 /* ════════════════ BARRA DE MEMBROS (HEADER) ════════════════
@@ -55,21 +88,23 @@ export function renderMissions() {
   updateProgress();
   updateHeaderStarsDisplay();
 
-  if (state.missions.length === 0) {
-    container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🏁</span>Nenhuma tarefa para hoje.</div>`;
-    return;
-  }
+  const readonly = !isSelectedDateToday();
+  const boardHTML = state.missions.length === 0
+    ? `<div class="empty-state"><span class="empty-state-icon">🏁</span>Nenhuma tarefa para este dia.</div>`
+    : `<div class="missions-board${readonly ? ' consultation-mode' : ''}">
+        ${state.config.members.map(mem => renderMemberColumn(mem)).join('')}
+      </div>`;
 
-  // Quadro kanban: coluna por membro
-  const html = `
-    <div class="missions-board">
-      ${state.config.members.map(mem => renderMemberColumn(mem)).join('')}
-    </div>`;
-  container.innerHTML = html;
+  container.innerHTML = `
+    ${renderDateNav()}
+    ${renderDayBanner()}
+    ${boardHTML}
+  `;
 }
 
 function renderMemberColumn(member) {
   const currentId = getCurrentMissionId();
+  const readonly = !isSelectedDateToday();
   // Tarefas que envolvem este membro (atribuídas a ele ou compartilhadas)
   const memberMissions = state.missions.filter(ms => 
     assigneeIds(ms).includes(member.id)
@@ -95,8 +130,8 @@ function renderMemberColumn(member) {
           <div class="task-desc">${ms.desc}</div>
         </div>
         <div class="task-actions">
-          <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}">✓</button>
-          <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}">✕</button>
+          <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
+          <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
         </div>
       </div>`;
   }).join('');
@@ -128,6 +163,14 @@ function updateProgress() {
 
   const car = document.getElementById('car-avatar');
   if (car) car.style.left = pct + '%';
+
+  const finalizeBtn = document.getElementById('btn-finalize');
+  if (finalizeBtn) finalizeBtn.disabled = !isSelectedDateToday();
+  if (finalizeBtn) finalizeBtn.classList.toggle('is-readonly', !isSelectedDateToday());
+
+  const weekBtn = document.getElementById('btn-finalize-week');
+  if (weekBtn) weekBtn.disabled = !isSelectedDateToday();
+  if (weekBtn) weekBtn.classList.toggle('is-readonly', !isSelectedDateToday());
 }
 
 function updateHeaderStarsDisplay() {
@@ -152,11 +195,11 @@ export function renderStarsTab() {
   if (goalEl) goalEl.textContent = `META DA SEMANA: ${goal} ⭐`;
 
   grid.innerHTML = state.config.members.map(mem => `
-    <div class="member-star-card">
+      <div class="member-star-card">
       <div class="member-star-avatar">${mem.avatar}</div>
       <div class="member-star-name">${mem.name}</div>
       <div class="member-star-count">⭐ ${state.memberStars[mem.id] || 0}</div>
-      <div class="member-star-sub">HOJE</div>
+      <div class="member-star-sub">${isSelectedDateToday() ? 'HOJE' : selectedDateLabel()}</div>
     </div>`).join('');
 }
 
@@ -181,7 +224,7 @@ export function renderTeamTab() {
         </div>
         <div class="team-member-stats">
           <div class="team-member-stars">⭐ ${state.memberStars[mem.id] || 0}</div>
-          <div class="team-member-done">${doneCount} TAREFAS HOJE</div>
+          <div class="team-member-done">${doneCount} TAREFAS ${isSelectedDateToday() ? 'HOJE' : 'NO DIA'}</div>
         </div>
       </div>`;
   }).join('');
@@ -266,6 +309,15 @@ const TAB_RENDERERS = {
   badges: renderBadges,
   week: renderWeek,
 };
+
+export function renderDashboard() {
+  renderMembersBar();
+  renderMissions();
+  renderStarsTab();
+  renderTeamTab();
+  renderBadges();
+  renderWeek();
+}
 
 export function switchTab(tab) {
   Object.keys(TAB_RENDERERS).forEach(t => {

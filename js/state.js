@@ -54,6 +54,24 @@ export function weekKeyOf(d = new Date()) {
   return todayKey(day);
 }
 
+export function dateFromKey(dateKey) {
+  return new Date(`${dateKey}T00:00:00`);
+}
+
+export function weekKeyOfDateKey(dateKey) {
+  return weekKeyOf(dateFromKey(dateKey));
+}
+
+export function shiftDateKey(dateKey, deltaDays) {
+  const day = dateFromKey(dateKey);
+  day.setDate(day.getDate() + deltaDays);
+  return todayKey(day);
+}
+
+export function isSelectedDateToday() {
+  return state.selectedDate === state.today;
+}
+
 export function timeToMin(t) {
   const [h, m] = String(t).split(':').map(Number);
   return (h || 0) * 60 + (m || 0);
@@ -137,6 +155,7 @@ function newWeekState() {
 export const state = {
   config: null,          // { members, missionsByDay, pin, requireApproval, teamStarsGoal }
   today: null,            // 'YYYY-MM-DD' do dia carregado
+  selectedDate: null,      // 'YYYY-MM-DD' da data em navegação
   missions: [],            // tarefas de hoje, já ordenadas por horário
   missionStatus: {},        // { [missionId]: { status:'done'|'fail', stars:number, bonus:{...} } }
   memberStars: {},           // estrelas DE HOJE por membro { [memberId]: number }
@@ -151,10 +170,24 @@ export const state = {
 
 /* ════════════════ TAREFAS DE HOJE (derivadas da config) ════════════════ */
 export function getTodayMissions() {
-  const dow = new Date().getDay();
+  const baseDate = dateFromKey(state.selectedDate || state.today || todayKey());
+  const dow = baseDate.getDay();
   const list = (state.config.missionsByDay[dow] || []).map(x => ({ ...x }));
   list.sort((a, b) => timeToMin(a.start) - timeToMin(b.start));
   return list;
+}
+
+export async function loadDateContext(dateKey) {
+  const normalized = dateKey || todayKey();
+  state.selectedDate = normalized;
+  state.missions = getTodayMissions();
+
+  const day = await loadDayState(normalized);
+  state.missionStatus = (day && day.missionStatus) || {};
+  state.memberStars = (day && day.memberStars) || zeroStarsByMember();
+
+  const week = await loadWeekState(weekKeyOfDateKey(normalized));
+  state.weekState = week || { weekKey: weekKeyOfDateKey(normalized), days: {}, finalized: false };
 }
 
 /* ════════════════ CARREGAMENTO INICIAL ════════════════
@@ -184,18 +217,11 @@ export async function loadState() {
   if (needsResave) await storageSaveConfig(state.config);
 
   state.today = todayKey();
-  state.missions = getTodayMissions();
-
-  const day = await loadDayState(state.today);
-  state.missionStatus = (day && day.missionStatus) || {};
-  state.memberStars = (day && day.memberStars) || zeroStarsByMember();
+  await loadDateContext(state.today);
 
   state.totals = (await loadTotals()) || {};
   state.badgesUnlocked = (await loadBadges()) || [];
   state.bonusLog = (await loadBonusLog()) || [];
-
-  const week = await loadWeekState(weekKeyOf());
-  state.weekState = week || newWeekState();
 }
 
 /* ════════════════ PERSISTÊNCIA DE MUDANÇAS ════════════════
@@ -206,7 +232,7 @@ export async function saveConfig() {
 }
 
 export async function persistDayState() {
-  return saveDayState(state.today, {
+  return saveDayState(state.selectedDate || state.today, {
     missionStatus: state.missionStatus,
     memberStars: state.memberStars,
   });

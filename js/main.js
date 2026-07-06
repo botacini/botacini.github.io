@@ -12,8 +12,8 @@
      dois módulos precisem se importar um ao outro.
    ════════════════════════════════════════════════════════════ */
 
-import { loadState } from './state.js';
-import { renderMembersBar, renderMissions, updateClock, switchTab } from './render.js';
+import { loadState, loadDateContext } from './state.js';
+import { renderDashboard, renderMissions, updateClock, switchTab } from './render.js';
 import {
   handleMissionAction, toggleBonus, confirmBonus, cancelBonus,
   tryFinalizeDay, finalizeDay, restartDay, tryFinalizeWeek,
@@ -29,8 +29,7 @@ import {
 async function init() {
   await loadState();
 
-  renderMembersBar();
-  renderMissions();
+  renderDashboard();
   updateClock();
   switchTab('missions');
 
@@ -60,10 +59,20 @@ function wireMissionList() {
   const list = document.getElementById('mission-list');
   if (!list) return;
   list.addEventListener('click', (e) => {
+    const dateBtn = e.target.closest('[data-date-key]');
+    if (dateBtn) {
+      void selectDashboardDate(dateBtn.dataset.dateKey);
+      return;
+    }
     const btn = e.target.closest('[data-mission-action]');
     if (!btn) return;
     handleMissionAction(btn.dataset.missionId, btn.dataset.missionAction);
   });
+}
+
+async function selectDashboardDate(dateKey) {
+  await loadDateContext(dateKey);
+  renderDashboard();
 }
 
 /* ════════════════════════════════════════════════════════════

@@ -14,6 +14,7 @@
 import {
   state, ALL_BADGES, assigneeIds,
   persistDayState, persistTotals, persistWeekState, persistBadges,
+  isSelectedDateToday,
 } from './state.js';
 import { renderMembersBar, renderMissions, renderWeek } from './render.js';
 import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti } from './effects.js';
@@ -37,6 +38,7 @@ function revokeStars(mission, stars) {
 
 /* ════════════════ MARCAR / DESMARCAR TAREFA ════════════════ */
 export function handleMissionAction(missionId, action) {
+  if (!isSelectedDateToday()) return;
   const prev = state.missionStatus[missionId];
   if (action === 'done') {
     if (prev && prev.status === 'done') unmarkMission(missionId);
@@ -52,6 +54,7 @@ function findMission(missionId) {
 }
 
 function markFail(missionId) {
+  if (!isSelectedDateToday()) return;
   const mission = findMission(missionId);
   if (!mission) return;
   const prev = state.missionStatus[missionId];
@@ -67,6 +70,7 @@ function markFail(missionId) {
 }
 
 export function unmarkMission(missionId) {
+  if (!isSelectedDateToday()) return;
   const mission = findMission(missionId);
   const prev = state.missionStatus[missionId];
   if (!mission || !prev) return;
@@ -80,6 +84,7 @@ export function unmarkMission(missionId) {
 }
 
 function setDoneWithBonus(missionId, bonusFlags) {
+  if (!isSelectedDateToday()) return;
   const mission = findMission(missionId);
   if (!mission) return;
   const stars = ['capricho', 'pontual', 'semreclamar'].filter(k => bonusFlags[k]).length;
@@ -110,6 +115,7 @@ function allMissionsDone() {
 
 /* ════════════════ POPUP DE BÔNUS ════════════════ */
 export function openBonusPopup(missionId) {
+  if (!isSelectedDateToday()) return;
   const mission = findMission(missionId);
   if (!mission) return;
   state.bonusPending = { missionId, capricho: false, pontual: false, semreclamar: false };
@@ -143,6 +149,7 @@ function renderBonusChecklist() {
 }
 
 export function toggleBonus(key) {
+  if (!isSelectedDateToday()) return;
   if (!state.bonusPending) return;
   state.bonusPending[key] = !state.bonusPending[key];
   renderBonusChecklist();
@@ -155,6 +162,7 @@ export function cancelBonus() {
 }
 
 export function confirmBonus() {
+  if (!isSelectedDateToday()) return;
   if (!state.bonusPending) return;
   const { missionId, ...flags } = state.bonusPending;
   setDoneWithBonus(missionId, flags);
@@ -165,6 +173,7 @@ export function confirmBonus() {
 
 /* ════════════════ FINALIZAR O DIA ════════════════ */
 export function tryFinalizeDay() {
+  if (!isSelectedDateToday()) return;
   if (state.missions.length === 0) {
     showToast('NENHUMA TAREFA CADASTRADA PARA HOJE');
     return;
@@ -182,13 +191,14 @@ export function tryFinalizeDay() {
 }
 
 export function finalizeDay() {
+  if (!isSelectedDateToday()) return;
   const total = state.missions.length;
   const done = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'done').length;
   const fails = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'fail').length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const starsToday = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
 
-  state.weekState.days[state.today] = { done, total, pct, stars: starsToday };
+  state.weekState.days[state.selectedDate || state.today] = { done, total, pct, stars: starsToday };
   persistWeekState();
 
   renderReportPopup({ done, total, fails, pct, starsToday });
@@ -228,6 +238,7 @@ function setText(id, value) {
 }
 
 export function restartDay() {
+  if (!isSelectedDateToday()) return;
   state.missionStatus = {};
   state.memberStars = {};
   state.config.members.forEach(mem => { state.memberStars[mem.id] = 0; });
@@ -242,6 +253,7 @@ export function restartDay() {
 
 /* ════════════════ FINALIZAR A SEMANA ════════════════ */
 export function tryFinalizeWeek() {
+  if (!isSelectedDateToday()) return;
   const daysLogged = Object.keys(state.weekState.days).length;
   if (daysLogged === 0) {
     showToast('AINDA NÃO HÁ NENHUM DIA FINALIZADO NESTA SEMANA');
@@ -257,6 +269,7 @@ export function tryFinalizeWeek() {
 }
 
 export function finalizeWeek() {
+  if (!isSelectedDateToday()) return;
   state.weekState.finalized = true;
   persistWeekState();
   checkAndUnlockBadges();
