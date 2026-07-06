@@ -1,17 +1,189 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Teste</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🏎️ GP da Família</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<h1>GitHub Pages OK</h1>
+<div id="app">
 
-<ul>
-  <li><a href="gp_da_familia.html">gp_da_familia.html</a></li>
-  <li><a href="gp_da_familia-1.html">gp_da_familia-1.html</a></li>
-  <li><a href="gp_da_familia-2.html">gp_da_familia-2.html</a></li>
-</ul>
+  <header class="app-header">
+    <div class="header-top">
+      <span class="header-flag">🏁</span>
+      <h1 class="header-title">GP DA FAMÍLIA</h1>
+      <span id="live-clock" class="header-clock">00:00</span>
+      <button id="btn-parent-panel" class="header-gear" aria-label="Painel dos pais">⚙️</button>
+    </div>
+    <div class="header-stars">
+      <span class="header-stars-icon">⭐</span>
+      <span id="header-team-stars">0</span>
+      <span>ESTRELAS DO TIME</span>
+    </div>
+  </header>
 
+  <div id="members-bar" class="members-bar"></div>
+
+  <main class="app-main">
+
+    <section id="panel-missions" class="panel">
+      <div class="progress-box">
+        <div class="progress-row">
+          <span id="prog-label">0 DE 0 TAREFAS ✅</span>
+          <span id="prog-pct">0%</span>
+        </div>
+        <div class="progress-track"><div id="prog-bar" class="progress-fill"></div></div>
+      </div>
+      <div class="race-strip"><span id="car-avatar" class="car-avatar">🏎️</span></div>
+      <div id="mission-list" class="mission-list"></div>
+      <button id="btn-finalize" class="btn-finalize">🏁 FINALIZAR O DIA</button>
+    </section>
+
+    <section id="panel-stars" class="panel" style="display:none">
+      <div class="stars-hero">
+        <div id="team-stars-count" class="stars-count">0</div>
+        <div class="stars-track"><div id="stars-goal-bar" class="stars-fill"></div></div>
+        <div id="team-stars-goal" class="stars-goal-label"></div>
+      </div>
+      <div id="member-stars-grid" class="member-stars-grid"></div>
+    </section>
+
+    <section id="panel-team" class="panel" style="display:none">
+      <div id="team-cards" class="team-cards"></div>
+    </section>
+
+    <section id="panel-badges" class="panel" style="display:none">
+      <div id="badge-grid" class="badge-grid"></div>
+    </section>
+
+    <section id="panel-week" class="panel" style="display:none">
+      <div id="week-days" class="week-days"></div>
+      <div id="week-avg-box" class="week-avg-box" style="display:none">
+        <div id="week-avg-num" class="week-avg-num">0%</div>
+        <div id="week-avg-sub" class="week-avg-sub"></div>
+      </div>
+      <button id="btn-finalize-week" class="btn-finalize-week">🏆 FINALIZAR A SEMANA</button>
+    </section>
+
+  </main>
+
+  <nav class="tab-bar">
+    <button id="tab-missions" class="tab-btn active" data-tab="missions">
+      <span class="tab-icon">🏁</span><span class="tab-label">MISSÕES</span>
+    </button>
+    <button id="tab-stars" class="tab-btn" data-tab="stars">
+      <span class="tab-icon">⭐</span><span class="tab-label">ESTRELAS</span>
+    </button>
+    <button id="tab-team" class="tab-btn" data-tab="team">
+      <span class="tab-icon">👨‍👩‍👧‍👦</span><span class="tab-label">TIME</span>
+    </button>
+    <button id="tab-badges" class="tab-btn" data-tab="badges">
+      <span class="tab-icon">🏆</span><span class="tab-label">CONQUISTAS</span>
+    </button>
+    <button id="tab-week" class="tab-btn" data-tab="week">
+      <span class="tab-icon">📅</span><span class="tab-label">SEMANA</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- Popup de bônus -->
+<div id="bonus-overlay" class="overlay" style="display:none">
+  <div class="popup bonus-popup">
+    <div id="bonus-emoji" class="popup-emoji">🏁</div>
+    <div id="bonus-mission-name" class="popup-title"></div>
+    <div class="bonus-checklist">
+      <div id="bci-capricho" class="bonus-check-item">
+        <span class="bonus-check-box" id="bcb-capricho"></span>
+        <span class="bonus-check-label">CAPRICHOU</span>
+      </div>
+      <div id="bci-pontual" class="bonus-check-item">
+        <span class="bonus-check-box" id="bcb-pontual"></span>
+        <span class="bonus-check-label">NA HORA CERTA</span>
+      </div>
+      <div id="bci-semreclamar" class="bonus-check-item">
+        <span class="bonus-check-box" id="bcb-semreclamar"></span>
+        <span class="bonus-check-label">SEM RECLAMAR</span>
+      </div>
+    </div>
+    <div id="bonus-star-preview" class="bonus-preview">MARQUE OS CRITÉRIOS ATENDIDOS</div>
+    <div class="popup-actions">
+      <button id="btn-bonus-cancel" class="btn-secondary">CANCELAR</button>
+      <button id="btn-bonus-confirm" class="btn-primary">CONFIRMAR ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Relatório de fim de dia -->
+<div id="report-overlay" class="overlay" style="display:none">
+  <div class="popup report-popup">
+    <div id="rep-emoji" class="popup-emoji">🏁</div>
+    <div id="rep-title" class="popup-title"></div>
+    <div class="rep-score-row"><span id="rep-score">0</span><span class="rep-score-pct">%</span></div>
+    <div id="rep-msg" class="rep-msg"></div>
+    <div class="rep-stars-row">⭐ <span id="rep-stars-val">+0</span></div>
+    <div id="rep-member-box" class="rep-member-box"></div>
+    <div id="rep-details" class="rep-details"></div>
+    <button id="btn-restart-day" class="btn-primary">🔄 NOVO DIA</button>
+  </div>
+</div>
+
+<!-- Popup de conquista desbloqueada -->
+<div id="badge-popup-overlay" class="overlay" style="display:none">
+  <div class="popup badge-popup">
+    <div id="badge-popup-icon" class="popup-emoji">🏆</div>
+    <div class="badge-popup-label">CONQUISTA DESBLOQUEADA!</div>
+    <div id="badge-popup-name" class="popup-title"></div>
+    <div id="badge-popup-desc" class="rep-msg"></div>
+    <button id="btn-badge-close" class="btn-primary">SHOW! ✓</button>
+  </div>
+</div>
+
+<!-- Teclado de PIN -->
+<div id="pin-overlay" class="overlay" style="display:none">
+  <div class="popup pin-popup">
+    <div class="popup-emoji">🔒</div>
+    <div id="pin-title" class="popup-title">PIN DOS PAIS</div>
+    <div id="pin-dots" class="pin-dots"></div>
+    <div class="pin-keypad">
+      <button class="pin-key" data-digit="1">1</button>
+      <button class="pin-key" data-digit="2">2</button>
+      <button class="pin-key" data-digit="3">3</button>
+      <button class="pin-key" data-digit="4">4</button>
+      <button class="pin-key" data-digit="5">5</button>
+      <button class="pin-key" data-digit="6">6</button>
+      <button class="pin-key" data-digit="7">7</button>
+      <button class="pin-key" data-digit="8">8</button>
+      <button class="pin-key" data-digit="9">9</button>
+      <button id="btn-pin-backspace" class="pin-key pin-key-fn">⌫</button>
+      <button class="pin-key" data-digit="0">0</button>
+      <button id="btn-pin-cancel" class="pin-key pin-key-fn">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- Painel dos pais -->
+<div id="parent-panel-overlay" class="overlay" style="display:none">
+  <div class="popup parent-panel-popup">
+    <div class="pp-header">
+      <div class="popup-title">⚙️ PAINEL DOS PAIS</div>
+      <button id="btn-parent-panel-close" class="pp-btn-close">✕</button>
+    </div>
+    <div class="pp-subtabs">
+      <button class="pp-subtab active" data-sub="membros">👨‍👩‍👧‍👦 MEMBROS</button>
+      <button class="pp-subtab" data-sub="tarefas">🏁 TAREFAS</button>
+      <button class="pp-subtab" data-sub="extras">🏆 EXTRAS</button>
+      <button class="pp-subtab" data-sub="bonus">🌟 BÔNUS</button>
+      <button class="pp-subtab" data-sub="ajustes">🔧 AJUSTES</button>
+    </div>
+    <div id="parent-panel-body" class="pp-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" style="display:none"></div>
+<div id="confetti-container" class="confetti-container"></div>
+
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

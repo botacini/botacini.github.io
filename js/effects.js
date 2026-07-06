@@ -1,16 +1,15 @@
 /* ════════════════════════════════════════════════════════════
-   GP DA FAMÍLIA — Efeitos (som, vibração, toast, confete, popup
-   de conquista)
+   GP DA FAMÍLIA — effects.js
    ════════════════════════════════════════════════════════════
-   Módulo criado para completar a integração: missions.js já
-   importava estas 6 funções de './effects.js', mas o arquivo
-   não existia entre os módulos fornecidos. Implementado sem
-   nenhuma dependência externa (som sintetizado via Web Audio
-   API, sem arquivos de áudio) para funcionar 100% no GitHub
-   Pages, sem backend.
+   Efeitos de interface: som, vibração, toast, popup de
+   conquista desbloqueada e confete. Não conhece `state` nem
+   regras de negócio — só recebe o que precisa mostrar/tocar e
+   mexe no DOM. Sem arquivos de áudio, sem bibliotecas externas:
+   tudo sintetizado via Web Audio API, para funcionar 100% no
+   GitHub Pages.
    ════════════════════════════════════════════════════════════ */
 
-/* ── SOM ──────────────────────────────────────────────────── */
+/* ════════════════ SOM ════════════════ */
 let audioCtx = null;
 function getCtx() {
   if (!audioCtx) {
@@ -54,14 +53,14 @@ export function playSound(type) {
   }
 }
 
-/* ── VIBRAÇÃO ─────────────────────────────────────────────── */
+/* ════════════════ VIBRAÇÃO ════════════════ */
 export function vibrate(pattern) {
   try {
     if (navigator.vibrate) navigator.vibrate(pattern);
   } catch (e) { /* ignora silenciosamente */ }
 }
 
-/* ── TOAST ────────────────────────────────────────────────── */
+/* ════════════════ TOAST ════════════════ */
 let toastTimer = null;
 export function showToast(msg) {
   const toast = document.getElementById('toast');
@@ -78,19 +77,23 @@ export function showToast(msg) {
   }, 2600);
 }
 
-/* ── POPUP DE CONQUISTA DESBLOQUEADA ─────────────────────── */
+/* ════════════════ POPUP DE CONQUISTA ════════════════ */
 export function showBadgeUnlockPopup(badge) {
   const overlay = document.getElementById('badge-popup-overlay');
   if (!overlay) return;
-  document.getElementById('badge-popup-icon').textContent = badge.icon;
-  document.getElementById('badge-popup-name').textContent = badge.name;
-  document.getElementById('badge-popup-desc').textContent = badge.desc;
+  const icon = document.getElementById('badge-popup-icon');
+  const name = document.getElementById('badge-popup-name');
+  const desc = document.getElementById('badge-popup-desc');
+  if (icon) icon.textContent = badge.icon;
+  if (name) name.textContent = badge.name;
+  if (desc) desc.textContent = badge.desc;
+
   overlay.style.display = 'flex';
   playSound('badge');
   vibrate([40, 40, 40, 40, 80]);
 }
 
-/* ── CONFETE ──────────────────────────────────────────────── */
+/* ════════════════ CONFETE ════════════════ */
 let confettiInterval = null;
 const CONFETTI_COLORS = ['#e8b800', '#5cb832', '#378add', '#cb3232', '#ffffff'];
 

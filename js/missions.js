@@ -1,168 +1,189 @@
-import {
-  state, getTodayMissions, persistDayState,
-  saveDay, saveBadges, loadTotalStars, saveTotalStars, ALL_BADGES
-} from './state.js';
-import { clearTodayState } from './storage.js';
-import { renderMissions, renderMembersBar, renderReport } from './render.js';
-import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti, stopConfetti } from './effects.js';
 /* ════════════════════════════════════════════════════════════
-   MISSÕES — marcar feita/perdida
+   GP DA FAMÍLIA — missions.js
+   ════════════════════════════════════════════════════════════
+   Regras de negócio: marcar tarefa, checklist de bônus
+   (capricho / pontualidade / sem reclamar), finalizar o dia,
+   finalizar a semana e desbloquear conquistas.
+
+   Só fala com state.js (estado + persistência), render.js
+   (para atualizar a tela depois de mudar algo) e effects.js
+   (som/vibração/confete/toast). Não manipula localStorage
+   diretamente em nenhum momento.
    ════════════════════════════════════════════════════════════ */
-export function getMemberById(id) {
-  if (id === 'compartilhada') return { name: 'COMPARTILHADA', avatar: '🤝', role: 'shared' };
-  return state.config.members.find(m => m.id === id) || { name: '?', avatar: '❓', role: 'crianca' };
+
+import {
+  state, ALL_BADGES, assigneeIds,
+  persistDayState, persistTotals, persistWeekState, persistBadges,
+  isSelectedDateToday,
+} from './state.js';
+import { renderMembersBar, renderMissions, renderWeek } from './render.js';
+import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti } from './effects.js';
+
+/* ════════════════ ESTRELAS: CONCEDER / REVOGAR ════════════════ */
+function awardStars(mission, stars) {
+  if (stars <= 0) return;
+  assigneeIds(mission).forEach(id => {
+    state.memberStars[id] = (state.memberStars[id] || 0) + stars;
+    state.totals[id] = (state.totals[id] || 0) + stars;
+  });
 }
 
-export function getTotalTeamStars() {
-  return Object.values(state.memberStars).reduce((a, b) => a + b, 0);
+function revokeStars(mission, stars) {
+  if (stars <= 0) return;
+  assigneeIds(mission).forEach(id => {
+    state.memberStars[id] = Math.max(0, (state.memberStars[id] || 0) - stars);
+    state.totals[id] = Math.max(0, (state.totals[id] || 0) - stars);
+  });
 }
 
-function getMissionById(missionId) {
-  return state.missions.find(m => m.id === missionId);
+/* ════════════════ MARCAR / DESMARCAR TAREFA ════════════════ */
+export function handleMissionAction(missionId, action) {
+  if (!isSelectedDateToday()) return;
+  const prev = state.missionStatus[missionId];
+  if (action === 'done') {
+    if (prev && prev.status === 'done') unmarkMission(missionId);
+    else openBonusPopup(missionId);
+  } else if (action === 'fail') {
+    if (prev && prev.status === 'fail') unmarkMission(missionId);
+    else markFail(missionId);
+  }
 }
 
-function getMissionIndexById(missionId) {
-  return state.missions.findIndex(m => m.id === missionId);
+function findMission(missionId) {
+  return state.missions.find(ms => ms.id === missionId) || null;
 }
 
-export function setMissionStatus(missionId, val) {
-  const m = getMissionById(missionId);
-  if (!m) return;
+function markFail(missionId) {
+  if (!isSelectedDateToday()) return;
+  const mission = findMission(missionId);
+  if (!mission) return;
+  const prev = state.missionStatus[missionId];
+  if (prev && prev.status === 'done' && prev.stars) revokeStars(mission, prev.stars);
+
+  state.missionStatus[missionId] = { status: 'fail', stars: 0 };
+  persistDayState();
+  persistTotals();
+  playSound('fail');
+  vibrate([80]);
+  renderMembersBar();
+  renderMissions();
+}
+
+export function unmarkMission(missionId) {
+  if (!isSelectedDateToday()) return;
+  const mission = findMission(missionId);
+  const prev = state.missionStatus[missionId];
+  if (!mission || !prev) return;
+  if (prev.status === 'done' && prev.stars) revokeStars(mission, prev.stars);
+
+  delete state.missionStatus[missionId];
+  persistDayState();
+  persistTotals();
+  renderMembersBar();
+  renderMissions();
+}
+
+function setDoneWithBonus(missionId, bonusFlags) {
+  if (!isSelectedDateToday()) return;
+  const mission = findMission(missionId);
+  if (!mission) return;
+  const stars = ['capricho', 'pontual', 'semreclamar'].filter(k => bonusFlags[k]).length;
 
   const prev = state.missionStatus[missionId];
+  if (prev && prev.status === 'done' && prev.stars) revokeStars(mission, prev.stars);
 
-  if (prev && prev.status === val) {
-    // Toggle off
-    if (prev.status === 'done') {
-      const starsToRemove = prev.stars || 1;
+  state.missionStatus[missionId] = { status: 'done', stars, bonus: { ...bonusFlags } };
+  awardStars(mission, stars);
 
-      if (m.assignee === 'compartilhada') {
-        state.config.members.forEach(mem => {
-          state.memberStars[mem.id] = Math.max(
-            0,
-            (state.memberStars[mem.id] || 0) - starsToRemove
-          );
-        });
-      } else {
-        state.memberStars[m.assignee] = Math.max(
-          0,
-          (state.memberStars[m.assignee] || 0) - starsToRemove
-        );
-      }
-    }
+  persistDayState();
+  persistTotals();
+  playSound('done');
+  vibrate([30, 30, 60]);
+  renderMembersBar();
+  renderMissions();
+  checkAndUnlockBadges();
 
-    state.missionStatus[missionId] = null;
-
-    persistDayState();
-    renderMissions();
-    renderMembersBar();
-    updateHeaderStars();
-    return;
-  }
-
-  if (val === 'done') {
-    openBonusPopup(missionId);
-  } else {
-    if (prev && prev.status === 'done') {
-      const starsToRemove = prev.stars || 1;
-      if (m.assignee === 'compartilhada') {
-        state.config.members.forEach(mem => { state.memberStars[mem.id] = Math.max(0, (state.memberStars[mem.id] || 0) - starsToRemove); });
-      } else {
-        state.memberStars[m.assignee] = Math.max(0, (state.memberStars[m.assignee] || 0) - starsToRemove);
-      }
-    }
-    state.missionStatus[missionId] = { status: 'fail', stars: 0 };
-    persistDayState();
-    renderMissions(); renderMembersBar(); updateHeaderStars();
+  if (allMissionsDone()) {
+    startConfetti();
+    showToast('🏁 TODAS AS TAREFAS CONCLUÍDAS!');
   }
 }
 
-/* ════════════════════════════════════════════════════════════
-   POPUP DE BÔNUS
-   ════════════════════════════════════════════════════════════ */
+function allMissionsDone() {
+  return state.missions.length > 0 && state.missions.every(ms => !!state.missionStatus[ms.id]);
+}
+
+/* ════════════════ POPUP DE BÔNUS ════════════════ */
 export function openBonusPopup(missionId) {
-  state.bonusPending = missionId;
-  state.bonusChecks = { capricho: false, pontual: false, semreclamar: false };
-  renderBonusPopup(missionId);
-  document.getElementById('bonus-overlay').style.display = 'flex';
+  if (!isSelectedDateToday()) return;
+  const mission = findMission(missionId);
+  if (!mission) return;
+  state.bonusPending = { missionId, capricho: false, pontual: false, semreclamar: false };
+
+  const emojiEl = document.getElementById('bonus-emoji');
+  const nameEl = document.getElementById('bonus-mission-name');
+  if (emojiEl) emojiEl.textContent = mission.emoji;
+  if (nameEl) nameEl.textContent = mission.title;
+
+  renderBonusChecklist();
+  const overlay = document.getElementById('bonus-overlay');
+  if (overlay) overlay.style.display = 'flex';
 }
 
-export function renderBonusPopup(missionId) {
-  const m = getMissionById(missionId);
-  if (!m) return;
-  document.getElementById('bonus-emoji').textContent = m.emoji;
-  document.getElementById('bonus-mission-name').textContent = m.title;
-  ['capricho', 'pontual', 'semreclamar'].forEach(k => {
-    document.getElementById('bci-' + k).classList.remove('checked');
-    document.getElementById('bcb-' + k).textContent = '';
+function renderBonusChecklist() {
+  if (!state.bonusPending) return;
+  ['capricho', 'pontual', 'semreclamar'].forEach(key => {
+    const item = document.getElementById('bci-' + key);
+    const box = document.getElementById('bcb-' + key);
+    const checked = !!state.bonusPending[key];
+    if (item) item.classList.toggle('checked', checked);
+    if (box) box.textContent = checked ? '✓' : '';
   });
-  updateBonusPreview();
+  const count = ['capricho', 'pontual', 'semreclamar'].filter(k => state.bonusPending[k]).length;
+  const preview = document.getElementById('bonus-star-preview');
+  if (preview) {
+    preview.textContent = count > 0
+      ? `⭐ +${count} ESTRELA${count > 1 ? 'S' : ''} PARA O TIME!`
+      : 'MARQUE OS CRITÉRIOS ATENDIDOS';
+  }
 }
 
 export function toggleBonus(key) {
-  state.bonusChecks[key] = !state.bonusChecks[key];
-  const item = document.getElementById('bci-' + key);
-  const box = document.getElementById('bcb-' + key);
-  item.classList.toggle('checked', state.bonusChecks[key]);
-  box.textContent = state.bonusChecks[key] ? '✓' : '';
-  updateBonusPreview();
+  if (!isSelectedDateToday()) return;
+  if (!state.bonusPending) return;
+  state.bonusPending[key] = !state.bonusPending[key];
+  renderBonusChecklist();
 }
 
-export function updateBonusPreview() {
-  const bonusCount = Object.values(state.bonusChecks).filter(Boolean).length;
-  const total = 1 + bonusCount;
-  document.getElementById('bonus-star-preview').textContent = `⭐ +${total} ESTRELA${total > 1 ? 'S' : ''} PARA O TIME!`;
+export function cancelBonus() {
+  state.bonusPending = null;
+  const overlay = document.getElementById('bonus-overlay');
+  if (overlay) overlay.style.display = 'none';
 }
 
 export function confirmBonus() {
-  const missionId = state.bonusPending;
-  if (missionId === null || missionId === undefined) return;
-  const m = getMissionById(missionId);
-  if (!m) return;
-  const bonusCount = Object.values(state.bonusChecks).filter(Boolean).length;
-  const stars = 1 + bonusCount;
-
-  state.missionStatus[missionId] = {
-    status: 'done', stars,
-    capricho: state.bonusChecks.capricho,
-    pontual: state.bonusChecks.pontual,
-    semreclamar: state.bonusChecks.semreclamar
-  };
-
-  if (m.assignee === 'compartilhada') {
-    state.config.members.forEach(mem => { state.memberStars[mem.id] = (state.memberStars[mem.id] || 0) + stars; });
-  } else {
-    state.memberStars[m.assignee] = (state.memberStars[m.assignee] || 0) + stars;
-  }
-
-  persistDayState(); // ← chamada que faltava no app original
-
-  document.getElementById('bonus-overlay').style.display = 'none';
+  if (!isSelectedDateToday()) return;
+  if (!state.bonusPending) return;
+  const { missionId, ...flags } = state.bonusPending;
+  setDoneWithBonus(missionId, flags);
   state.bonusPending = null;
-
-  playSound('done');
-  vibrate([30, 30, 60]);
-
-  if (Object.keys(state.missionStatus).filter(k => state.missionStatus[k] && state.missionStatus[k].status === 'done').length === 1) checkBadge('first_done');
-  const allDone = state.missions.every((m) => state.missionStatus[m.id] && state.missionStatus[m.id].status === 'done');
-  if (allDone) checkBadge('missions_all');
-  const todayStars = getTotalTeamStars();
-  if (todayStars >= 10) checkBadge('stars10');
-
-  renderMissions(); renderMembersBar(); updateHeaderStars();
-  showToast(`⭐ +${stars} ESTRELA${stars > 1 ? 'S' : ''}! ARRASOU!`);
+  const overlay = document.getElementById('bonus-overlay');
+  if (overlay) overlay.style.display = 'none';
 }
 
-export function updateHeaderStars() {
-  document.getElementById('header-team-stars').textContent = getTotalTeamStars();
-}
-
-/* ════════════════════════════════════════════════════════════
-   FINALIZAR O DIA
-   ════════════════════════════════════════════════════════════ */
-export function tryFinalize() {
+/* ════════════════ FINALIZAR O DIA ════════════════ */
+export function tryFinalizeDay() {
+  if (!isSelectedDateToday()) return;
+  if (state.missions.length === 0) {
+    showToast('NENHUMA TAREFA CADASTRADA PARA HOJE');
+    return;
+  }
+  const pending = state.missions.filter(ms => !state.missionStatus[ms.id]);
+  if (pending.length > 0) {
+    const ok = confirm(`Ainda tem ${pending.length} tarefa(s) sem marcar. Finalizar o dia mesmo assim?`);
+    if (!ok) return;
+  }
   if (state.config.requireApproval) {
-    // openPinOverlay('approve') fica no módulo do painel dos pais (fora do escopo deste arquivo)
     window.dispatchEvent(new CustomEvent('gp:request-pin-approve'));
   } else {
     finalizeDay();
@@ -170,76 +191,137 @@ export function tryFinalize() {
 }
 
 export function finalizeDay() {
-  const done = state.missions.filter((m) => state.missionStatus[m.id] && state.missionStatus[m.id].status === 'done').length;
+  if (!isSelectedDateToday()) return;
   const total = state.missions.length;
-  const pct = total > 0 ? Math.round(done / total * 100) : 0;
-  const totalStars = getTotalTeamStars();
+  const done = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'done').length;
+  const fails = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'fail').length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const starsToday = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
 
-  const stored = loadTotalStars();
-  stored.total = (stored.total || 0) + totalStars;
-  state.config.members.forEach(m => {
-    stored.byMember[m.id] = (stored.byMember[m.id] || 0) + (state.memberStars[m.id] || 0);
-  });
-  saveTotalStars(stored);
+  state.weekState.days[state.selectedDate || state.today] = { done, total, pct, stars: starsToday };
+  persistWeekState();
 
-  saveDay(state.weekData, pct);
-  checkAllBadges(pct, totalStars, stored.total);
+  renderReportPopup({ done, total, fails, pct, starsToday });
+  checkAndUnlockBadges();
 
-  renderReport(pct, totalStars, done, total);
+  if (pct === 100) { startConfetti(); playSound('done'); }
+  else { playSound('badge'); }
+  vibrate([30, 30]);
 
-  if (pct === 100) setTimeout(startConfetti, 400);
+  const overlay = document.getElementById('report-overlay');
+  if (overlay) overlay.style.display = 'flex';
 }
 
-/* ════════════════════════════════════════════════════════════
-   BADGES
-   ════════════════════════════════════════════════════════════ */
-export function checkBadge(id) {
-  if (state.unlockedBadges.includes(id)) return;
-  state.unlockedBadges.push(id);
-  saveBadges(state.unlockedBadges);
-  const badge = ALL_BADGES.find(b => b.id === id);
-  if (badge) showBadgeUnlockPopup(badge);
-  if (state.unlockedBadges.length >= 5) setTimeout(() => checkBadge('collector'), 400);
-}
+function renderReportPopup({ done, total, fails, pct, starsToday }) {
+  const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🏁' : pct >= 40 ? '🔧' : '🚧';
+  const title = pct === 100 ? 'DIA PERFEITO!' : pct >= 70 ? 'BOA CORRIDA!' : pct >= 40 ? 'PODE MELHORAR' : 'DIA DIFÍCIL';
+  const msg = fails > 0 ? `${fails} tarefa(s) não concluída(s).` : 'Nenhuma falha hoje!';
 
-export function checkAllBadges(pct, todayStars, totalStars) {
-  if (pct === 100) checkBadge('perfect_day');
-  if (pct >= 90) checkBadge('podium');
-  if (todayStars >= 10) checkBadge('stars10');
-  if (totalStars >= 50) checkBadge('stars50');
-  const hasPerfect = Object.values(state.missionStatus).some(s => s && s.capricho && s.pontual && s.semreclamar);
-  if (hasPerfect) checkBadge('team_bonus');
-  checkStreaks();
-}
+  setText('rep-emoji', emoji);
+  setText('rep-title', title);
+  setText('rep-score', pct);
+  setText('rep-msg', msg);
+  setText('rep-stars-val', '+' + starsToday);
 
-export function checkStreaks() {
-  const now = new Date();
-  let streak = 0;
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(now); d.setDate(now.getDate() - i);
-    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    if (state.weekData[key] !== undefined && state.weekData[key] >= 90) streak++;
-    else break;
+  const memberBox = document.getElementById('rep-member-box');
+  if (memberBox) {
+    memberBox.innerHTML = state.config.members
+      .map(mem => `<div>${mem.avatar} ${mem.name}: ⭐ ${state.memberStars[mem.id] || 0}</div>`)
+      .join('');
   }
-  if (streak >= 3) checkBadge('streak3');
-  if (streak >= 7) checkBadge('streak7');
+  setText('rep-details', `${done} de ${total} tarefas concluídas`);
 }
 
-/* ════════════════════════════════════════════════════════════
-   NOVO DIA — reset intencional (NÃO é o bug; isto é um reset
-   proposital pedido pelo usuário/pai, então aqui SIM devemos
-   limpar o estado salvo, não recuperá-lo).
-   ════════════════════════════════════════════════════════════ */
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
 export function restartDay() {
-  stopConfetti();
-  state.missions = getTodayMissions();
+  if (!isSelectedDateToday()) return;
   state.missionStatus = {};
   state.memberStars = {};
-  state.config.members.forEach(m => { state.memberStars[m.id] = 0; });
-  clearTodayState(); // apaga o "estado de hoje" salvo — é um novo dia de verdade
-  document.getElementById('report-overlay').style.display = 'none';
-  renderMissions();
+  state.config.members.forEach(mem => { state.memberStars[mem.id] = 0; });
+  persistDayState();
+
+  const overlay = document.getElementById('report-overlay');
+  if (overlay) overlay.style.display = 'none';
+
   renderMembersBar();
-  updateHeaderStars();
-  window.dispatchEvent(new CustomEvent('gp:switch-tab', { detail: 'missions' }));
+  renderMissions();
+}
+
+/* ════════════════ FINALIZAR A SEMANA ════════════════ */
+export function tryFinalizeWeek() {
+  if (!isSelectedDateToday()) return;
+  const daysLogged = Object.keys(state.weekState.days).length;
+  if (daysLogged === 0) {
+    showToast('AINDA NÃO HÁ NENHUM DIA FINALIZADO NESTA SEMANA');
+    return;
+  }
+  if (state.weekState.finalized) {
+    showToast('ESSA SEMANA JÁ FOI FINALIZADA');
+    return;
+  }
+  const ok = confirm(`Finalizar a semana com ${daysLogged} dia(s) registrado(s)?`);
+  if (!ok) return;
+  finalizeWeek();
+}
+
+export function finalizeWeek() {
+  if (!isSelectedDateToday()) return;
+  state.weekState.finalized = true;
+  persistWeekState();
+  checkAndUnlockBadges();
+
+  const pcts = Object.values(state.weekState.days).map(d => d.pct);
+  const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : 0;
+  showToast(`🏆 SEMANA FINALIZADA! MÉDIA: ${avg}%`);
+  playSound('badge');
+  vibrate([40, 40, 40, 80]);
+  renderWeek();
+}
+
+/* ════════════════ CONQUISTAS (FIXAS + METAS PERSONALIZADAS) ════════════════
+   Exportada porque também precisa ser checada depois de um bônus manual
+   dado pelo painel dos pais (que não conhece missions.js — ver a ponte
+   de eventos 'gp:check-goals' em main.js). */
+export function checkAndUnlockBadges() {
+  if (!state.badgesUnlocked.includes('primeira-corrida') && Object.keys(state.weekState.days).length >= 1) {
+    unlockGoal(ALL_BADGES.find(b => b.id === 'primeira-corrida'));
+  }
+
+  const todayInfo = state.weekState.days[state.today];
+  if (todayInfo && todayInfo.total > 0 && todayInfo.done === todayInfo.total
+    && !state.badgesUnlocked.includes('sem-erros')) {
+    unlockGoal(ALL_BADGES.find(b => b.id === 'sem-erros'));
+  }
+
+  const totalStarsEver = Object.values(state.totals).reduce((a, b) => a + b, 0);
+  if (totalStarsEver >= 10 && !state.badgesUnlocked.includes('capricho-total')) {
+    unlockGoal(ALL_BADGES.find(b => b.id === 'capricho-total'));
+  }
+
+  if (state.weekState.finalized && Object.keys(state.weekState.days).length >= 7
+    && !state.badgesUnlocked.includes('semana-completa')) {
+    unlockGoal(ALL_BADGES.find(b => b.id === 'semana-completa'));
+  }
+
+  // Metas personalizadas: cada uma soma estrelas históricas — da família
+  // inteira ou de um membro específico — contra uma meta definida pelos
+  // pais no painel (aba EXTRAS).
+  (state.config.customGoals || []).forEach(goal => {
+    if (state.badgesUnlocked.includes(goal.id)) return;
+    const progress = goal.type === 'member_stars'
+      ? (state.totals[goal.memberId] || 0)
+      : totalStarsEver;
+    if (progress >= goal.target) unlockGoal(goal);
+  });
+}
+
+function unlockGoal(goal) {
+  if (!goal || state.badgesUnlocked.includes(goal.id)) return;
+  state.badgesUnlocked.push(goal.id);
+  persistBadges();
+  showBadgeUnlockPopup(goal);
 }

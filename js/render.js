@@ -1,633 +1,333 @@
-import { state, ALL_BADGES, DAY_NAMES } from './state.js';
-import { getMemberById, getTotalTeamStars, setMissionStatus } from './missions.js';
-
 /* ════════════════════════════════════════════════════════════
-   RELÓGIO
+   GP DA FAMÍLIA — render.js
+   ════════════════════════════════════════════════════════════
+   Responsabilidade única: pintar a interface a partir do que
+   está em `state` (state.js). Não decide nada, não persiste
+   nada, não muda estrelas nem status — só lê e desenha. As
+   únicas mutações de estado feitas aqui são as puramente
+   visuais (ex: qual aba está ativa), que não precisam ser
+   persistidas.
    ════════════════════════════════════════════════════════════ */
+
+import {
+  state, DAY_FULL, DAY_NAMES, ALL_BADGES,
+  timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
+} from './state.js';
+
+/* ════════════════ RELÓGIO ════════════════ */
 export function updateClock() {
-  const n = new Date();
-  document.getElementById('live-clock').textContent =
-    String(n.getHours()).padStart(2, '0') + ':' +
-    String(n.getMinutes()).padStart(2, '0');
+  const el = document.getElementById('live-clock');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 }
 
-export function timeToMin(t) {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
+function nowMin() {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
 }
 
-export function getCurrentIdx() {
-  const n = new Date();
-  const cur = n.getHours() * 60 + n.getMinutes();
-
-  for (let i = 0; i < state.missions.length; i++) {
-    if (
-      cur >= timeToMin(state.missions[i].start) &&
-      cur < timeToMin(state.missions[i].end)
-    ) {
-      return i;
-    }
-  }
-
-  if (state.missions.length > 0 && cur < timeToMin(state.missions[0].start))
-    return 0;
-
-  return state.missions.length - 1;
-}
-
-/* ════════════════════════════════════════════════════════════
-   ABAS
-   ════════════════════════════════════════════════════════════ */
-
-export function switchTab(tab) {
-  ['missions', 'stars', 'team', 'badges', 'week'].forEach(t => {
-    const p = document.getElementById('panel-' + t);
-    const b = document.getElementById('tab-' + t);
-
-    if (p) p.style.display = t === tab ? '' : 'none';
-    if (b) b.classList.toggle('active', t === tab);
+function getCurrentMissionId() {
+  const n = nowMin();
+  let current = null;
+  state.missions.forEach(ms => {
+    if (n >= timeToMin(ms.start) && n < timeToMin(ms.end)) current = ms.id;
   });
-
-  if (tab === 'week') renderWeek();
-  if (tab === 'badges') renderBadges();
-  if (tab === 'stars') renderStarsTab();
-  if (tab === 'team') renderTeamTab();
+  return current;
 }
 
-window.addEventListener('gp:switch-tab', e => switchTab(e.detail));
+function selectedDateKey() {
+  return state.selectedDate || state.today || todayKey();
+}
 
-/* ════════════════════════════════════════════════════════════
-   BARRA DE MEMBROS
-   ════════════════════════════════════════════════════════════ */
+function selectedDateLabel() {
+  const day = dateFromKey(selectedDateKey()).getDay();
+  return DAY_FULL[day].toUpperCase();
+}
 
+function renderDateNav() {
+  const selected = dateFromKey(selectedDateKey());
+  const sunday = new Date(selected);
+  sunday.setDate(selected.getDate() - selected.getDay());
+
+  return `
+    <div class="day-nav" aria-label="Navegação por data">
+      ${DAY_NAMES.map((label, index) => {
+        const day = new Date(sunday);
+        day.setDate(sunday.getDate() + index);
+        const key = todayKey(day);
+        const active = key === selectedDateKey();
+        return `<button class="day-nav-btn${active ? ' active' : ''}" data-date-key="${key}" aria-pressed="${active ? 'true' : 'false'}">${label}</button>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderDayBanner() {
+  return `<div class="day-banner">${selectedDateLabel()}</div>`;
+}
+
+/* ════════════════ BARRA DE MEMBROS (HEADER) ════════════════
+   Mostra apenas as estrelas de hoje de cada um — sem filtro,
+   já que o kanban mostra todas as colunas de uma vez. */
 export function renderMembersBar() {
   const bar = document.getElementById('members-bar');
-  bar.innerHTML = '';
-
-  const allPill = document.createElement('div');
-  allPill.className =
-    'member-pill member-all-pill' +
-    (state.filterMember === 'all' ? ' active' : '');
-
-  allPill.onclick = () => {
-    state.filterMember = 'all';
-    renderMembersBar();
-    renderMissions();
-  };
-
-  allPill.innerHTML = `
-    <span class="pill-avatar">👨‍👩‍👧‍👦</span>
-    <span class="pill-name">TODOS</span>
-    <span class="pill-stars">⭐ ${getTotalTeamStars()}</span>
-  `;
-
-  bar.appendChild(allPill);
-
-  state.config.members.forEach(member => {
-    const pill = document.createElement('div');
-
-    pill.className =
-      'member-pill' +
-      (state.filterMember === member.id ? ' active' : '');
-
-    pill.onclick = () => {
-      state.filterMember = member.id;
-      renderMembersBar();
-      renderMissions();
-    };
-
-    pill.innerHTML = `
-      <span class="pill-avatar">${member.avatar}</span>
-      <span class="pill-name">${member.name}</span>
-      <span class="pill-stars">⭐ ${state.memberStars[member.id] || 0}</span>
-    `;
-
-    bar.appendChild(pill);
-  });
+  if (!bar) return;
+  bar.innerHTML = state.config.members.map(mem => `
+    <div class="member-pill" style="border-color:${mem.color};background:${mem.color}22">
+      <span class="pill-avatar">${mem.avatar}</span>
+      <span class="pill-name">${mem.name}</span>
+      <span class="pill-stars">⭐${state.memberStars[mem.id] || 0}</span>
+    </div>`).join('');
 }
 
-/* ════════════════════════════════════════════════════════════
-   LISTA DE MISSÕES
-   ════════════════════════════════════════════════════════════ */
-
+/* ════════════════ QUADRO DE TAREFAS (NOVO: KANBAN POR MEMBRO) ════════════════ */
 export function renderMissions() {
+  const container = document.getElementById('mission-list');
+  if (!container) return;
 
-  const curIdx = getCurrentIdx();
+  updateProgress();
+  updateHeaderStarsDisplay();
 
-  const total = state.missions.length;
-
-  const done = state.missions.filter(
-    mission =>
-      state.missionStatus[mission.id] &&
-      state.missionStatus[mission.id].status === 'done'
-  ).length;
-
-  const pct =
-    total > 0
-      ? Math.round(done / total * 100)
-      : 0;
-
-  document.getElementById('prog-label').textContent =
-    `${done} DE ${total} TAREFAS ✅`;
-
-  document.getElementById('prog-pct').textContent =
-    `${pct}%`;
-
-  document.getElementById('prog-bar').style.width =
-    Math.max(pct, 3) + '%';
-
-  const firstMember = state.config.members[0];
-
-  document.getElementById('car-avatar').textContent =
-    firstMember ? firstMember.avatar : '🏎️';
-
-  const list = document.getElementById('mission-list');
-  list.innerHTML = '';
-
-  let visible = state.missions.map((mission, index) => ({
-    mission,
-    index
-  }));
-
-  if (state.filterMember !== 'all') {
-    visible = visible.filter(({ mission }) =>
-      mission.assignee === state.filterMember ||
-      mission.assignee === 'compartilhada'
-    );
-  }
-
-  if (!visible.length) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-state-icon">🔍</span>
-        NENHUMA TAREFA<br>PARA ESTE MEMBRO HOJE
+  const readonly = !isSelectedDateToday();
+  const boardHTML = state.missions.length === 0
+    ? `<div class="empty-state"><span class="empty-state-icon">🏁</span>Nenhuma tarefa para este dia.</div>`
+    : `<div class="missions-board${readonly ? ' consultation-mode' : ''}">
+        ${state.config.members.map(mem => renderMemberColumn(mem)).join('')}
       </div>`;
-    return;
-  }
 
-  visible.forEach(({ mission, index }) => {
-
-    const st = state.missionStatus[mission.id];
-    const status = st?.status ?? null;
-
-    const member = getMemberById(mission.assignee);
-    const isShared = mission.assignee === 'compartilhada';
-    const isCurrent = index === curIdx;
-
-    const card = document.createElement('div');
-
-    let cls = 'mission-card';
-
-    if (status === 'done')
-      cls += ' done';
-    else if (status === 'fail')
-      cls += ' fail';
-    else if (isShared)
-      cls += ' shared';
-
-    if (isCurrent && !status)
-      cls += ' current';
-
-    card.className = cls;
-
-    const stars =
-      st && st.stars > 0
-        ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;font-weight:900">
-             ⭐ +${st.stars} estrela${st.stars > 1 ? 's' : ''}
-           </div>`
-        : '';
-
-    const assignee =
-      isShared
-        ? `<span class="assignee-tag shared-tag">🤝 COMPARTILHADA</span>`
-        : `<span class="assignee-tag">${member.avatar} ${member.name}</span>`;
-
-    card.innerHTML = `
-      <div class="time-col">
-        <span class="t-start">${mission.start}</span>
-        <span class="t-end">${mission.end}</span>
-      </div>
-
-      <div class="m-emoji">${mission.emoji}</div>
-
-      <div class="m-info">
-        <div class="m-title">${mission.title}</div>
-        <div class="m-desc">${mission.desc}</div>
-        <div class="m-assignee">${assignee}</div>
-        ${stars}
-      </div>
-
-      <div class="btn-group">
-        <button class="btn-check btn-done ${status === 'done' ? 'active' : ''}">
-          ✓
-        </button>
-
-        <button class="btn-check btn-fail ${status === 'fail' ? 'active' : ''}">
-          ✗
-        </button>
-      </div>
-    `;
-
-    card
-      .querySelector('.btn-done')
-      .addEventListener('click', () => setMissionStatus(mission.id, 'done'));
-
-    card
-      .querySelector('.btn-fail')
-      .addEventListener('click', () => setMissionStatus(mission.id, 'fail'));
-
-    list.appendChild(card);
-  });
-
+  container.innerHTML = `
+    ${renderDateNav()}
+    ${renderDayBanner()}
+    ${boardHTML}
+  `;
 }
 
-
-/* ════════════════════════════════════════════════════════════
-   ABA ESTRELAS
-   ════════════════════════════════════════════════════════════ */
-
-export function renderStarsTab() {
-
-  const total = getTotalTeamStars();
-  const maxPossible = state.missions.length * 4;
-  const pct = Math.min(
-    100,
-    Math.round(total / Math.max(maxPossible, 1) * 100)
+function renderMemberColumn(member) {
+  const currentId = getCurrentMissionId();
+  const readonly = !isSelectedDateToday();
+  // Tarefas que envolvem este membro (atribuídas a ele ou compartilhadas)
+  const memberMissions = state.missions.filter(ms => 
+    assigneeIds(ms).includes(member.id)
   );
 
-  document.getElementById('team-stars-count').textContent = total;
-  document.getElementById('stars-goal-bar').style.width = pct + '%';
+  const rows = memberMissions.map((ms, idx) => {
+    const st = state.missionStatus[ms.id];
+    const doneClass = st?.status === 'done' ? ' done' : '';
+    const failClass = st?.status === 'fail' ? ' fail' : '';
+    const currentClass = currentId === ms.id && !st ? ' current' : '';
+    const sharedMemberIds = assigneeIds(ms);
+    const isShared = sharedMemberIds.length > 1;
 
-  const done = state.missions.filter(
-    mission =>
-      state.missionStatus[mission.id] &&
-      state.missionStatus[mission.id].status === 'done'
-  ).length;
+    return `
+      <div class="task-cell${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}" data-mission-id="${ms.id}">
+        <div class="task-time">
+          <span class="task-start">${ms.start}</span>
+          <span class="task-end">${ms.end}</span>
+        </div>
+        <div class="task-emoji">${ms.emoji}</div>
+        <div class="task-body">
+          <div class="task-title">${ms.title}</div>
+          <div class="task-desc">${ms.desc}</div>
+        </div>
+        <div class="task-actions">
+          <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
+          <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
+        </div>
+      </div>`;
+  }).join('');
 
-  document.getElementById('team-stars-goal').textContent =
-    done === state.missions.length
-      ? `🏁 DIA COMPLETO! ${total} ESTRELAS DO TIME!`
-      : `META: COMPLETAR ${state.missions.length - done} TAREFAS AINDA!`;
-
-  const grid = document.getElementById('member-stars-grid');
-  grid.innerHTML = '';
-
-  state.config.members.forEach(member => {
-
-    const stars = state.memberStars[member.id] || 0;
-
-    const card = document.createElement('div');
-    card.className = 'member-star-card';
-
-    const roleLabel =
-      member.role === 'pai'
-        ? '👨 PAI'
-        : member.role === 'mae'
-        ? '👩 MÃE'
-        : '🧒 CRIANÇA';
-
-    card.innerHTML = `
-      <span class="member-star-avatar">${member.avatar}</span>
-      <div class="member-star-name">${member.name}</div>
-      <div class="member-star-count">${stars}</div>
-      <div class="member-star-sub">${roleLabel}</div>
-    `;
-
-    grid.appendChild(card);
-
-  });
-
+  return `
+    <div class="board-column" style="--member-color:${member.color || '#ccc'}">
+      <div class="column-header">
+        <span class="column-avatar">${member.avatar}</span>
+        <span class="column-name">${member.name}</span>
+        <span class="column-stars">⭐${state.memberStars[member.id] || 0}</span>
+      </div>
+      <div class="column-tasks">
+        ${rows || '<div class="column-empty">— sem tarefas hoje</div>'}
+      </div>
+    </div>`;
 }
 
-/* ════════════════════════════════════════════════════════════
-   ABA TIME
-   ════════════════════════════════════════════════════════════ */
+function updateProgress() {
+  const total = state.missions.length;
+  const done = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'done').length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  const label = document.getElementById('prog-label');
+  const pctEl = document.getElementById('prog-pct');
+  const bar = document.getElementById('prog-bar');
+  if (label) label.textContent = `${done} DE ${total} TAREFAS ✅`;
+  if (pctEl) pctEl.textContent = `${pct}%`;
+  if (bar) bar.style.width = pct + '%';
+
+  const car = document.getElementById('car-avatar');
+  if (car) car.style.left = pct + '%';
+
+  const finalizeBtn = document.getElementById('btn-finalize');
+  if (finalizeBtn) finalizeBtn.disabled = !isSelectedDateToday();
+  if (finalizeBtn) finalizeBtn.classList.toggle('is-readonly', !isSelectedDateToday());
+
+  const weekBtn = document.getElementById('btn-finalize-week');
+  if (weekBtn) weekBtn.disabled = !isSelectedDateToday();
+  if (weekBtn) weekBtn.classList.toggle('is-readonly', !isSelectedDateToday());
+}
+
+function updateHeaderStarsDisplay() {
+  const el = document.getElementById('header-team-stars');
+  if (!el) return;
+  const total = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
+  el.textContent = total;
+}
+
+/* ════════════════ ABA ESTRELAS ════════════════ */
+export function renderStarsTab() {
+  const totalEl = document.getElementById('team-stars-count');
+  const barEl = document.getElementById('stars-goal-bar');
+  const goalEl = document.getElementById('team-stars-goal');
+  const grid = document.getElementById('member-stars-grid');
+  if (!totalEl || !grid) return;
+
+  const total = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
+  const goal = state.config.teamStarsGoal || 20;
+  totalEl.textContent = total;
+  if (barEl) barEl.style.width = Math.min(100, Math.round((total / goal) * 100)) + '%';
+  if (goalEl) goalEl.textContent = `META DA SEMANA: ${goal} ⭐`;
+
+  grid.innerHTML = state.config.members.map(mem => `
+      <div class="member-star-card">
+      <div class="member-star-avatar">${mem.avatar}</div>
+      <div class="member-star-name">${mem.name}</div>
+      <div class="member-star-count">⭐ ${state.memberStars[mem.id] || 0}</div>
+      <div class="member-star-sub">${isSelectedDateToday() ? 'HOJE' : selectedDateLabel()}</div>
+    </div>`).join('');
+}
+
+/* ════════════════ ABA TIME ════════════════ */
+const ROLE_LABEL = { pai: 'PAI', mae: 'MÃE', crianca: 'CRIANÇA' };
 
 export function renderTeamTab() {
-
   const container = document.getElementById('team-cards');
-  container.innerHTML = '';
+  if (!container) return;
 
-  state.config.members.forEach(member => {
-
-    const stars = state.memberStars[member.id] || 0;
-
-    const myMissions = state.missions.filter(
-      mission =>
-        mission.assignee === member.id ||
-        mission.assignee === 'compartilhada'
-    );
-
-    const myDone = myMissions.filter(
-      mission =>
-        state.missionStatus[mission.id] &&
-        state.missionStatus[mission.id].status === 'done'
+  container.innerHTML = state.config.members.map(mem => {
+    const doneCount = state.missions.filter(ms =>
+      assigneeIds(ms).includes(mem.id) &&
+      state.missionStatus[ms.id]?.status === 'done'
     ).length;
-
-    const roleLbl =
-      member.role === 'pai'
-        ? 'PAI'
-        : member.role === 'mae'
-        ? 'MÃE'
-        : 'FILHO(A)';
-
-    const roleCls =
-      member.role === 'pai'
-        ? 'role-pai'
-        : member.role === 'mae'
-        ? 'role-mae'
-        : 'role-crianca';
-
-    const card = document.createElement('div');
-    card.className = 'team-member-card';
-
-    card.innerHTML = `
-      <div class="team-member-avatar">${member.avatar}</div>
-
-      <div class="team-member-info">
-        <div class="team-member-name">${member.name}</div>
-
-        <span class="role-badge ${roleCls}">
-          ${roleLbl}
-        </span>
-
-        <div
-          class="team-member-done"
-          style="margin-top:6px;color:#666;font-size:10px;font-weight:900"
-        >
-          ${myDone} TAREFAS CONCLUÍDAS
+    return `
+      <div class="team-member-card" style="border-left:4px solid ${mem.color}">
+        <span class="team-member-avatar">${mem.avatar}</span>
+        <div class="team-member-info">
+          <div class="team-member-name">${mem.name}</div>
+          <span class="role-badge role-${mem.role}">${ROLE_LABEL[mem.role] || mem.role.toUpperCase()}</span>
         </div>
-      </div>
-
-      <div class="team-member-stats">
-        <div class="team-member-stars">
-          ⭐ ${stars}
+        <div class="team-member-stats">
+          <div class="team-member-stars">⭐ ${state.memberStars[mem.id] || 0}</div>
+          <div class="team-member-done">${doneCount} TAREFAS ${isSelectedDateToday() ? 'HOJE' : 'NO DIA'}</div>
         </div>
-
-        <div class="team-member-done">
-          ESTRELAS HOJE
-        </div>
-      </div>
-    `;
-
-    container.appendChild(card);
-
-  });
-
+      </div>`;
+  }).join('');
 }
 
-/* ════════════════════════════════════════════════════════════
-   ABA CONQUISTAS
-   ════════════════════════════════════════════════════════════ */
-
+/* ════════════════ ABA CONQUISTAS (FIXAS + METAS PERSONALIZADAS) ════════════════ */
 export function renderBadges() {
-
   const grid = document.getElementById('badge-grid');
-  grid.innerHTML = '';
+  if (!grid) return;
 
-  ALL_BADGES.forEach(badge => {
+  // Todas as conquistas: fixas (ALL_BADGES) + personalizadas (customGoals)
+  const allGoals = [
+    ...ALL_BADGES,
+    ...(state.config.customGoals || [])
+  ];
 
-    const unlocked =
-      state.unlockedBadges.includes(badge.id);
+  grid.innerHTML = allGoals.map(goal => {
+    const unlocked = state.badgesUnlocked.includes(goal.id);
+    const progress = goal.type === 'member_stars'
+      ? (state.totals[goal.memberId] || 0)
+      : Object.values(state.totals).reduce((a, b) => a + b, 0);
+    const pct = goal.target ? Math.round((progress / goal.target) * 100) : 0;
 
-    const card = document.createElement('div');
-
-    card.className =
-      'badge-card' +
-      (unlocked ? ' unlocked' : '');
-
-    card.innerHTML = `
-      <span class="badge-icon">${badge.icon}</span>
-
-      <div class="badge-name">
-        ${badge.name}
-      </div>
-
-      <div class="badge-desc">
-        ${unlocked ? badge.desc : '???'}
-      </div>
-    `;
-
-    grid.appendChild(card);
-
-  });
-
+    return `
+      <div class="badge-card${unlocked ? ' unlocked' : ''}">
+        <div class="badge-icon">${goal.icon}</div>
+        <div class="badge-name">${goal.name}</div>
+        <div class="badge-desc">${goal.desc}</div>
+        ${goal.target ? `<div class="badge-progress">${progress}/${goal.target}</div>` : ''}
+      </div>`;
+  }).join('');
 }
 
-/* ════════════════════════════════════════════════════════════
-   ABA SEMANA
-   ════════════════════════════════════════════════════════════ */
-
+/* ════════════════ ABA SEMANA ════════════════ */
 export function renderWeek() {
+  const daysEl = document.getElementById('week-days');
+  const avgBox = document.getElementById('week-avg-box');
+  const avgNum = document.getElementById('week-avg-num');
+  const avgSub = document.getElementById('week-avg-sub');
+  if (!daysEl) return;
 
-  const now = new Date();
-  const dow = now.getDay();
-
-  const mon = new Date(now);
-  mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
-
-  const container = document.getElementById('week-days');
-  container.innerHTML = '';
-
-  let sum = 0;
-  let count = 0;
+  const days = state.weekState?.days || {};
+  const monday = new Date(state.weekState.weekKey + 'T00:00:00');
+  let rows = '';
+  let pctSum = 0;
+  let pctCount = 0;
 
   for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const dow = d.getDay();
+    const info = days[key];
+    const pct = info ? info.pct : null;
+    if (pct !== null && pct !== undefined) { pctSum += pct; pctCount++; }
 
-    const d = new Date(mon);
-    d.setDate(mon.getDate() + i);
-
-    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-
-    const score = state.weekData[key];
-    const isToday = d.toDateString() === now.toDateString();
-
-    if (score !== undefined) {
-      sum += score;
-      count++;
-    }
-
-    const barCol =
-      score === undefined ? '#333' :
-      score >= 90 ? '#5cb832' :
-      score >= 70 ? '#e8b800' :
-      score >= 50 ? '#378ADD' :
-      '#cb3232';
-
-    const flag =
-      score === 100 ? '🏆' :
-      score >= 90 ? '🥇' :
-      score >= 70 ? '🥈' :
-      score >= 50 ? '🏅' :
-      score !== undefined ? '🚗' : '';
-
-    const sc =
-      score !== undefined
-        ? score + '%'
-        : isToday
-        ? 'HOJE'
-        : '--';
-
-    const scCol =
-      score >= 90 ? '#e8b800' :
-      score >= 70 ? '#5cb832' :
-      score !== undefined ? '#aaa' :
-      '#555';
-
-    const row = document.createElement('div');
-    row.className = 'day-row';
-
-    if (isToday) {
-      row.style.cssText =
-        'display:flex;align-items:center;gap:8px;background:#1a2d1a;border:2px solid var(--gold);border-radius:14px;padding:10px 12px;margin-bottom:6px;';
-    }
-
-    row.innerHTML = `
-      <span class="day-name" style="${isToday ? 'color:var(--gold);' : ''}">
-        ${DAY_NAMES[d.getDay()]}
-      </span>
-
-      <div style="flex:1;background:var(--card2);border-radius:6px;height:14px;overflow:hidden;border:1px solid #222;">
-        <div style="height:100%;width:${score || 0}%;background:${barCol};border-radius:6px;transition:width .6s;"></div>
-      </div>
-
-      <span style="font-size:13px;font-weight:900;min-width:46px;text-align:right;color:${scCol}">
-        ${sc}
-      </span>
-
-      <span style="font-size:16px">
-        ${flag}
-      </span>
-    `;
-
-    container.appendChild(row);
+    rows += `
+      <div class="day-row">
+        <span class="day-name">${DAY_FULL[dow].slice(0, 3).toUpperCase()}</span>
+        <div class="progress-track" style="flex:1">
+          <div class="progress-fill" style="width:${pct ?? 0}%"></div>
+        </div>
+        <span style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">${pct !== null && pct !== undefined ? pct + '%' : '—'}</span>
+      </div>`;
   }
+  daysEl.innerHTML = rows;
 
-  const avgBox = document.getElementById('week-avg-box');
-
-  if (count > 0) {
-
-    const avg = Math.round(sum / count);
-
-    avgBox.style.display = '';
-
-    document.getElementById('week-avg-num').textContent =
-      avg + '%';
-
-    document.getElementById('week-avg-sub').textContent =
-      avg === 100 ? '🏆 SEMANA PERFEITA!' :
-      avg >= 90 ? '🥇 SEMANA INCRÍVEL!' :
-      avg >= 70 ? '🥈 BOA SEMANA!' :
-      avg >= 50 ? '🏅 CHEGANDO LÁ!' :
-      '🚦 TREINANDO!';
-
-  } else {
-
+  if (pctCount > 0 && avgBox && avgNum && avgSub) {
+    avgBox.style.display = 'block';
+    avgNum.textContent = Math.round(pctSum / pctCount) + '%';
+    avgSub.textContent = state.weekState.finalized ? 'SEMANA FINALIZADA' : 'MÉDIA DA SEMANA ATÉ AGORA';
+  } else if (avgBox) {
     avgBox.style.display = 'none';
-
   }
-
 }
 
-/* ════════════════════════════════════════════════════════════
-   RELATÓRIO DE FIM DE DIA
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════ TROCA DE ABAS ════════════════ */
+const TAB_RENDERERS = {
+  missions: () => { renderMembersBar(); renderMissions(); },
+  stars: renderStarsTab,
+  team: renderTeamTab,
+  badges: renderBadges,
+  week: renderWeek,
+};
 
-export function renderReport(pct, totalStars, done, total) {
+export function renderDashboard() {
+  renderMembersBar();
+  renderMissions();
+  renderStarsTab();
+  renderTeamTab();
+  renderBadges();
+  renderWeek();
+}
 
-  const emojis =
-    pct === 100 ? '🏆' :
-    pct >= 90 ? '🥇' :
-    pct >= 70 ? '🥈' :
-    pct >= 50 ? '🏅' :
-    '🚗';
-
-  const titles =
-    pct === 100 ? 'DIA PERFEITO DO TIME!' :
-    pct >= 90 ? 'TIME NO PÓDIO!' :
-    pct >= 70 ? 'MUITO BEM, FAMÍLIA!' :
-    pct >= 50 ? 'CHEGANDO LÁ!' :
-    'AMANHÃ A GENTE TREINA!';
-
-  const msgs =
-    pct === 100
-      ? 'FAMÍLIA INCRÍVEL! DIA PERFEITO! 🏆'
-      : pct >= 90
-      ? 'QUE DIA INCRÍVEL, FAMÍLIA! ARRASARAM! 🚀'
-      : pct >= 70
-      ? 'BOA CORRIDA EM EQUIPE! QUASE NO TOPO! 💪'
-      : 'TODO DIA É NOVO COMEÇO! AMANHÃ VOCÊS CONSEGUEM! 💫';
-
-  document.getElementById('rep-emoji').textContent = emojis;
-  document.getElementById('rep-title').textContent = titles;
-  document.getElementById('rep-score').textContent = pct;
-  document.getElementById('rep-msg').textContent = msgs;
-  document.getElementById('rep-stars-val').textContent = '+' + totalStars;
-
-  let membersHtml =
-    `<div style="font-size:12px;font-weight:900;color:var(--gold);margin-bottom:8px">
-      ⭐ ESTRELAS POR MEMBRO
-    </div>`;
-
-  state.config.members.forEach(member => {
-
-    membersHtml += `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#ddd;">
-        <span>${member.avatar} ${member.name}</span>
-        <span style="color:var(--gold);font-weight:900">
-          ⭐ ${state.memberStars[member.id] || 0}
-        </span>
-      </div>
-    `;
-
+export function switchTab(tab) {
+  Object.keys(TAB_RENDERERS).forEach(t => {
+    const panel = document.getElementById('panel-' + t);
+    const btn = document.getElementById('tab-' + t);
+    if (panel) panel.style.display = t === tab ? 'block' : 'none';
+    if (btn) btn.classList.toggle('active', t === tab);
   });
-
-  document.getElementById('rep-member-box').innerHTML =
-    membersHtml;
-
-  const doneM = state.missions.filter(
-    mission =>
-      state.missionStatus[mission.id] &&
-      state.missionStatus[mission.id].status === 'done'
-  );
-
-  const failM = state.missions.filter(
-    mission =>
-      state.missionStatus[mission.id] &&
-      state.missionStatus[mission.id].status === 'fail'
-  );
-
-  let detailsHtml =
-    `<div style="font-size:12px;font-weight:900;color:var(--gold);margin-bottom:8px">
-      🏎️ TAREFAS: ${done}/${total}
-    </div>`;
-
-  if (doneM.length) {
-
-    detailsHtml += `
-      <div style="color:#5cb832;font-size:12px;margin-bottom:4px">
-        ✅ CONCLUÍDAS:
-        ${doneM.map(m => `${m.emoji} ${m.title}`).join(', ')}
-      </div>
-    `;
-
-  }
-
-  if (failM.length) {
-
-    detailsHtml += `
-      <div style="color:var(--red);font-size:12px">
-        ❌ PERDIDAS:
-        ${failM.map(m => `${m.emoji} ${m.title}`).join(', ')}
-      </div>
-    `;
-
-  }
-
-  document.getElementById('rep-details').innerHTML =
-    detailsHtml;
-
-  document.getElementById('report-overlay').style.display =
-    'flex';
-
+  const renderer = TAB_RENDERERS[tab];
+  if (renderer) renderer();
 }
+
+window.addEventListener('gp:switch-tab', (e) => switchTab(e.detail));

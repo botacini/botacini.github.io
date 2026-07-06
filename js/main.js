@@ -1,63 +1,78 @@
 /* ════════════════════════════════════════════════════════════
    GP DA FAMÍLIA — main.js
    ════════════════════════════════════════════════════════════
-   Único responsável por:
-   - inicializar a aplicação
-   - carregar os dados persistidos (via state.js -> storage.js)
-   - chamar o primeiro render (via render.js)
-   - conectar os eventos da interface às funções de missions.js
-   - garantir que toda alteração de estado seja re-renderizada
-     e persistida
-
-   Nenhuma lógica de negócio mora aqui — apenas orquestração e
-   ligação de eventos DOM às funções já expostas pelos módulos
-   existentes.
+   Único ponto de entrada. Não contém regra de negócio nem
+   lógica de renderização própria — só:
+   - inicializa a aplicação (carrega o estado via state.js)
+   - dispara o primeiro render (via render.js)
+   - liga os eventos de interface às funções corretas de
+     missions.js e parent-panel.js
+   - faz a ponte por eventos entre missions.js (que pede PIN)
+     e parent-panel.js (que sabe conferir PIN), sem que esses
+     dois módulos precisem se importar um ao outro.
    ════════════════════════════════════════════════════════════ */
 
-import { state, initDayState } from './state.js';
+import { loadState, loadDateContext } from './state.js';
+import { renderDashboard, renderMissions, updateClock, switchTab } from './render.js';
 import {
-  renderMissions, renderMembersBar, updateClock, switchTab
-} from './render.js';
-import {
-  tryFinalize, restartDay,
-  toggleBonus, confirmBonus, updateHeaderStars
+  handleMissionAction, toggleBonus, confirmBonus, cancelBonus,
+  tryFinalizeDay, finalizeDay, restartDay, tryFinalizeWeek,
 } from './missions.js';
 import {
   openPinOverlay, closePinOverlay, pressPinDigit, pressPinBackspace,
-  closeParentPanel, wireParentPanelEvents
+  closeParentPanel, wireParentPanelEvents,
 } from './parent-panel.js';
 
 /* ════════════════════════════════════════════════════════════
    INICIALIZAÇÃO
    ════════════════════════════════════════════════════════════ */
-function init() {
-  // 1. Carrega o estado de hoje já salvo (missionStatus/memberStars),
-  //    ou zera se for a primeira vez no dia. state.config e
-  //    state.missions já foram carregados na importação de state.js.
-  initDayState();
+async function init() {
+  await loadState();
 
-  // 2. Primeiro render
-  renderMembersBar();
-  renderMissions();
-  updateHeaderStars();
+  renderDashboard();
   updateClock();
   switchTab('missions');
 
-  // 3. Relógio e destaque da missão atual — atualiza a cada 30s
+  // Relógio e destaque da tarefa atual — atualiza a cada 30s
   setInterval(() => {
     updateClock();
     renderMissions();
   }, 30000);
 
-  // 4. Eventos da interface
+  wireMissionList();
   wireTabBar();
   wireFinalizeButton();
   wireBonusPopup();
   wireReportPopup();
+  wireWeekPanel();
   wireBadgePopup();
-  wirePinApproval();
   wireParentPanelAccess();
+  wirePinApprovalBridge();
   wireParentPanelEvents();
+}
+
+/* ════════════════════════════════════════════════════════════
+   LISTA DE MISSÕES (delegação — a lista é reconstruída a cada
+   render, então o listener fica no container, não nos botões)
+   ════════════════════════════════════════════════════════════ */
+function wireMissionList() {
+  const list = document.getElementById('mission-list');
+  if (!list) return;
+  list.addEventListener('click', (e) => {
+    const dateBtn = e.target.closest('[data-date-key]');
+    if (dateBtn) {
+      void selectDashboardDate(dateBtn.dataset.dateKey);
+      return;
+    }
+    const btn = e.target.closest('[data-mission-action]');
+    if (!btn) return;
+    handleMissionAction(btn.dataset.missionId, btn.dataset.missionAction);
+  });
+}
+
+async function selectDashboardDate(dateKey) {
+  await loadDateContext(dateKey);
+  renderDashboard();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -74,33 +89,21 @@ function wireTabBar() {
    ════════════════════════════════════════════════════════════ */
 function wireFinalizeButton() {
   const btn = document.getElementById('btn-finalize');
-  if (btn) btn.addEventListener('click', tryFinalize);
+  if (btn) btn.addEventListener('click', tryFinalizeDay);
 }
 
 /* ════════════════════════════════════════════════════════════
-   POPUP DE BÔNUS (checklist de capricho/pontualidade/sem reclamar)
-   
-   FIXED: Uses event delegation on the overlay instead of static
-   button reference, so listeners persist even if the bonus popup
-   is dynamically re-rendered.
+   POPUP DE BÔNUS
    ════════════════════════════════════════════════════════════ */
 function wireBonusPopup() {
   ['capricho', 'pontual', 'semreclamar'].forEach(key => {
     const item = document.getElementById('bci-' + key);
     if (item) item.addEventListener('click', () => toggleBonus(key));
   });
-
-  // Use event delegation on the overlay parent
-  const overlay = document.getElementById('bonus-overlay');
-  if (overlay) {
-    overlay.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-bonus-confirm') confirmBonus();
-      if (e.target.id === 'btn-bonus-cancel') {
-        state.bonusPending = null;
-        document.getElementById('bonus-overlay').style.display = 'none';
-      }
-    });
-  }
+  const confirmBtn = document.getElementById('btn-bonus-confirm');
+  if (confirmBtn) confirmBtn.addEventListener('click', confirmBonus);
+  const cancelBtn = document.getElementById('btn-bonus-cancel');
+  if (cancelBtn) cancelBtn.addEventListener('click', cancelBonus);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -112,32 +115,28 @@ function wireReportPopup() {
 }
 
 /* ════════════════════════════════════════════════════════════
+   FINALIZAR A SEMANA (botão na aba "Semana")
+   ════════════════════════════════════════════════════════════ */
+function wireWeekPanel() {
+  const btn = document.getElementById('btn-finalize-week');
+  if (btn) btn.addEventListener('click', tryFinalizeWeek);
+}
+
+/* ════════════════════════════════════════════════════════════
    POPUP DE CONQUISTA DESBLOQUEADA
    ════════════════════════════════════════════════════════════ */
 function wireBadgePopup() {
   const closeBtn = document.getElementById('btn-badge-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
-      document.getElementById('badge-popup-overlay').style.display = 'none';
+      const overlay = document.getElementById('badge-popup-overlay');
+      if (overlay) overlay.style.display = 'none';
     });
   }
 }
 
 /* ════════════════════════════════════════════════════════════
-   APROVAÇÃO POR PIN
-   ════════════════════════════════════════════════════════════
-   missions.js dispara 'gp:request-pin-approve' quando
-   state.config.requireApproval é true. Agora isso abre o
-   teclado de PIN de verdade (parent-panel.js); ao acertar o
-   PIN, o próprio parent-panel.js chama finalizeDay(). */
-function wirePinApproval() {
-  window.addEventListener('gp:request-pin-approve', () => {
-    openPinOverlay('approve');
-  });
-}
-
-/* ════════════════════════════════════════════════════════════
-   ACESSO AO PAINEL DOS PAIS (botão de engrenagem no cabeçalho)
+   ACESSO AO PAINEL DOS PAIS (engrenagem + teclado de PIN)
    ════════════════════════════════════════════════════════════ */
 function wireParentPanelAccess() {
   const gearBtn = document.getElementById('btn-parent-panel');
@@ -155,6 +154,19 @@ function wireParentPanelAccess() {
 
   const closePanelBtn = document.getElementById('btn-parent-panel-close');
   if (closePanelBtn) closePanelBtn.addEventListener('click', closeParentPanel);
+}
+
+/* ════════════════════════════════════════════════════════════
+   PONTE DE APROVAÇÃO POR PIN
+   ════════════════════════════════════════════════════════════
+   missions.js dispara 'gp:request-pin-approve' quando é
+   preciso confirmar o PIN para finalizar o dia; parent-panel.js
+   dispara 'gp:pin-approved' quando o PIN digitado está certo.
+   main.js é o único que conhece as duas pontas — por isso
+   missions.js e parent-panel.js nunca precisam se importar. */
+function wirePinApprovalBridge() {
+  window.addEventListener('gp:request-pin-approve', () => openPinOverlay('approve'));
+  window.addEventListener('gp:pin-approved', () => finalizeDay());
 }
 
 /* ════════════════════════════════════════════════════════════
