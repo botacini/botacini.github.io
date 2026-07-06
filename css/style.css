@@ -184,23 +184,32 @@ button { font-family: inherit; cursor: pointer; }
 
 /* NOVO: Quadro kanban por membro */
 .missions-board {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   gap: 12px;
   padding: 2px;
   overflow-x: auto;
-  align-items: start;
+  overflow-y: visible;
+  align-items: flex-start;
+
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .board-column {
+  flex: 0 0 160px;
+
   display: flex;
   flex-direction: column;
   gap: 8px;
+
   background: var(--card);
   border-left: 4px solid var(--member-color, #ccc);
   border-radius: 12px;
   padding: 10px;
-  min-width: 140px;
+
+  min-width: 160px;
 }
 
 .column-header {
@@ -351,6 +360,25 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 900;
   font-size: 14px;
   letter-spacing: 1px;
+}
+
+.day-banner {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 12px;
+
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+
+  text-align: center;
+
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 1px;
+
+  color: var(--gold);
 }
 
 /* ════════════════ ABA ESTRELAS ════════════════ */
