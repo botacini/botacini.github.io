@@ -181,6 +181,94 @@ button { font-family: inherit; cursor: pointer; }
 
 /* lista de missões */
 .mission-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* NOVO: Quadro kanban por membro */
+.missions-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 2px;
+  overflow-x: auto;
+  align-items: start;
+}
+
+.board-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--card);
+  border-left: 4px solid var(--member-color, #ccc);
+  border-radius: 12px;
+  padding: 10px;
+  min-width: 140px;
+}
+
+.column-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 800;
+}
+
+.column-avatar { font-size: 20px; }
+.column-name { font-size: 11px; letter-spacing: .3px; color: var(--member-color, #ccc); }
+.column-stars { font-size: 10px; color: var(--gold); font-weight: 900; }
+
+.column-tasks { display: flex; flex-direction: column; gap: 6px; }
+.column-empty { text-align: center; font-size: 10px; color: var(--muted); padding: 8px 0; }
+
+.task-cell {
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: all .2s;
+}
+
+.task-cell.done { border-color: var(--green); background: #10210f; }
+.task-cell.fail { border-color: var(--red); background: #260f0f; opacity: .7; }
+.task-cell.current { border-color: var(--gold); box-shadow: 0 0 8px rgba(232,184,0,.4); }
+.task-cell.shared-task { background: rgba(55, 138, 221, .08); }
+
+.task-time {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.task-start { color: var(--text); }
+.task-end { color: var(--muted); }
+.task-emoji { font-size: 14px; text-align: center; }
+.task-body { display: flex; flex-direction: column; gap: 1px; }
+.task-title { font-weight: 700; color: var(--text); }
+.task-desc { font-size: 9px; color: var(--muted); }
+.task-actions { display: flex; gap: 3px; }
+.task-btn {
+  flex: 1;
+  background: var(--line);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 4px;
+  padding: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.task-done.active { background: var(--green); border-color: var(--green); color: #06280a; }
+.task-fail.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* -- legacy mission card (para compatibilidade) -- */
 .mission-card {
   display: flex;
   align-items: center;
@@ -579,6 +667,38 @@ button { font-family: inherit; cursor: pointer; }
   padding: 12px; margin-top: 10px; font-size: 12px; font-weight: 700;
 }
 .pp-field-label { display: block; font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+
+/* ── Metas personalizadas ── */
+.pp-goal-row {
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.pp-goal-info {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pp-goal-info input {
+  margin-bottom: 0;
+}
+
+/* ── Bônus manual ── */
+.pp-bonus-entry {
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
 
 /* ════════════════ RESPONSIVO ════════════════ */
 @media (max-width: 360px) {
