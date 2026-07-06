@@ -563,3 +563,40 @@ button { font-family: inherit; cursor: pointer; }
   .header-title { font-size: 15px; }
   .m-title { font-size: 12px; }
 }
+
+/* ════════════════ VISÃO EM COLUNAS ════════════════ */
+
+.day-title-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+
+  text-align: center;
+
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1px;
+
+  color: var(--gold);
+}
+
+.members-columns-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.members-columns {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.member-column {
+  flex: 0 0 220px;
+}
