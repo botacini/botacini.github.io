@@ -235,27 +235,31 @@ export function renderBadges() {
   const grid = document.getElementById('badge-grid');
   if (!grid) return;
 
-  // Todas as conquistas: fixas (ALL_BADGES) + personalizadas (customGoals)
-  const allGoals = [
-    ...ALL_BADGES,
-    ...(state.config.customGoals || [])
-  ];
-
-  grid.innerHTML = allGoals.map(goal => {
+  const fixedBadgesHTML = ALL_BADGES.map(goal => {
     const unlocked = state.badgesUnlocked.includes(goal.id);
-    const progress = goal.type === 'member_stars'
-      ? (state.totals[goal.memberId] || 0)
-      : Object.values(state.totals).reduce((a, b) => a + b, 0);
-    const pct = goal.target ? Math.round((progress / goal.target) * 100) : 0;
-
     return `
       <div class="badge-card${unlocked ? ' unlocked' : ''}">
         <div class="badge-icon">${goal.icon}</div>
         <div class="badge-name">${goal.name}</div>
         <div class="badge-desc">${goal.desc}</div>
-        ${goal.target ? `<div class="badge-progress">${progress}/${goal.target}</div>` : ''}
       </div>`;
   }).join('');
+
+  const customGoalsHTML = (state.config.customGoals || []).map(goal => {
+    const redeemed = !!goal.redeemed;
+    const label = redeemed ? 'Cancelar conquista' : 'Resgatar conquista';
+
+    return `
+      <div class="badge-card custom-goal ${redeemed ? 'claimed' : 'pending'}">
+        <div class="badge-icon">${goal.icon}</div>
+        <div class="badge-name">${goal.name}</div>
+        <div class="badge-desc">${goal.desc || 'Meta personalizada'}</div>
+        <div class="badge-state">${redeemed ? 'RESGATADA' : 'NÃO RESGATADA'}</div>
+        <button class="badge-action" data-goal-action="toggle" data-goal-id="${goal.id}">${label}</button>
+      </div>`;
+  }).join('');
+
+  grid.innerHTML = fixedBadgesHTML + customGoalsHTML;
 }
 
 /* ════════════════ ABA SEMANA ════════════════ */

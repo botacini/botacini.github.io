@@ -16,6 +16,7 @@ import { state, saveConfig, getTodayMissions, persistDayState, persistTotals, pe
 import { resetAllData, exportAllData, importAllData } from './storage.js';
 import { renderDashboard } from './render.js';
 import { checkAndUnlockBadges } from './missions.js';
+import { awardStars, revokeStars } from './missions.js';
 
 let currentEditDay = todayDow();
 let activeSubTab = 'membros'; // 'membros' | 'tarefas' | 'extras' | 'bonus' | 'ajustes'
@@ -146,6 +147,41 @@ function sortDay(dow) {
 /* ════════════════════════════════════════════════════════════
    PAINEL DOS PAIS
    ════════════════════════════════════════════════════════════ */
+function customGoalRewardStars(goal) {
+  return Math.max(0, Number(goal.claimedStars || goal.target || 0));
+}
+
+function customGoalAssignee(goal) {
+  return goal.type === 'member_stars' ? goal.memberId : 'compartilhada';
+}
+
+export async function toggleCustomGoalReward(goalId) {
+  const goal = (state.config.customGoals || []).find(g => g.id === goalId);
+  if (!goal) return;
+
+  if (goal.redeemed) {
+    const rewardStars = customGoalRewardStars(goal);
+    if (rewardStars > 0) {
+      revokeStars({ assignee: customGoalAssignee(goal) }, rewardStars);
+    }
+    goal.redeemed = false;
+    goal.claimedStars = 0;
+  } else {
+    const rewardStars = Math.max(0, Number(goal.target || 0));
+    if (rewardStars > 0) {
+      awardStars({ assignee: customGoalAssignee(goal) }, rewardStars);
+    }
+    goal.redeemed = true;
+    goal.claimedStars = rewardStars;
+  }
+
+  await saveConfig();
+  await persistDayState();
+  await persistTotals();
+  checkAndUnlockBadges();
+  renderDashboard();
+}
+
 export function openParentPanel() {
   activeSubTab = 'membros';
   currentEditDay = todayDow();
@@ -264,7 +300,7 @@ function extrasHTML() {
     <div class="pp-section-title">🏆 METAS PERSONALIZADAS (TROFÉUS)</div>
     <div class="pp-hint">Crie metas de estrelas para a família ou membros individuais.</div>
     ${goalRows}
-    <button class="pp-btn-add" data-add-goal>+ ADICIONAR META</button>`;
+    <button class="pp-btn-add" data-add-goal>+ CRIAR CONQUISTA PERSONALIZADA</button>`;
 }
 
 /* ── BONUS: DAR ESTRELAS MANUAIS ────────────────────────── */
@@ -307,6 +343,11 @@ function ajustesHTML() {
     <label class="pp-field-label">PIN DOS PAIS (4 a 8 dígitos)</label>
     <input id="pp-pin-input" class="pp-input" maxlength="8" inputmode="numeric" value="${state.config.pin}">
     <button class="pp-btn-add" id="pp-save-pin">SALVAR PIN</button>
+
+    <div class="pp-toggle-row">
+      <span>NÃO SOLICITAR SENHA PARA ABRIR O PAINEL DOS PAIS</span>
+      <input type="checkbox" id="pp-skip-parent-pin" ${state.config.skipParentPanelPin ? 'checked' : ''}>
+    </div>
 
     <div class="pp-toggle-row">
       <span>EXIGIR PIN PARA FINALIZAR O DIA</span>
@@ -416,18 +457,32 @@ export function wireParentPanelEvents() {
         id: genId('goal'),
         type: 'family_stars',
         memberId: null,
-        icon: '🏆',
-        name: 'NOVA META',
-        target: 50,
-        desc: 'Meta personalizada'
+      icon: '🏆',
+      name: 'NOVA META',
+      target: 50,
+      desc: 'Meta personalizada',
+        redeemed: false,
+        claimedStars: 0
       });
       saveConfig();
+      renderDashboard();
       renderParentPanel();
     } else if (e.target.matches('[data-remove-goal]')) {
       const idx = Number(e.target.closest('[data-goal-idx]').dataset.goalIdx);
       if (!confirm('Remover esta meta?')) return;
+      const goal = (state.config.customGoals || [])[idx];
+      if (goal && goal.redeemed) {
+        const rewardStars = Number(goal.claimedStars || goal.target || 0);
+        if (rewardStars > 0) {
+          const rewardMission = { assignee: goal.type === 'member_stars' ? goal.memberId : 'compartilhada' };
+          revokeStars(rewardMission, rewardStars);
+          persistDayState();
+          persistTotals();
+        }
+      }
       (state.config.customGoals || []).splice(idx, 1);
       saveConfig();
+      renderDashboard();
       renderParentPanel();
     } else if (e.target.id === 'pp-bonus-give') {
       const memberId = document.getElementById('pp-bonus-member').value;
@@ -496,6 +551,7 @@ export function wireParentPanelEvents() {
         if (field === 'target') goal[field] = Number(e.target.value);
         else goal[field] = e.target.value;
         saveConfig();
+        renderDashboard();
       }
     } else if (e.target.matches('[data-msfield]')) {
       const idx = Number(e.target.closest('[data-mission-idx]').dataset.missionIdx);
@@ -509,6 +565,9 @@ export function wireParentPanelEvents() {
     } else if (e.target.matches('[data-copy-target]')) {
       const dow = Number(e.target.dataset.copyTarget);
       if (e.target.checked) copyTargets.add(dow); else copyTargets.delete(dow);
+    } else if (e.target.id === 'pp-skip-parent-pin') {
+      state.config.skipParentPanelPin = e.target.checked;
+      saveConfig();
     } else if (e.target.id === 'pp-require-approval') {
       state.config.requireApproval = e.target.checked;
       saveConfig();

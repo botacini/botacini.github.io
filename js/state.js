@@ -136,6 +136,7 @@ function defaultConfig() {
     missionsByDay: defaultMissionsByDay(),
     pin: '1234',
     requireApproval: false,
+    skipParentPanelPin: false,
     teamStarsGoal: 20,
     customGoals: [], // metas/troféus personalizados criados pelos pais
   };
@@ -201,16 +202,31 @@ export async function loadState() {
   state.config = config;
 
   // Auto-cura de dados legados: configs salvas antes de existirem cor por
-  // membro e metas personalizadas não têm esses campos — preenche com
-  // valores padrão e regrava, sem tocar em mais nada (nunca destrutivo).
+  // membro, opção de abrir o painel sem PIN e campos novos das metas
+  // personalizadas não têm esses campos — preenche com valores padrão e
+  // regrava, sem tocar em mais nada (nunca destrutivo).
   let needsResave = false;
   if (!Array.isArray(state.config.customGoals)) {
     state.config.customGoals = [];
     needsResave = true;
   }
+  if (typeof state.config.skipParentPanelPin !== 'boolean') {
+    state.config.skipParentPanelPin = false;
+    needsResave = true;
+  }
   state.config.members.forEach(mem => {
     if (!mem.color) {
       mem.color = nextMemberColor(state.config.members);
+      needsResave = true;
+    }
+  });
+  state.config.customGoals.forEach(goal => {
+    if (typeof goal.redeemed !== 'boolean') {
+      goal.redeemed = false;
+      needsResave = true;
+    }
+    if (typeof goal.claimedStars !== 'number') {
+      goal.claimedStars = 0;
       needsResave = true;
     }
   });

@@ -12,7 +12,7 @@
      dois módulos precisem se importar um ao outro.
    ════════════════════════════════════════════════════════════ */
 
-import { loadState, loadDateContext } from './state.js';
+import { loadState, loadDateContext, state } from './state.js';
 import { renderDashboard, renderMissions, updateClock, switchTab } from './render.js';
 import {
   handleMissionAction, toggleBonus, confirmBonus, cancelBonus,
@@ -20,6 +20,7 @@ import {
 } from './missions.js';
 import {
   openPinOverlay, closePinOverlay, pressPinDigit, pressPinBackspace,
+  openParentPanel, toggleCustomGoalReward,
   closeParentPanel, wireParentPanelEvents,
 } from './parent-panel.js';
 
@@ -46,6 +47,7 @@ async function init() {
   wireReportPopup();
   wireWeekPanel();
   wireBadgePopup();
+  wireBadgeActions();
   wireParentPanelAccess();
   wirePinApprovalBridge();
   wireParentPanelEvents();
@@ -135,12 +137,26 @@ function wireBadgePopup() {
   }
 }
 
+function wireBadgeActions() {
+  const grid = document.getElementById('badge-grid');
+  if (!grid) return;
+  grid.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-goal-action]');
+    if (!btn) return;
+    const goalId = btn.dataset.goalId;
+    void toggleCustomGoalReward(goalId);
+  });
+}
+
 /* ════════════════════════════════════════════════════════════
    ACESSO AO PAINEL DOS PAIS (engrenagem + teclado de PIN)
    ════════════════════════════════════════════════════════════ */
 function wireParentPanelAccess() {
   const gearBtn = document.getElementById('btn-parent-panel');
-  if (gearBtn) gearBtn.addEventListener('click', () => openPinOverlay('panel'));
+  if (gearBtn) gearBtn.addEventListener('click', () => {
+    if (state.config?.skipParentPanelPin) openParentPanel();
+    else openPinOverlay('panel');
+  });
 
   const pinCancelBtn = document.getElementById('btn-pin-cancel');
   if (pinCancelBtn) pinCancelBtn.addEventListener('click', closePinOverlay);

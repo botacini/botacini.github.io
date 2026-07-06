@@ -20,7 +20,7 @@ import { renderMembersBar, renderMissions, renderWeek } from './render.js';
 import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti } from './effects.js';
 
 /* ════════════════ ESTRELAS: CONCEDER / REVOGAR ════════════════ */
-function awardStars(mission, stars) {
+export function awardStars(mission, stars) {
   if (stars <= 0) return;
   assigneeIds(mission).forEach(id => {
     state.memberStars[id] = (state.memberStars[id] || 0) + stars;
@@ -28,7 +28,7 @@ function awardStars(mission, stars) {
   });
 }
 
-function revokeStars(mission, stars) {
+export function revokeStars(mission, stars) {
   if (stars <= 0) return;
   assigneeIds(mission).forEach(id => {
     state.memberStars[id] = Math.max(0, (state.memberStars[id] || 0) - stars);
@@ -307,16 +307,6 @@ export function checkAndUnlockBadges() {
     unlockGoal(ALL_BADGES.find(b => b.id === 'semana-completa'));
   }
 
-  // Metas personalizadas: cada uma soma estrelas históricas — da família
-  // inteira ou de um membro específico — contra uma meta definida pelos
-  // pais no painel (aba EXTRAS).
-  (state.config.customGoals || []).forEach(goal => {
-    if (state.badgesUnlocked.includes(goal.id)) return;
-    const progress = goal.type === 'member_stars'
-      ? (state.totals[goal.memberId] || 0)
-      : totalStarsEver;
-    if (progress >= goal.target) unlockGoal(goal);
-  });
 }
 
 function unlockGoal(goal) {
