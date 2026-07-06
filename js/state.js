@@ -15,11 +15,23 @@ import {
   loadWeekState, saveWeekState,
   loadBadges, saveBadges,
   loadTotals, saveTotals,
+  loadBonusLog, saveBonusLog,
 } from './storage.js';
 
 /* ════════════════ CONSTANTES ════════════════ */
 export const DAY_NAMES = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
 export const DAY_FULL = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+// Paleta de cores por membro — cada família ganha uma "cor de equipe"
+// (como nas escuderias de F1). Usada nas colunas do quadro, nos pills
+// da barra de membros e nos cartões de tarefa.
+export const MEMBER_COLOR_PALETTE = ['#378add', '#e879c9', '#5cb832', '#e8b800', '#cb3232', '#8a5cf6', '#38b6ce', '#f2884b'];
+
+export function nextMemberColor(members) {
+  const used = new Set((members || []).map(m => m.color).filter(Boolean));
+  const free = MEMBER_COLOR_PALETTE.find(c => !used.has(c));
+  return free || MEMBER_COLOR_PALETTE[(members || []).length % MEMBER_COLOR_PALETTE.length];
+}
 
 export const ALL_BADGES = [
   { id: 'primeira-corrida', icon: '🏁', name: 'PRIMEIRA CORRIDA', desc: 'Complete seu primeiro dia' },
@@ -51,12 +63,31 @@ function genId(prefix) {
   return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+/* ════════════════ ASSIGNEE (RESPONSÁVEIS DE UMA TAREFA) ════════════════
+   `mission.assignee` pode assumir 3 formatos, de propósito, para nunca
+   forçar migração destrutiva de dados antigos:
+   - 'compartilhada'  → todos os membros ATUAIS (dinâmico; inclui quem
+                          for cadastrado depois — comportamento antigo)
+   - array de ids      → tarefa dividida entre membros específicos
+                          (pode ter 1 ou vários — "feita em conjunto")
+   - string de 1 id     → formato legado (pré multi-atribuição)
+   Todo o resto do app lê o responsável SEMPRE através desta função —
+   nunca comparando `assignee` diretamente. */
+export function assigneeIds(mission, members) {
+  const list = members || (state.config && state.config.members) || [];
+  const a = mission.assignee;
+  if (a === 'compartilhada') return list.map(mem => mem.id);
+  if (Array.isArray(a)) return a;
+  if (typeof a === 'string' && a) return [a];
+  return [];
+}
+
 /* ════════════════ VALORES PADRÃO (primeira execução) ════════════════ */
 function defaultMembers() {
   return [
-    { id: genId('mem'), name: 'PAPAI', avatar: '👨', role: 'pai' },
-    { id: genId('mem'), name: 'MAMÃE', avatar: '👩', role: 'mae' },
-    { id: genId('mem'), name: 'FILHO', avatar: '🧒', role: 'crianca' },
+    { id: genId('mem'), name: 'PAPAI', avatar: '👨', role: 'pai', color: MEMBER_COLOR_PALETTE[0] },
+    { id: genId('mem'), name: 'MAMÃE', avatar: '👩', role: 'mae', color: MEMBER_COLOR_PALETTE[1] },
+    { id: genId('mem'), name: 'FILHO', avatar: '🧒', role: 'crianca', color: MEMBER_COLOR_PALETTE[2] },
   ];
 }
 
@@ -88,6 +119,7 @@ function defaultConfig() {
     pin: '1234',
     requireApproval: false,
     teamStarsGoal: 20,
+    customGoals: [], // metas/troféus personalizados criados pelos pais
   };
 }
 
@@ -109,8 +141,9 @@ export const state = {
   missionStatus: {},        // { [missionId]: { status:'done'|'fail', stars:number, bonus:{...} } }
   memberStars: {},           // estrelas DE HOJE por membro { [memberId]: number }
   totals: {},                 // estrelas históricas acumuladas por membro
-  badgesUnlocked: [],          // ids de conquistas já desbloqueadas
+  badgesUnlocked: [],          // ids de conquistas (fixas + metas personalizadas) já desbloqueadas
   weekState: null,               // { weekKey, days:{ [dateKey]: {done,total,pct,stars} }, finalized }
+  bonusLog: [],                   // histórico de bônus manuais dados pelos pais (fora da agenda)
   bonusPending: null,             // id da missão aguardando o checklist de bônus
   pinMode: null,                   // 'panel' | 'approve'
   pinBuffer: '',
@@ -134,6 +167,22 @@ export async function loadState() {
   }
   state.config = config;
 
+  // Auto-cura de dados legados: configs salvas antes de existirem cor por
+  // membro e metas personalizadas não têm esses campos — preenche com
+  // valores padrão e regrava, sem tocar em mais nada (nunca destrutivo).
+  let needsResave = false;
+  if (!Array.isArray(state.config.customGoals)) {
+    state.config.customGoals = [];
+    needsResave = true;
+  }
+  state.config.members.forEach(mem => {
+    if (!mem.color) {
+      mem.color = nextMemberColor(state.config.members);
+      needsResave = true;
+    }
+  });
+  if (needsResave) await storageSaveConfig(state.config);
+
   state.today = todayKey();
   state.missions = getTodayMissions();
 
@@ -143,6 +192,7 @@ export async function loadState() {
 
   state.totals = (await loadTotals()) || {};
   state.badgesUnlocked = (await loadBadges()) || [];
+  state.bonusLog = (await loadBonusLog()) || [];
 
   const week = await loadWeekState(weekKeyOf());
   state.weekState = week || newWeekState();
@@ -168,6 +218,10 @@ export async function persistTotals() {
 
 export async function persistBadges() {
   return saveBadges(state.badgesUnlocked);
+}
+
+export async function persistBonusLog() {
+  return saveBonusLog(state.bonusLog);
 }
 
 export async function persistWeekState() {

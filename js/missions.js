@@ -12,7 +12,7 @@
    ════════════════════════════════════════════════════════════ */
 
 import {
-  state, ALL_BADGES,
+  state, ALL_BADGES, assigneeIds,
   persistDayState, persistTotals, persistWeekState, persistBadges,
 } from './state.js';
 import { renderMembersBar, renderMissions, renderWeek } from './render.js';
@@ -21,21 +21,15 @@ import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti } fr
 /* ════════════════ ESTRELAS: CONCEDER / REVOGAR ════════════════ */
 function awardStars(mission, stars) {
   if (stars <= 0) return;
-  if (mission.assignee === 'compartilhada') {
-    state.config.members.forEach(mem => {
-      state.memberStars[mem.id] = (state.memberStars[mem.id] || 0) + stars;
-      state.totals[mem.id] = (state.totals[mem.id] || 0) + stars;
-    });
-  } else {
-    state.memberStars[mission.assignee] = (state.memberStars[mission.assignee] || 0) + stars;
-    state.totals[mission.assignee] = (state.totals[mission.assignee] || 0) + stars;
-  }
+  assigneeIds(mission).forEach(id => {
+    state.memberStars[id] = (state.memberStars[id] || 0) + stars;
+    state.totals[id] = (state.totals[id] || 0) + stars;
+  });
 }
 
 function revokeStars(mission, stars) {
   if (stars <= 0) return;
-  const ids = mission.assignee === 'compartilhada' ? state.config.members.map(m => m.id) : [mission.assignee];
-  ids.forEach(id => {
+  assigneeIds(mission).forEach(id => {
     state.memberStars[id] = Math.max(0, (state.memberStars[id] || 0) - stars);
     state.totals[id] = Math.max(0, (state.totals[id] || 0) - stars);
   });
@@ -275,33 +269,46 @@ export function finalizeWeek() {
   renderWeek();
 }
 
-/* ════════════════ CONQUISTAS ════════════════ */
-function checkAndUnlockBadges() {
+/* ════════════════ CONQUISTAS (FIXAS + METAS PERSONALIZADAS) ════════════════
+   Exportada porque também precisa ser checada depois de um bônus manual
+   dado pelo painel dos pais (que não conhece missions.js — ver a ponte
+   de eventos 'gp:check-goals' em main.js). */
+export function checkAndUnlockBadges() {
   if (!state.badgesUnlocked.includes('primeira-corrida') && Object.keys(state.weekState.days).length >= 1) {
-    unlockBadge('primeira-corrida');
+    unlockGoal(ALL_BADGES.find(b => b.id === 'primeira-corrida'));
   }
 
   const todayInfo = state.weekState.days[state.today];
   if (todayInfo && todayInfo.total > 0 && todayInfo.done === todayInfo.total
     && !state.badgesUnlocked.includes('sem-erros')) {
-    unlockBadge('sem-erros');
+    unlockGoal(ALL_BADGES.find(b => b.id === 'sem-erros'));
   }
 
   const totalStarsEver = Object.values(state.totals).reduce((a, b) => a + b, 0);
   if (totalStarsEver >= 10 && !state.badgesUnlocked.includes('capricho-total')) {
-    unlockBadge('capricho-total');
+    unlockGoal(ALL_BADGES.find(b => b.id === 'capricho-total'));
   }
 
   if (state.weekState.finalized && Object.keys(state.weekState.days).length >= 7
     && !state.badgesUnlocked.includes('semana-completa')) {
-    unlockBadge('semana-completa');
+    unlockGoal(ALL_BADGES.find(b => b.id === 'semana-completa'));
   }
+
+  // Metas personalizadas: cada uma soma estrelas históricas — da família
+  // inteira ou de um membro específico — contra uma meta definida pelos
+  // pais no painel (aba EXTRAS).
+  (state.config.customGoals || []).forEach(goal => {
+    if (state.badgesUnlocked.includes(goal.id)) return;
+    const progress = goal.type === 'member_stars'
+      ? (state.totals[goal.memberId] || 0)
+      : totalStarsEver;
+    if (progress >= goal.target) unlockGoal(goal);
+  });
 }
 
-function unlockBadge(id) {
-  const badge = ALL_BADGES.find(b => b.id === id);
-  if (!badge) return;
-  state.badgesUnlocked.push(id);
+function unlockGoal(goal) {
+  if (!goal || state.badgesUnlocked.includes(goal.id)) return;
+  state.badgesUnlocked.push(goal.id);
   persistBadges();
-  showBadgeUnlockPopup(badge);
+  showBadgeUnlockPopup(goal);
 }

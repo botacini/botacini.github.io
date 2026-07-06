@@ -12,12 +12,13 @@
    liga as duas pontas é o main.js.
    ════════════════════════════════════════════════════════════ */
 
-import { state, saveConfig, getTodayMissions, persistDayState, persistTotals, timeToMin, DAY_FULL } from './state.js';
+import { state, saveConfig, getTodayMissions, persistDayState, persistTotals, persistBonusLog, timeToMin, DAY_FULL, MEMBER_COLOR_PALETTE } from './state.js';
 import { resetAllData, exportAllData, importAllData } from './storage.js';
 import { renderMembersBar, renderMissions } from './render.js';
+import { checkAndUnlockBadges } from './missions.js';
 
 let currentEditDay = new Date().getDay();
-let activeSubTab = 'membros'; // 'membros' | 'tarefas' | 'ajustes'
+let activeSubTab = 'membros'; // 'membros' | 'tarefas' | 'extras' | 'bonus' | 'ajustes'
 let copyTargets = new Set();
 
 function genId(prefix) {
@@ -169,6 +170,8 @@ function renderParentPanel() {
   if (!body) return;
   if (activeSubTab === 'membros') body.innerHTML = membrosHTML();
   else if (activeSubTab === 'tarefas') body.innerHTML = tarefasHTML();
+  else if (activeSubTab === 'extras') body.innerHTML = extrasHTML();
+  else if (activeSubTab === 'bonus') body.innerHTML = bonusHTML();
   else body.innerHTML = ajustesHTML();
 }
 
@@ -238,6 +241,65 @@ function tarefasHTML() {
     <div class="pp-copy-grid">${copyCheckboxes}</div>
     <button class="pp-btn-add" id="pp-copy-confirm">COPIAR TAREFAS SELECIONADAS</button>
     <div class="pp-hint">⚠️ Copiar substitui totalmente as tarefas dos dias marcados.</div>`;
+}
+
+/* ── EXTRAS: METAS PERSONALIZADAS ────────────────────────── */
+function extrasHTML() {
+  const customGoals = state.config.customGoals || [];
+  const goalRows = customGoals.map((goal, idx) => {
+    const memName = goal.type === 'member_stars'
+      ? (state.config.members.find(m => m.id === goal.memberId)?.name || 'Desconhecido')
+      : 'FAMÍLIA INTEIRA';
+    return `
+      <div class="pp-goal-row" data-goal-idx="${idx}">
+        <div class="pp-goal-info">
+          <input class="pp-input" style="width:60px" data-gfield="icon" value="${goal.icon}" maxlength="2">
+          <input class="pp-input" style="flex:1" data-gfield="name" value="${goal.name}" placeholder="Nome da meta">
+          <input class="pp-input" style="width:80px" type="number" data-gfield="target" value="${goal.target}" placeholder="Meta">
+          <span style="color:var(--muted);font-size:11px">${memName}</span>
+          <button class="pp-btn-remove" data-remove-goal>✕</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="pp-section-title">🏆 METAS PERSONALIZADAS (TROFÉUS)</div>
+    <div class="pp-hint">Crie metas de estrelas para a família ou membros individuais.</div>
+    ${goalRows}
+    <button class="pp-btn-add" data-add-goal>+ ADICIONAR META</button>`;
+}
+
+/* ── BONUS: DAR ESTRELAS MANUAIS ────────────────────────── */
+function bonusHTML() {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const bonusToday = (state.bonusLog || []).filter(b => b.date === todayStr);
+
+  const historyRows = bonusToday.map((entry, idx) => {
+    const mem = state.config.members.find(m => m.id === entry.memberId);
+    return `
+      <div class="pp-bonus-entry">
+        <span>${mem?.avatar} ${mem?.name || 'Desconhecido'}</span>
+        <span style="color:var(--gold)">+${entry.stars} ⭐</span>
+        <span style="color:var(--muted);font-size:11px">${entry.reason}</span>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="pp-section-title">🌟 BÔNUS EXTRAS (FORA DA AGENDA)</div>
+    <div class="pp-hint">Reconheça comportamentos não agendados: limpou a sala, ajudou um irmão, etc.</div>
+
+    <div class="pp-section-title" style="margin-top:12px">CONCEDER BÔNUS AGORA</div>
+    <select id="pp-bonus-member" class="pp-input">
+      <option value="">— Escolha um membro —</option>
+      ${state.config.members.map(m => `<option value="${m.id}">${m.avatar} ${m.name}</option>`).join('')}
+    </select>
+    <input id="pp-bonus-stars" class="pp-input" type="number" min="1" max="10" value="1" placeholder="Quantas estrelas?">
+    <input id="pp-bonus-reason" class="pp-input" placeholder="Motivo (ex: limpou a sala)">
+    <button class="pp-btn-add" id="pp-bonus-give">✨ CONCEDER BÔNUS</button>
+
+    <div class="pp-section-title" style="margin-top:16px">HISTÓRICO DE HOJE (${bonusToday.length})</div>
+    ${historyRows || '<div class="pp-empty">Nenhum bônus concedido ainda hoje.</div>'}`;
 }
 
 /* ── AJUSTES ─────────────────────────────────────────────── */
@@ -350,6 +412,64 @@ export function wireParentPanelEvents() {
       if (confirm('Isso vai apagar TODOS os dados salvos (membros, tarefas, estrelas, conquistas). Tem certeza?')) {
         resetAllData().then(() => location.reload());
       }
+    } else if (e.target.matches('[data-add-goal]')) {
+      state.config.customGoals = state.config.customGoals || [];
+      state.config.customGoals.push({
+        id: genId('goal'),
+        type: 'family_stars',
+        memberId: null,
+        icon: '🏆',
+        name: 'NOVA META',
+        target: 50,
+        desc: 'Meta personalizada'
+      });
+      saveConfig();
+      renderParentPanel();
+    } else if (e.target.matches('[data-remove-goal]')) {
+      const idx = Number(e.target.closest('[data-goal-idx]').dataset.goalIdx);
+      if (!confirm('Remover esta meta?')) return;
+      (state.config.customGoals || []).splice(idx, 1);
+      saveConfig();
+      renderParentPanel();
+    } else if (e.target.id === 'pp-bonus-give') {
+      const memberId = document.getElementById('pp-bonus-member').value;
+      const starsVal = Number(document.getElementById('pp-bonus-stars').value);
+      const reason = document.getElementById('pp-bonus-reason').value.trim();
+
+      if (!memberId) { alert('Escolha um membro.'); return; }
+      if (starsVal < 1) { alert('Mínimo 1 estrela.'); return; }
+      if (!reason) { alert('Descreva o motivo.'); return; }
+
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      // Registra no histórico de bônus
+      if (!state.bonusLog) state.bonusLog = [];
+      state.bonusLog.push({
+        date: todayKey,
+        memberId,
+        stars: starsVal,
+        reason,
+        timestamp: new Date().toISOString()
+      });
+
+      // Concede as estrelas imediatamente
+      state.memberStars[memberId] = (state.memberStars[memberId] || 0) + starsVal;
+      state.totals[memberId] = (state.totals[memberId] || 0) + starsVal;
+
+      persistDayState();
+      persistTotals();
+      persistBonusLog();
+      checkAndUnlockBadges();
+
+      // Limpa o formulário e re-renderiza
+      document.getElementById('pp-bonus-member').value = '';
+      document.getElementById('pp-bonus-stars').value = '1';
+      document.getElementById('pp-bonus-reason').value = '';
+      renderParentPanel();
+      renderMembersBar();
+      renderMissions();
+      alert(`✨ Bônus de ${starsVal} ⭐ concedido a ${state.config.members.find(m => m.id === memberId)?.name}!`);
     }
   });
 
@@ -370,6 +490,15 @@ export function wireParentPanelEvents() {
       if (mem) {
         mem[e.target.dataset.mfield] = e.target.value;
         commitMembersChange();
+      }
+    } else if (e.target.matches('[data-gfield]')) {
+      const idx = Number(e.target.closest('[data-goal-idx]').dataset.goalIdx);
+      const goal = (state.config.customGoals || [])[idx];
+      if (goal) {
+        const field = e.target.dataset.gfield;
+        if (field === 'target') goal[field] = Number(e.target.value);
+        else goal[field] = e.target.value;
+        saveConfig();
       }
     } else if (e.target.matches('[data-msfield]')) {
       const idx = Number(e.target.closest('[data-mission-idx]').dataset.missionIdx);

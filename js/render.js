@@ -9,7 +9,7 @@
    persistidas.
    ════════════════════════════════════════════════════════════ */
 
-import { state, DAY_FULL, ALL_BADGES, timeToMin } from './state.js';
+import { state, DAY_FULL, ALL_BADGES, timeToMin, assigneeIds } from './state.js';
 
 /* ════════════════ RELÓGIO ════════════════ */
 export function updateClock() {
@@ -33,79 +33,83 @@ function getCurrentMissionId() {
   return current;
 }
 
-/* ════════════════ BARRA DE MEMBROS ════════════════ */
-let activeMemberFilter = 'all';
-
+/* ════════════════ BARRA DE MEMBROS (HEADER) ════════════════
+   Mostra apenas as estrelas de hoje de cada um — sem filtro,
+   já que o kanban mostra todas as colunas de uma vez. */
 export function renderMembersBar() {
   const bar = document.getElementById('members-bar');
   if (!bar) return;
-  bar.innerHTML = '';
-
-  const allPill = document.createElement('button');
-  allPill.className = 'member-pill member-all-pill' + (activeMemberFilter === 'all' ? ' active' : '');
-  allPill.innerHTML = `<span class="pill-avatar">👨‍👩‍👧‍👦</span><span class="pill-name">TODOS</span>`;
-  allPill.addEventListener('click', () => { activeMemberFilter = 'all'; renderMembersBar(); renderMissions(); });
-  bar.appendChild(allPill);
-
-  state.config.members.forEach(mem => {
-    const pill = document.createElement('button');
-    pill.className = 'member-pill' + (activeMemberFilter === mem.id ? ' active' : '');
-    const stars = state.memberStars[mem.id] || 0;
-    pill.innerHTML = `<span class="pill-avatar">${mem.avatar}</span><span class="pill-name">${mem.name}</span><span class="pill-stars">⭐${stars}</span>`;
-    pill.addEventListener('click', () => { activeMemberFilter = mem.id; renderMembersBar(); renderMissions(); });
-    bar.appendChild(pill);
-  });
+  bar.innerHTML = state.config.members.map(mem => `
+    <div class="member-pill" style="border-color:${mem.color};background:${mem.color}22">
+      <span class="pill-avatar">${mem.avatar}</span>
+      <span class="pill-name">${mem.name}</span>
+      <span class="pill-stars">⭐${state.memberStars[mem.id] || 0}</span>
+    </div>`).join('');
 }
 
-/* ════════════════ LISTA DE MISSÕES (aba principal) ════════════════ */
+/* ════════════════ QUADRO DE TAREFAS (NOVO: KANBAN POR MEMBRO) ════════════════ */
 export function renderMissions() {
-  const list = document.getElementById('mission-list');
-  if (!list) return;
-
-  const currentId = getCurrentMissionId();
-  const visible = state.missions.filter(ms =>
-    activeMemberFilter === 'all' || ms.assignee === 'compartilhada' || ms.assignee === activeMemberFilter
-  );
-
-  if (visible.length === 0) {
-    list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🏁</span>Nenhuma tarefa para hoje.</div>`;
-  } else {
-    list.innerHTML = visible.map(ms => missionCardHTML(ms, ms.id === currentId)).join('');
-  }
+  const container = document.getElementById('mission-list');
+  if (!container) return;
 
   updateProgress();
   updateHeaderStarsDisplay();
+
+  if (state.missions.length === 0) {
+    container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🏁</span>Nenhuma tarefa para hoje.</div>`;
+    return;
+  }
+
+  // Quadro kanban: coluna por membro
+  const html = `
+    <div class="missions-board">
+      ${state.config.members.map(mem => renderMemberColumn(mem)).join('')}
+    </div>`;
+  container.innerHTML = html;
 }
 
-function missionCardHTML(ms, isCurrent) {
-  const st = state.missionStatus[ms.id];
-  const doneClass = st && st.status === 'done' ? ' done' : '';
-  const failClass = st && st.status === 'fail' ? ' fail' : '';
-  const currentClass = isCurrent && !st ? ' current' : '';
-  const sharedClass = ms.assignee === 'compartilhada' ? ' shared' : '';
+function renderMemberColumn(member) {
+  const currentId = getCurrentMissionId();
+  // Tarefas que envolvem este membro (atribuídas a ele ou compartilhadas)
+  const memberMissions = state.missions.filter(ms => 
+    assigneeIds(ms).includes(member.id)
+  );
 
-  const assigneeTag = ms.assignee === 'compartilhada'
-    ? `<span class="assignee-tag shared-tag">🤝 TODOS</span>`
-    : (() => {
-        const mem = state.config.members.find(m => m.id === ms.assignee);
-        return mem ? `<span class="assignee-tag">${mem.avatar} ${mem.name}</span>` : '';
-      })();
+  const rows = memberMissions.map((ms, idx) => {
+    const st = state.missionStatus[ms.id];
+    const doneClass = st?.status === 'done' ? ' done' : '';
+    const failClass = st?.status === 'fail' ? ' fail' : '';
+    const currentClass = currentId === ms.id && !st ? ' current' : '';
+    const sharedMemberIds = assigneeIds(ms);
+    const isShared = sharedMemberIds.length > 1;
+
+    return `
+      <div class="task-cell${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}" data-mission-id="${ms.id}">
+        <div class="task-time">
+          <span class="task-start">${ms.start}</span>
+          <span class="task-end">${ms.end}</span>
+        </div>
+        <div class="task-emoji">${ms.emoji}</div>
+        <div class="task-body">
+          <div class="task-title">${ms.title}</div>
+          <div class="task-desc">${ms.desc}</div>
+        </div>
+        <div class="task-actions">
+          <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}">✓</button>
+          <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}">✕</button>
+        </div>
+      </div>`;
+  }).join('');
 
   return `
-    <div class="mission-card${sharedClass}${currentClass}${doneClass}${failClass}" data-mission-id="${ms.id}">
-      <div class="time-col">
-        <span class="t-start">${ms.start}</span>
-        <span class="t-end">${ms.end}</span>
+    <div class="board-column" style="--member-color:${member.color || '#ccc'}">
+      <div class="column-header">
+        <span class="column-avatar">${member.avatar}</span>
+        <span class="column-name">${member.name}</span>
+        <span class="column-stars">⭐${state.memberStars[member.id] || 0}</span>
       </div>
-      <span class="m-emoji">${ms.emoji}</span>
-      <div class="m-info">
-        <div class="m-title">${ms.title}</div>
-        <div class="m-desc">${ms.desc}</div>
-        <div class="m-assignee">${assigneeTag}</div>
-      </div>
-      <div class="btn-group">
-        <button class="btn-check btn-done${st && st.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}">✓</button>
-        <button class="btn-check btn-fail${st && st.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}">✕</button>
+      <div class="column-tasks">
+        ${rows || '<div class="column-empty">— sem tarefas hoje</div>'}
       </div>
     </div>`;
 }
@@ -165,11 +169,11 @@ export function renderTeamTab() {
 
   container.innerHTML = state.config.members.map(mem => {
     const doneCount = state.missions.filter(ms =>
-      (ms.assignee === mem.id || ms.assignee === 'compartilhada') &&
+      assigneeIds(ms).includes(mem.id) &&
       state.missionStatus[ms.id]?.status === 'done'
     ).length;
     return `
-      <div class="team-member-card">
+      <div class="team-member-card" style="border-left:4px solid ${mem.color}">
         <span class="team-member-avatar">${mem.avatar}</span>
         <div class="team-member-info">
           <div class="team-member-name">${mem.name}</div>
@@ -183,17 +187,30 @@ export function renderTeamTab() {
   }).join('');
 }
 
-/* ════════════════ ABA CONQUISTAS ════════════════ */
+/* ════════════════ ABA CONQUISTAS (FIXAS + METAS PERSONALIZADAS) ════════════════ */
 export function renderBadges() {
   const grid = document.getElementById('badge-grid');
   if (!grid) return;
-  grid.innerHTML = ALL_BADGES.map(b => {
-    const unlocked = state.badgesUnlocked.includes(b.id);
+
+  // Todas as conquistas: fixas (ALL_BADGES) + personalizadas (customGoals)
+  const allGoals = [
+    ...ALL_BADGES,
+    ...(state.config.customGoals || [])
+  ];
+
+  grid.innerHTML = allGoals.map(goal => {
+    const unlocked = state.badgesUnlocked.includes(goal.id);
+    const progress = goal.type === 'member_stars'
+      ? (state.totals[goal.memberId] || 0)
+      : Object.values(state.totals).reduce((a, b) => a + b, 0);
+    const pct = goal.target ? Math.round((progress / goal.target) * 100) : 0;
+
     return `
       <div class="badge-card${unlocked ? ' unlocked' : ''}">
-        <div class="badge-icon">${b.icon}</div>
-        <div class="badge-name">${b.name}</div>
-        <div class="badge-desc">${b.desc}</div>
+        <div class="badge-icon">${goal.icon}</div>
+        <div class="badge-name">${goal.name}</div>
+        <div class="badge-desc">${goal.desc}</div>
+        ${goal.target ? `<div class="badge-progress">${progress}/${goal.target}</div>` : ''}
       </div>`;
   }).join('');
 }

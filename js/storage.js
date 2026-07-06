@@ -83,6 +83,17 @@ export async function saveTotals(totals) {
   return writeRaw('totals', totals);
 }
 
+/* ════════════════ HISTÓRICO DE BÔNUS MANUAL ════════════════
+   Registro de estrelas dadas pelos pais fora da agenda (ex: o filho
+   ajudou sem ter sido pedido). Serve de histórico/auditoria — não
+   afeta as regras de missões. */
+export async function loadBonusLog() {
+  return readRaw('bonusLog') || [];
+}
+export async function saveBonusLog(log) {
+  return writeRaw('bonusLog', log);
+}
+
 /* ════════════════ EXPORTAR / IMPORTAR TUDO ════════════════
    Backup manual: o usuário baixa um .json com tudo que está
    salvo (config, dias, semanas, badges, totais) e pode
