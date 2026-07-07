@@ -13,6 +13,7 @@ import {
   state, DAY_FULL, DAY_NAMES, ALL_BADGES,
   timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
 } from './state.js';
+import { getFamilyName } from './storage.js';
 
 /* ════════════════ RELÓGIO ════════════════ */
 export function updateClock() {
@@ -180,6 +181,20 @@ function updateHeaderStarsDisplay() {
   el.textContent = total;
 }
 
+function updateHeaderTitle() {
+  const el = document.getElementById('header-title');
+  if (!el) return;
+  const familyName = (state.config && state.config.familyName) || getFamilyName();
+  el.textContent = familyName ? `🏁 GP — ${familyName.toUpperCase()}` : 'GP DA FAMÍLIA';
+}
+
+function updateTopbarHeight() {
+  const header = document.querySelector('.app-header');
+  if (!header) return;
+  const h = header.getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--topbar-h', h + 'px');
+}
+
 /* ════════════════ ABA ESTRELAS ════════════════ */
 export function renderStarsTab() {
   const totalEl = document.getElementById('team-stars-count');
@@ -315,6 +330,8 @@ const TAB_RENDERERS = {
 };
 
 export function renderDashboard() {
+  updateHeaderTitle();
+  updateTopbarHeight();
   renderMembersBar();
   renderMissions();
   renderStarsTab();

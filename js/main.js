@@ -34,6 +34,14 @@ async function init() {
   updateClock();
   switchTab('missions');
 
+  // Mantém a altura da topbar atualizada para o CSS var --topbar-h
+  window.addEventListener('resize', () => {
+    const header = document.querySelector('.app-header');
+    if (header) {
+      document.documentElement.style.setProperty('--topbar-h', header.getBoundingClientRect().height + 'px');
+    }
+  });
+
   // Relógio e destaque da tarefa atual — atualiza a cada 30s
   setInterval(() => {
     updateClock();
@@ -152,11 +160,15 @@ function wireBadgeActions() {
    ACESSO AO PAINEL DOS PAIS (engrenagem + teclado de PIN)
    ════════════════════════════════════════════════════════════ */
 function wireParentPanelAccess() {
-  const gearBtn = document.getElementById('btn-parent-panel');
-  if (gearBtn) gearBtn.addEventListener('click', () => {
+  function openPanel() {
     if (state.config?.skipParentPanelPin) openParentPanel();
     else openPinOverlay('panel');
-  });
+  }
+  // Botão mobile (no header) e botão desktop (rodapé da sidebar)
+  const gearBtn = document.getElementById('btn-parent-panel');
+  if (gearBtn) gearBtn.addEventListener('click', openPanel);
+  const sidebarGearBtn = document.getElementById('btn-parent-panel-sidebar');
+  if (sidebarGearBtn) sidebarGearBtn.addEventListener('click', openPanel);
 
   const pinCancelBtn = document.getElementById('btn-pin-cancel');
   if (pinCancelBtn) pinCancelBtn.addEventListener('click', closePinOverlay);
