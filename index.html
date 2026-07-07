@@ -184,8 +184,76 @@
 <div id="toast" class="toast" style="display:none"></div>
 <div id="confetti-container" class="confetti-container"></div>
 
+<!-- Popup de configuração inicial da família -->
+<div id="family-setup-overlay" class="overlay" style="display:none">
+  <div class="popup" style="text-align:center">
+    <div class="popup-emoji">🏎️</div>
+    <div class="popup-title" style="margin-top:8px;margin-bottom:6px">BEM-VINDOS AO GP DA FAMÍLIA!</div>
+    <div class="rep-msg" style="margin-bottom:16px">Como se chama a sua família?<br><span style="font-size:11px;color:var(--muted)">(ex: Família Silva, Os Rodrigues)</span></div>
+    <input
+      id="family-setup-input"
+      class="pp-input"
+      maxlength="40"
+      placeholder="NOME DA FAMÍLIA"
+      autocomplete="off"
+      style="text-align:center;font-size:16px;font-weight:800;letter-spacing:.5px;margin-bottom:14px"
+    >
+    <div id="family-setup-error" style="color:var(--red);font-size:11px;font-weight:700;min-height:16px;margin-bottom:8px"></div>
+    <button id="family-setup-confirm" class="btn-primary" style="width:100%;font-size:14px;padding:13px">
+      🏁 VAMOS COMEÇAR!
+    </button>
+  </div>
+</div>
+
 <!-- Supabase SDK (necessário para storage.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script type="module" src="js/main.js"></script>
+
+<!-- Inicialização da família — controla quando main.js::init() roda -->
+<script type="module">
+  import { getFamilyId, setFamilyId, slugify } from './js/storage.js';
+
+  const LS_KEY   = 'gp_family_id';
+  const overlay  = document.getElementById('family-setup-overlay');
+  const input    = document.getElementById('family-setup-input');
+  const confirmBtn = document.getElementById('family-setup-confirm');
+  const errorEl  = document.getElementById('family-setup-error');
+
+  /* Carrega main.js e chama init() imediatamente.
+     Como main.js exporta init (não usa DOMContentLoaded),
+     isso funciona tanto na primeira abertura quanto nas seguintes. */
+  async function startApp() {
+    const { init } = await import('./js/main.js');
+    await init();
+  }
+
+  async function confirmFamily() {
+    const raw = input.value.trim();
+    if (!raw) {
+      errorEl.textContent = 'Por favor, informe o nome da família.';
+      input.focus();
+      return;
+    }
+    const id = slugify(raw);
+    if (!id) {
+      errorEl.textContent = 'Nome inválido. Use letras e números.';
+      input.focus();
+      return;
+    }
+    setFamilyId(raw);
+    overlay.style.display = 'none';
+    await startApp();
+  }
+
+  confirmBtn.addEventListener('click', confirmFamily);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmFamily(); });
+
+  if (localStorage.getItem(LS_KEY)) {
+    // Família já conhecida — inicia direto
+    startApp();
+  } else {
+    overlay.style.display = 'flex';
+    input.focus();
+  }
+</script>
 </body>
 </html>

@@ -188,4 +188,4 @@ function wirePinApprovalBridge() {
 /* ════════════════════════════════════════════════════════════
    START
    ════════════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', init);
+export { init };

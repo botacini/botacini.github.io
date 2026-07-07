@@ -16,6 +16,7 @@ import {
   loadBadges, saveBadges,
   loadTotals, saveTotals,
   loadBonusLog, saveBonusLog,
+  getFamilyName,
 } from './storage.js';
 
 /* ════════════════ CONSTANTES ════════════════ */
@@ -206,6 +207,12 @@ export async function loadState() {
   // personalizadas não têm esses campos — preenche com valores padrão e
   // regrava, sem tocar em mais nada (nunca destrutivo).
   let needsResave = false;
+
+  // Garante que familyName está sincronizado com o localStorage
+  if (!state.config.familyName) {
+    state.config.familyName = getFamilyName();
+    needsResave = true;
+  }
   if (!Array.isArray(state.config.customGoals)) {
     state.config.customGoals = [];
     needsResave = true;
