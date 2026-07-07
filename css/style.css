@@ -559,6 +559,12 @@ button { font-family: inherit; cursor: pointer; }
   border-top: 2px solid var(--line);
   z-index: 20;
 }
+/* No mobile os wrappers internos são transparentes —
+   os botões ficam lado a lado como filhos diretos do flex */
+.tab-bar-tabs {
+  display: contents; /* expõe os filhos direto ao flex do pai */
+}
+.tab-bar-bottom { display: none; } /* botão de config só aparece no desktop */
 .tab-btn {
   flex: 1;
   background: none;
