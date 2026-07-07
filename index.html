@@ -12,8 +12,9 @@
   <header class="app-header">
     <div class="header-top">
       <span class="header-flag">🏁</span>
-      <h1 class="header-title">GP DA FAMÍLIA</h1>
+      <h1 class="header-title" id="header-title">GP DA FAMÍLIA</h1>
       <span id="live-clock" class="header-clock">00:00</span>
+      <!-- botão visível só no mobile -->
       <button id="btn-parent-panel" class="header-gear" aria-label="Painel dos pais">⚙️</button>
     </div>
     <div class="header-stars">
@@ -22,6 +23,9 @@
       <span>ESTRELAS DO TIME</span>
     </div>
   </header>
+
+  <!-- wrapper que envolve sidebar + conteúdo abaixo da topbar (desktop) -->
+  <div class="app-body">
 
   <div id="members-bar" class="members-bar"></div>
 
@@ -68,22 +72,33 @@
 
   </main>
 
+  </div><!-- /.app-body -->
+
   <nav class="tab-bar">
-    <button id="tab-missions" class="tab-btn active" data-tab="missions">
-      <span class="tab-icon">🏁</span><span class="tab-label">MISSÕES</span>
-    </button>
-    <button id="tab-stars" class="tab-btn" data-tab="stars">
-      <span class="tab-icon">⭐</span><span class="tab-label">ESTRELAS</span>
-    </button>
-    <button id="tab-team" class="tab-btn" data-tab="team">
-      <span class="tab-icon">👨‍👩‍👧‍👦</span><span class="tab-label">TIME</span>
-    </button>
-    <button id="tab-badges" class="tab-btn" data-tab="badges">
-      <span class="tab-icon">🏆</span><span class="tab-label">CONQUISTAS</span>
-    </button>
-    <button id="tab-week" class="tab-btn" data-tab="week">
-      <span class="tab-icon">📅</span><span class="tab-label">SEMANA</span>
-    </button>
+    <!-- abas no topo da sidebar (desktop) -->
+    <div class="tab-bar-tabs">
+      <button id="tab-missions" class="tab-btn active" data-tab="missions">
+        <span class="tab-icon">🏁</span><span class="tab-label">MISSÕES</span>
+      </button>
+      <button id="tab-stars" class="tab-btn" data-tab="stars">
+        <span class="tab-icon">⭐</span><span class="tab-label">ESTRELAS</span>
+      </button>
+      <button id="tab-team" class="tab-btn" data-tab="team">
+        <span class="tab-icon">👨‍👩‍👧‍👦</span><span class="tab-label">TIME</span>
+      </button>
+      <button id="tab-badges" class="tab-btn" data-tab="badges">
+        <span class="tab-icon">🏆</span><span class="tab-label">CONQUISTAS</span>
+      </button>
+      <button id="tab-week" class="tab-btn" data-tab="week">
+        <span class="tab-icon">📅</span><span class="tab-label">SEMANA</span>
+      </button>
+    </div>
+    <!-- botão de configurações no rodapé da sidebar (desktop) -->
+    <div class="tab-bar-bottom">
+      <button id="btn-parent-panel-sidebar" class="sidebar-gear-btn" aria-label="Painel dos pais">
+        <span class="sidebar-gear-icon">⚙️</span><span>CONFIGURAÇÕES</span>
+      </button>
+    </div>
   </nav>
 
 </div>
