@@ -32,21 +32,26 @@
    SUPABASE_URL  → Settings → API → Project URL
    SUPABASE_PUBLISHABLE_KEY → Settings → API → anon / public  */
 
-const SUPABASE_URL = 'https://yomngetgdfnjipfdckzp.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2mtzblJVo_4mIS_rB82C9w_4X3ozk50';
+const SUPABASE_URL = 'COLOQUE_SUA_URL_AQUI';
+const SUPABASE_PUBLISHABLE_KEY = 'COLOQUE_SUA_CHAVE_AQUI';
 
 /* ════════════════ IDENTIFICADOR DA FAMÍLIA ════════════════
    Atualmente fixo — será substituído por URL ou login futuramente. */
 const CURRENT_FAMILY = 'familia_a';
 
-/* ════════════════ CLIENTE SUPABASE ════════════════ */
-// O cliente é criado uma única vez e reutilizado por todas as funções.
-// Depende do CDN do Supabase carregado antes deste módulo no index.html.
+/* ════════════════ CLIENTE SUPABASE (SINGLETON) ════════════════
+   Criado uma única vez na primeira chamada e reutilizado sempre.
+   Evita o aviso "Multiple GoTrueClient instances detected"
+   que aparece quando createClient() é chamado mais de uma vez
+   no mesmo contexto de browser. */
+let _client = null;
 function getClient() {
+  if (_client) return _client;
   if (typeof window.supabase === 'undefined' || typeof window.supabase.createClient !== 'function') {
     throw new Error('[storage] Supabase SDK não encontrado. Verifique se o CDN foi carregado no index.html.');
   }
-  return window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  _client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  return _client;
 }
 
 // Cache em memória do blob JSON da família, para evitar múltiplos
