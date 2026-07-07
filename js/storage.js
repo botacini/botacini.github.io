@@ -32,8 +32,8 @@
    SUPABASE_URL  → Settings → API → Project URL
    SUPABASE_PUBLISHABLE_KEY → Settings → API → anon / public  */
 
-const SUPABASE_URL = 'COLOQUE_SUA_URL_AQUI';
-const SUPABASE_PUBLISHABLE_KEY = 'COLOQUE_SUA_CHAVE_AQUI';
+const SUPABASE_URL = 'https://yomngetgdfnjipfdckzp.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2mtzblJVo_4mIS_rB82C9w_4X3ozk50';
 
 /* ════════════════ IDENTIFICADOR DA FAMÍLIA ════════════════
    Atualmente fixo — será substituído por URL ou login futuramente. */
