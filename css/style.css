@@ -210,14 +210,18 @@ button { font-family: inherit; cursor: pointer; }
   flex-direction: row;
   flex-wrap: nowrap;
   gap: 12px;
-  padding: 2px;
+  padding: 2px 2px 10px;
   overflow-x: auto;
   overflow-y: visible;
   align-items: flex-start;
 
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  scrollbar-color: var(--gold) var(--card2);
 }
+.missions-board::-webkit-scrollbar        { height: 6px; }
+.missions-board::-webkit-scrollbar-track  { background: var(--card2); border-radius: 3px; }
+.missions-board::-webkit-scrollbar-thumb  { background: var(--gold);  border-radius: 3px; }
 .missions-board.consultation-mode .task-cell {
   opacity: .62;
 }
@@ -797,10 +801,129 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 12px;
 }
 
-/* ════════════════ RESPONSIVO ════════════════ */
+/* ════════════════ RESPONSIVO — MOBILE PEQUENO ════════════════ */
 @media (max-width: 360px) {
   .header-title { font-size: 15px; }
   .m-title { font-size: 12px; }
+}
+
+/* ════════════════ RESPONSIVO — DESKTOP (≥ 768px) ════════════════
+   No desktop o app deixa de ser uma coluna estreita centralizada
+   e passa a ocupar a tela de forma mais ampla, com:
+   - Sidebar fixa à esquerda (header + tab-bar vertical)
+   - Área de conteúdo principal à direita, mais larga
+   - Kanban com colunas maiores que aproveitam o espaço extra
+   ════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+
+  /* Layout raiz: sidebar + conteúdo lado a lado */
+  #app {
+    max-width: 100%;
+    min-height: 100vh;
+    flex-direction: row;
+    padding-bottom: 0;
+  }
+
+  /* ── Sidebar esquerda ── */
+  .app-header {
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+    min-height: 100vh;
+    border-bottom: none;
+    border-right: 3px solid var(--red);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px 100px; /* padding-bottom deixa espaço para tab-bar */
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Faixa quadriculada fica na lateral direita do header */
+  .app-header::after {
+    left: auto; right: -2px; top: 0; bottom: 0;
+    width: 6px; height: auto;
+    background: repeating-linear-gradient(180deg, #fff 0 10px, #000 10px 20px);
+  }
+
+  .header-top { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .header-flag { font-size: 28px; }
+  .header-title { font-size: 15px; letter-spacing: 1px; }
+  .header-clock { font-size: 20px; align-self: stretch; text-align: center; padding: 8px; }
+  .header-stars { margin-top: 16px; flex-direction: column; align-items: flex-start; gap: 4px; }
+  #header-team-stars { font-size: 28px; }
+
+  /* Members bar vira uma lista vertical dentro do sidebar */
+  .members-bar {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+    background: transparent;
+    border-bottom: none;
+    border-top: 1px solid var(--line);
+    padding: 12px 0 0;
+    gap: 6px;
+  }
+  .member-pill { border-radius: 10px; padding: 8px 10px; font-size: 11px; }
+
+  /* Tab-bar vira barra lateral vertical fixada na base do sidebar */
+  .tab-bar {
+    position: fixed;
+    left: 0; bottom: 0; top: auto; right: auto;
+    width: 220px;
+    max-width: 220px;
+    flex-direction: column;
+    height: auto;
+    border-top: none;
+    border-right: 3px solid var(--line);
+    border-top: 1px solid var(--line);
+    padding: 6px 0;
+    z-index: 20;
+  }
+  .tab-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 0;
+  }
+  .tab-icon { font-size: 16px; }
+  .tab-label { font-size: 11px; letter-spacing: .4px; }
+
+  /* ── Área de conteúdo ── */
+  .app-main {
+    flex: 1;
+    min-width: 0;
+    padding: 20px 24px 20px;
+    overflow-y: auto;
+    min-height: 100vh;
+  }
+
+  /* Kanban: colunas maiores no desktop */
+  .board-column {
+    flex: 0 0 200px;
+    min-width: 200px;
+  }
+
+  .task-cell { font-size: 11px; padding: 8px; gap: 4px; }
+  .task-emoji { font-size: 16px; }
+  .task-title { font-size: 11px; }
+  .task-desc  { font-size: 10px; }
+  .task-btn   { font-size: 10px; padding: 4px; }
+
+  /* Navegação de dias maior */
+  .day-nav-btn { padding: 10px 0; font-size: 11px; }
+
+  /* Cards de estrelas em grid de 3 colunas */
+  .member-stars-grid { grid-template-columns: repeat(3, 1fr); }
+
+  /* Painel dos pais: popup maior */
+  .parent-panel-popup { max-width: 560px; max-height: 90vh; }
+
+  /* Popup genérico mais largo */
+  .popup { max-width: 460px; }
 }
 
 /* ════════════════ VISÃO EM COLUNAS ════════════════ */
