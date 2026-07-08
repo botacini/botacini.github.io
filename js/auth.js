@@ -65,8 +65,10 @@ export async function initialize() {
  * Retorna true se existe uma família/sessão ativa.
  */
 export function hasSession() {
-  const id = _session ? _session.familyId : localStorage.getItem(LS_FAMILY_ID);
-  return !!id && id !== 'familia_a' || !!localStorage.getItem(LS_FAMILY_ID);
+  // Há sessão se o family_id foi explicitamente gravado pelo usuário.
+  // Não depende do valor do cache — lê direto da fonte para ser seguro
+  // mesmo se chamado antes de initialize().
+  return !!localStorage.getItem(LS_FAMILY_ID);
 }
 
 /**

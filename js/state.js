@@ -16,8 +16,8 @@ import {
   loadBadges, saveBadges,
   loadTotals, saveTotals,
   loadBonusLog, saveBonusLog,
-  getFamilyName,
 } from './storage.js';
+import { getCurrentFamilyName } from './auth.js';
 
 /* ════════════════ CONSTANTES ════════════════ */
 export const DAY_NAMES = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
@@ -210,7 +210,7 @@ export async function loadState() {
 
   // Garante que familyName está sincronizado com o localStorage
   if (!state.config.familyName) {
-    state.config.familyName = getFamilyName();
+    state.config.familyName = getCurrentFamilyName();
     needsResave = true;
   }
   if (!Array.isArray(state.config.customGoals)) {
