@@ -183,13 +183,56 @@ export async function toggleCustomGoalReward(goalId) {
 }
 
 export function openParentPanel() {
-  activeSubTab = 'membros';
+  openParentPanelOnTab('membros');
+}
+
+export function openParentPanelOnTab(tab) {
+  activeSubTab = tab;
   currentEditDay = todayDow();
   copyTargets = new Set();
   renderParentPanel();
   const overlay = document.getElementById('parent-panel-overlay');
   if (overlay) overlay.style.display = 'flex';
+
+  // Se abriu numa aba de ação rápida, executa a ação imediatamente
+  if (tab === 'tarefas') _triggerAddMission();
+  else if (tab === 'extras') _triggerAddGoal();
+  else if (tab === 'bonus') { /* o formulário já aparece renderizado */ }
 }
+
+// Dispara a criação de uma nova tarefa logo após abrir o painel na aba tarefas
+function _triggerAddMission() {
+  state.config.missionsByDay[currentEditDay] = state.config.missionsByDay[currentEditDay] || [];
+  state.config.missionsByDay[currentEditDay].push({
+    id: _genId('ms'), start: '08:00', end: '08:30', emoji: '⭐',
+    title: 'NOVA TAREFA', desc: 'DESCRIÇÃO', assignee: 'compartilhada',
+  });
+  _sortDay(currentEditDay);
+  commitMissionsChange();
+  renderParentPanel();
+}
+
+// Dispara a criação de uma nova conquista logo após abrir o painel na aba extras
+function _triggerAddGoal() {
+  state.config.customGoals = state.config.customGoals || [];
+  state.config.customGoals.push({
+    id: _genId('goal'),
+    type: 'family_stars',
+    memberId: null,
+    icon: '🏆',
+    name: 'NOVA META',
+    target: 50,
+    desc: 'Meta personalizada',
+    redeemed: false,
+    claimedStars: 0,
+  });
+  saveConfig();
+  renderDashboard();
+  renderParentPanel();
+}
+
+function _genId(prefix) { return genId(prefix); }
+function _sortDay(dow) { sortDay(dow); }
 
 export function closeParentPanel() {
   const overlay = document.getElementById('parent-panel-overlay');
@@ -207,6 +250,8 @@ function renderParentPanel() {
   else if (activeSubTab === 'extras') body.innerHTML = extrasHTML();
   else if (activeSubTab === 'bonus') body.innerHTML = bonusHTML();
   else body.innerHTML = ajustesHTML();
+  // Nota: tarefas/extras/bonus ainda são renderizadas quando acessadas via
+  // openParentPanelOnTab() — os botões físicos no painel foram removidos do HTML.
 }
 
 /* ── MEMBROS ─────────────────────────────────────────────── */

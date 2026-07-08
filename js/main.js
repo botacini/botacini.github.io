@@ -20,7 +20,7 @@ import {
 } from './missions.js';
 import {
   openPinOverlay, closePinOverlay, pressPinDigit, pressPinBackspace,
-  openParentPanel, toggleCustomGoalReward,
+  openParentPanel, openParentPanelOnTab, toggleCustomGoalReward,
   closeParentPanel, wireParentPanelEvents,
 } from './parent-panel.js';
 
@@ -34,14 +34,6 @@ async function init() {
   updateClock();
   switchTab('missions');
 
-  // Mantém a altura da topbar atualizada para o CSS var --topbar-h
-  window.addEventListener('resize', () => {
-    const header = document.querySelector('.app-header');
-    if (header) {
-      document.documentElement.style.setProperty('--topbar-h', header.getBoundingClientRect().height + 'px');
-    }
-  });
-
   // Relógio e destaque da tarefa atual — atualiza a cada 30s
   setInterval(() => {
     updateClock();
@@ -51,6 +43,7 @@ async function init() {
   wireMissionList();
   wireTabBar();
   wireFinalizeButton();
+  wireShortcutButtons();
   wireBonusPopup();
   wireReportPopup();
   wireWeekPanel();
@@ -69,6 +62,11 @@ function wireMissionList() {
   const list = document.getElementById('mission-list');
   if (!list) return;
   list.addEventListener('click', (e) => {
+    // Botão de atalho "Adicionar nova tarefa" (renderizado dentro do mission-list)
+    if (e.target.closest('#btn-add-mission-shortcut')) {
+      openParentPanelOnTab('tarefas');
+      return;
+    }
     const dateBtn = e.target.closest('[data-date-key]');
     if (dateBtn) {
       void selectDashboardDate(dateBtn.dataset.dateKey);
@@ -77,6 +75,21 @@ function wireMissionList() {
     const btn = e.target.closest('[data-mission-action]');
     if (!btn) return;
     handleMissionAction(btn.dataset.missionId, btn.dataset.missionAction);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   BOTÕES DE ATALHO (Estrelas, Conquistas)
+   Os listeners ficam no documento pois os botões são injetados
+   dinamicamente pelos renderers — delegação no document.body.
+   ════════════════════════════════════════════════════════════ */
+function wireShortcutButtons() {
+  document.body.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-add-goal-shortcut')) {
+      openParentPanelOnTab('extras');
+    } else if (e.target.closest('#btn-bonus-shortcut')) {
+      openParentPanelOnTab('bonus');
+    }
   });
 }
 
@@ -160,15 +173,11 @@ function wireBadgeActions() {
    ACESSO AO PAINEL DOS PAIS (engrenagem + teclado de PIN)
    ════════════════════════════════════════════════════════════ */
 function wireParentPanelAccess() {
-  function openPanel() {
+  const gearBtn = document.getElementById('btn-parent-panel');
+  if (gearBtn) gearBtn.addEventListener('click', () => {
     if (state.config?.skipParentPanelPin) openParentPanel();
     else openPinOverlay('panel');
-  }
-  // Botão mobile (no header) e botão desktop (rodapé da sidebar)
-  const gearBtn = document.getElementById('btn-parent-panel');
-  if (gearBtn) gearBtn.addEventListener('click', openPanel);
-  const sidebarGearBtn = document.getElementById('btn-parent-panel-sidebar');
-  if (sidebarGearBtn) sidebarGearBtn.addEventListener('click', openPanel);
+  });
 
   const pinCancelBtn = document.getElementById('btn-pin-cancel');
   if (pinCancelBtn) pinCancelBtn.addEventListener('click', closePinOverlay);
@@ -200,4 +209,4 @@ function wirePinApprovalBridge() {
 /* ════════════════════════════════════════════════════════════
    START
    ════════════════════════════════════════════════════════════ */
-export { init };
+document.addEventListener('DOMContentLoaded', init);

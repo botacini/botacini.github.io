@@ -13,7 +13,6 @@ import {
   state, DAY_FULL, DAY_NAMES, ALL_BADGES,
   timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
 } from './state.js';
-import { getCurrentFamilyName } from './auth.js';
 
 /* ════════════════ RELÓGIO ════════════════ */
 export function updateClock() {
@@ -100,6 +99,7 @@ export function renderMissions() {
     ${renderDateNav()}
     ${renderDayBanner()}
     ${boardHTML}
+    ${isSelectedDateToday() ? `<button id="btn-add-mission-shortcut" class="btn-finalize-week" style="margin-top:10px">➕ ADICIONAR NOVA TAREFA</button>` : ''}
   `;
 }
 
@@ -181,20 +181,6 @@ function updateHeaderStarsDisplay() {
   el.textContent = total;
 }
 
-function updateHeaderTitle() {
-  const el = document.getElementById('header-title');
-  if (!el) return;
-  const familyName = (state.config && state.config.familyName) || getCurrentFamilyName();
-  el.textContent = familyName ? `🏁 GP — ${familyName.toUpperCase()}` : 'GP DA FAMÍLIA';
-}
-
-function updateTopbarHeight() {
-  const header = document.querySelector('.app-header');
-  if (!header) return;
-  const h = header.getBoundingClientRect().height;
-  document.documentElement.style.setProperty('--topbar-h', h + 'px');
-}
-
 /* ════════════════ ABA ESTRELAS ════════════════ */
 export function renderStarsTab() {
   const totalEl = document.getElementById('team-stars-count');
@@ -216,6 +202,20 @@ export function renderStarsTab() {
       <div class="member-star-count">⭐ ${state.memberStars[mem.id] || 0}</div>
       <div class="member-star-sub">${isSelectedDateToday() ? 'HOJE' : selectedDateLabel()}</div>
     </div>`).join('');
+
+  // Botão de atalho fora do grid
+  const starsPanel = document.getElementById('panel-stars');
+  if (starsPanel) {
+    let shortcutBtn = document.getElementById('btn-bonus-shortcut');
+    if (!shortcutBtn) {
+      shortcutBtn = document.createElement('button');
+      shortcutBtn.id = 'btn-bonus-shortcut';
+      shortcutBtn.className = 'btn-finalize-week';
+      shortcutBtn.style.marginTop = '14px';
+      shortcutBtn.textContent = '⭐ CONCEDER BÔNUS';
+      starsPanel.appendChild(shortcutBtn);
+    }
+  }
 }
 
 /* ════════════════ ABA TIME ════════════════ */
@@ -275,6 +275,20 @@ export function renderBadges() {
   }).join('');
 
   grid.innerHTML = fixedBadgesHTML + customGoalsHTML;
+
+  // Botão de atalho fora do grid
+  const badgesPanel = document.getElementById('panel-badges');
+  if (badgesPanel) {
+    let shortcutBtn = document.getElementById('btn-add-goal-shortcut');
+    if (!shortcutBtn) {
+      shortcutBtn = document.createElement('button');
+      shortcutBtn.id = 'btn-add-goal-shortcut';
+      shortcutBtn.className = 'btn-finalize-week';
+      shortcutBtn.style.marginTop = '14px';
+      shortcutBtn.textContent = '🏆 CRIAR NOVA CONQUISTA';
+      badgesPanel.appendChild(shortcutBtn);
+    }
+  }
 }
 
 /* ════════════════ ABA SEMANA ════════════════ */
@@ -330,8 +344,6 @@ const TAB_RENDERERS = {
 };
 
 export function renderDashboard() {
-  updateHeaderTitle();
-  updateTopbarHeight();
   renderMembersBar();
   renderMissions();
   renderStarsTab();
