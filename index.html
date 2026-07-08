@@ -12,9 +12,8 @@
   <header class="app-header">
     <div class="header-top">
       <span class="header-flag">🏁</span>
-      <h1 class="header-title" id="header-title">GP DA FAMÍLIA</h1>
+      <h1 class="header-title">GP DA FAMÍLIA</h1>
       <span id="live-clock" class="header-clock">00:00</span>
-      <!-- botão visível só no mobile -->
       <button id="btn-parent-panel" class="header-gear" aria-label="Painel dos pais">⚙️</button>
     </div>
     <div class="header-stars">
@@ -23,9 +22,6 @@
       <span>ESTRELAS DO TIME</span>
     </div>
   </header>
-
-  <!-- wrapper que envolve sidebar + conteúdo abaixo da topbar (desktop) -->
-  <div class="app-body">
 
   <div id="members-bar" class="members-bar"></div>
 
@@ -72,33 +68,22 @@
 
   </main>
 
-  </div><!-- /.app-body -->
-
   <nav class="tab-bar">
-    <!-- abas no topo da sidebar (desktop) -->
-    <div class="tab-bar-tabs">
-      <button id="tab-missions" class="tab-btn active" data-tab="missions">
-        <span class="tab-icon">🏁</span><span class="tab-label">MISSÕES</span>
-      </button>
-      <button id="tab-stars" class="tab-btn" data-tab="stars">
-        <span class="tab-icon">⭐</span><span class="tab-label">ESTRELAS</span>
-      </button>
-      <button id="tab-team" class="tab-btn" data-tab="team">
-        <span class="tab-icon">👨‍👩‍👧‍👦</span><span class="tab-label">TIME</span>
-      </button>
-      <button id="tab-badges" class="tab-btn" data-tab="badges">
-        <span class="tab-icon">🏆</span><span class="tab-label">CONQUISTAS</span>
-      </button>
-      <button id="tab-week" class="tab-btn" data-tab="week">
-        <span class="tab-icon">📅</span><span class="tab-label">SEMANA</span>
-      </button>
-    </div>
-    <!-- botão de configurações no rodapé da sidebar (desktop) -->
-    <div class="tab-bar-bottom">
-      <button id="btn-parent-panel-sidebar" class="sidebar-gear-btn" aria-label="Painel dos pais">
-        <span class="sidebar-gear-icon">⚙️</span><span>CONFIGURAÇÕES</span>
-      </button>
-    </div>
+    <button id="tab-missions" class="tab-btn active" data-tab="missions">
+      <span class="tab-icon">🏁</span><span class="tab-label">MISSÕES</span>
+    </button>
+    <button id="tab-stars" class="tab-btn" data-tab="stars">
+      <span class="tab-icon">⭐</span><span class="tab-label">ESTRELAS</span>
+    </button>
+    <button id="tab-team" class="tab-btn" data-tab="team">
+      <span class="tab-icon">👨‍👩‍👧‍👦</span><span class="tab-label">TIME</span>
+    </button>
+    <button id="tab-badges" class="tab-btn" data-tab="badges">
+      <span class="tab-icon">🏆</span><span class="tab-label">CONQUISTAS</span>
+    </button>
+    <button id="tab-week" class="tab-btn" data-tab="week">
+      <span class="tab-icon">📅</span><span class="tab-label">SEMANA</span>
+    </button>
   </nav>
 
 </div>
@@ -187,9 +172,6 @@
     </div>
     <div class="pp-subtabs">
       <button class="pp-subtab active" data-sub="membros">👨‍👩‍👧‍👦 MEMBROS</button>
-      <button class="pp-subtab" data-sub="tarefas">🏁 TAREFAS</button>
-      <button class="pp-subtab" data-sub="extras">🏆 EXTRAS</button>
-      <button class="pp-subtab" data-sub="bonus">🌟 BÔNUS</button>
       <button class="pp-subtab" data-sub="ajustes">🔧 AJUSTES</button>
     </div>
     <div id="parent-panel-body" class="pp-body"></div>
@@ -199,75 +181,8 @@
 <div id="toast" class="toast" style="display:none"></div>
 <div id="confetti-container" class="confetti-container"></div>
 
-<!-- Popup de configuração inicial da família -->
-<div id="family-setup-overlay" class="overlay" style="display:none">
-  <div class="popup" style="text-align:center">
-    <div class="popup-emoji">🏎️</div>
-    <div class="popup-title" style="margin-top:8px;margin-bottom:6px">BEM-VINDOS AO GP DA FAMÍLIA!</div>
-    <div class="rep-msg" style="margin-bottom:16px">Como se chama a sua família?<br><span style="font-size:11px;color:var(--muted)">(ex: Família Silva, Os Rodrigues)</span></div>
-    <input
-      id="family-setup-input"
-      class="pp-input"
-      maxlength="40"
-      placeholder="NOME DA FAMÍLIA"
-      autocomplete="off"
-      style="text-align:center;font-size:16px;font-weight:800;letter-spacing:.5px;margin-bottom:14px"
-    >
-    <div id="family-setup-error" style="color:var(--red);font-size:11px;font-weight:700;min-height:16px;margin-bottom:8px"></div>
-    <button id="family-setup-confirm" class="btn-primary" style="width:100%;font-size:14px;padding:13px">
-      🏁 VAMOS COMEÇAR!
-    </button>
-  </div>
-</div>
-
 <!-- Supabase SDK (necessário para storage.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-<!-- Inicialização da família — controla quando main.js::init() roda -->
-<script type="module">
-  import { initialize, hasSession, setCurrentFamily } from './js/auth.js';
-
-  const overlay    = document.getElementById('family-setup-overlay');
-  const input      = document.getElementById('family-setup-input');
-  const confirmBtn = document.getElementById('family-setup-confirm');
-  const errorEl    = document.getElementById('family-setup-error');
-
-  /* Carrega main.js e chama init() imediatamente.
-     Como main.js exporta init (não usa DOMContentLoaded),
-     isso funciona tanto na primeira abertura quanto nas seguintes. */
-  async function startApp() {
-    const { init } = await import('./js/main.js');
-    await init();
-  }
-
-  async function confirmFamily() {
-    const raw = input.value.trim();
-    if (!raw) {
-      errorEl.textContent = 'Por favor, informe o nome da família.';
-      input.focus();
-      return;
-    }
-    const ok = setCurrentFamily(raw);
-    if (!ok) {
-      errorEl.textContent = 'Nome inválido. Use letras e números.';
-      input.focus();
-      return;
-    }
-    overlay.style.display = 'none';
-    await startApp();
-  }
-
-  confirmBtn.addEventListener('click', confirmFamily);
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmFamily(); });
-
-  // initialize() restaura a sessão; hasSession() diz se há família ativa
-  await initialize();
-  if (hasSession()) {
-    startApp();
-  } else {
-    overlay.style.display = 'flex';
-    input.focus();
-  }
-</script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
