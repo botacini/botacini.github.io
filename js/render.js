@@ -13,7 +13,7 @@ import {
   state, DAY_FULL, DAY_NAMES, ALL_BADGES,
   timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
 } from './state.js';
-import { getFamilyName } from './storage.js';
+import { getCurrentFamilyName } from './auth.js';
 
 /* ════════════════ RELÓGIO ════════════════ */
 export function updateClock() {
@@ -184,7 +184,7 @@ function updateHeaderStarsDisplay() {
 function updateHeaderTitle() {
   const el = document.getElementById('header-title');
   if (!el) return;
-  const familyName = (state.config && state.config.familyName) || getFamilyName();
+  const familyName = (state.config && state.config.familyName) || getCurrentFamilyName();
   el.textContent = familyName ? `🏁 GP — ${familyName.toUpperCase()}` : 'GP DA FAMÍLIA';
 }
 

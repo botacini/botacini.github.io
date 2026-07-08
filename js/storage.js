@@ -36,52 +36,11 @@ const SUPABASE_URL = 'https://yomngetgdfnjipfdckzp.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2mtzblJVo_4mIS_rB82C9w_4X3ozk50';
 
 /* ════════════════ IDENTIFICADOR DA FAMÍLIA ════════════════
-   Lido do localStorage; definido na primeira abertura pelo popup
-   de boas-vindas (index.html). Exportado para que outros módulos
-   possam ler o nome amigável sem precisar bater no Supabase. */
+   Toda a lógica de identidade da família vive em auth.js.
+   storage.js apenas importa o que precisa para as queries
+   ao Supabase. */
+import { getCurrentFamilyId } from './auth.js';
 
-const LS_FAMILY_KEY = 'gp_family_id';
-const LS_FAMILY_NAME_KEY = 'gp_family_name';
-
-export function getFamilyId() {
-  return localStorage.getItem(LS_FAMILY_KEY) || 'familia_a';
-}
-
-export function getFamilyName() {
-  return localStorage.getItem(LS_FAMILY_NAME_KEY) || '';
-}
-
-/**
- * Converte texto livre para um slug seguro para usar como family_id.
- * Ex: "Família Silva" → "familia-silva"
- */
-export function slugify(text) {
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')   // remove acentos
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')              // espaços → hífen
-    .replace(/[^a-z0-9-]/g, '')       // remove caracteres especiais
-    .replace(/-+/g, '-')              // hífens duplos → simples
-    .replace(/^-|-$/g, '');           // trim de hífens nas bordas
-}
-
-/**
- * Persiste o identificador da família no localStorage.
- * Chamado pelo popup inicial em index.html.
- */
-export function setFamilyId(rawName) {
-  const id = slugify(rawName);
-  if (!id) return false;
-  localStorage.setItem(LS_FAMILY_KEY, id);
-  localStorage.setItem(LS_FAMILY_NAME_KEY, rawName.trim());
-  return id;
-}
-
-function getCurrentFamily() {
-  return getFamilyId();
-}
 
 /* ════════════════ CLIENTE SUPABASE (SINGLETON) ════════════════
    Criado uma única vez na primeira chamada e reutilizado sempre.
@@ -115,7 +74,7 @@ async function fetchFamilyBlob() {
     const { data, error } = await client
       .from('family_config')
       .select('config')
-      .eq('family_id', getCurrentFamily())
+      .eq('family_id', getCurrentFamilyId())
       .maybeSingle();
 
     if (error) {
@@ -168,7 +127,7 @@ async function writeRaw(key, value) {
     const { error } = await client
       .from('family_config')
       .upsert(
-        { family_id: getCurrentFamily(), config: updated },
+        { family_id: getCurrentFamilyId(), config: updated },
         { onConflict: 'family_id' }
       );
 
@@ -268,7 +227,7 @@ export async function importAllData(data) {
     const { error } = await client
       .from('family_config')
       .upsert(
-        { family_id: getCurrentFamily(), config: _configCache },
+        { family_id: getCurrentFamilyId(), config: _configCache },
         { onConflict: 'family_id' }
       );
     if (error) {
@@ -290,7 +249,7 @@ export async function resetAllData() {
     const { error } = await client
       .from('family_config')
       .upsert(
-        { family_id: getCurrentFamily(), config: {} },
+        { family_id: getCurrentFamilyId(), config: {} },
         { onConflict: 'family_id' }
       );
     if (error) {
