@@ -225,13 +225,12 @@
 
 <!-- Inicialização da família — controla quando main.js::init() roda -->
 <script type="module">
-  import { getFamilyId, setFamilyId, slugify } from './js/storage.js';
+  import { initialize, hasSession, setCurrentFamily } from './js/auth.js';
 
-  const LS_KEY   = 'gp_family_id';
-  const overlay  = document.getElementById('family-setup-overlay');
-  const input    = document.getElementById('family-setup-input');
+  const overlay    = document.getElementById('family-setup-overlay');
+  const input      = document.getElementById('family-setup-input');
   const confirmBtn = document.getElementById('family-setup-confirm');
-  const errorEl  = document.getElementById('family-setup-error');
+  const errorEl    = document.getElementById('family-setup-error');
 
   /* Carrega main.js e chama init() imediatamente.
      Como main.js exporta init (não usa DOMContentLoaded),
@@ -248,13 +247,12 @@
       input.focus();
       return;
     }
-    const id = slugify(raw);
-    if (!id) {
+    const ok = setCurrentFamily(raw);
+    if (!ok) {
       errorEl.textContent = 'Nome inválido. Use letras e números.';
       input.focus();
       return;
     }
-    setFamilyId(raw);
     overlay.style.display = 'none';
     await startApp();
   }
@@ -262,8 +260,9 @@
   confirmBtn.addEventListener('click', confirmFamily);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmFamily(); });
 
-  if (localStorage.getItem(LS_KEY)) {
-    // Família já conhecida — inicia direto
+  // initialize() restaura a sessão; hasSession() diz se há família ativa
+  await initialize();
+  if (hasSession()) {
     startApp();
   } else {
     overlay.style.display = 'flex';
