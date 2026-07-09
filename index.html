@@ -178,6 +178,79 @@
   </div>
 </div>
 
+<!-- Quick Action: Nova Tarefa -->
+<div id="qa-task-overlay" class="overlay" style="display:none">
+  <div class="popup qa-popup">
+    <div class="popup-emoji">⭐</div>
+    <div id="qa-task-member-label" class="popup-title">NOVA TAREFA</div>
+    <input id="qa-task-name" class="qa-input" placeholder="NOME DA TAREFA" maxlength="50">
+    <div class="qa-time-row">
+      <div class="qa-field">
+        <label class="qa-label">INÍCIO</label>
+        <input id="qa-task-start" class="qa-input" type="time" value="08:00">
+      </div>
+      <div class="qa-field">
+        <label class="qa-label">FIM</label>
+        <input id="qa-task-end" class="qa-input" type="time" value="08:30">
+      </div>
+    </div>
+    <div class="popup-actions">
+      <button id="btn-qa-task-cancel" class="btn-secondary">CANCELAR</button>
+      <button id="btn-qa-task-confirm" class="btn-primary">SALVAR ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Action: Nova Conquista -->
+<div id="qa-goal-overlay" class="overlay" style="display:none">
+  <div class="popup qa-popup">
+    <div class="popup-emoji">🏆</div>
+    <div class="popup-title">NOVA CONQUISTA</div>
+    <input id="qa-goal-name" class="qa-input" placeholder="NOME DA CONQUISTA" maxlength="40">
+    <div class="qa-time-row">
+      <div class="qa-field">
+        <label class="qa-label">ÍCONE</label>
+        <input id="qa-goal-icon" class="qa-input" maxlength="2" value="🏆">
+      </div>
+      <div class="qa-field">
+        <label class="qa-label">META (⭐)</label>
+        <input id="qa-goal-target" class="qa-input" type="number" min="1" value="50">
+      </div>
+    </div>
+    <div class="popup-actions">
+      <button id="btn-qa-goal-cancel" class="btn-secondary">CANCELAR</button>
+      <button id="btn-qa-goal-confirm" class="btn-primary">SALVAR ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Action: Novo Membro -->
+<div id="qa-member-overlay" class="overlay" style="display:none">
+  <div class="popup qa-popup">
+    <div class="popup-emoji">👤</div>
+    <div class="popup-title">NOVO MEMBRO</div>
+    <input id="qa-member-name" class="qa-input" placeholder="NOME" maxlength="20">
+    <div class="qa-time-row">
+      <div class="qa-field">
+        <label class="qa-label">AVATAR</label>
+        <input id="qa-member-avatar" class="qa-input" maxlength="2" value="🧒">
+      </div>
+      <div class="qa-field">
+        <label class="qa-label">PAPEL</label>
+        <select id="qa-member-role" class="qa-input">
+          <option value="crianca">CRIANÇA</option>
+          <option value="pai">PAI</option>
+          <option value="mae">MÃE</option>
+        </select>
+      </div>
+    </div>
+    <div class="popup-actions">
+      <button id="btn-qa-member-cancel" class="btn-secondary">CANCELAR</button>
+      <button id="btn-qa-member-confirm" class="btn-primary">SALVAR ✓</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast" style="display:none"></div>
 <div id="confetti-container" class="confetti-container"></div>
 
