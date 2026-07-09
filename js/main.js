@@ -23,6 +23,11 @@ import {
   openParentPanel, openParentPanelOnTab, toggleCustomGoalReward,
   closeParentPanel, wireParentPanelEvents,
 } from './parent-panel.js';
+import {
+  openNewTaskPopup, closeNewTaskPopup, confirmNewTask, deleteTask,
+  openNewGoalPopup, closeNewGoalPopup, confirmNewGoal, deleteGoal,
+  openNewMemberPopup, closeNewMemberPopup, confirmNewMember,
+} from './quick-actions.js';
 
 /* ════════════════════════════════════════════════════════════
    INICIALIZAÇÃO
@@ -52,6 +57,7 @@ async function init() {
   wireParentPanelAccess();
   wirePinApprovalBridge();
   wireParentPanelEvents();
+  wireQuickActionsPopups();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -62,11 +68,6 @@ function wireMissionList() {
   const list = document.getElementById('mission-list');
   if (!list) return;
   list.addEventListener('click', (e) => {
-    // Botão de atalho "Adicionar nova tarefa" (renderizado dentro do mission-list)
-    if (e.target.closest('#btn-add-mission-shortcut')) {
-      openParentPanelOnTab('tarefas');
-      return;
-    }
     const dateBtn = e.target.closest('[data-date-key]');
     if (dateBtn) {
       void selectDashboardDate(dateBtn.dataset.dateKey);
@@ -79,16 +80,38 @@ function wireMissionList() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   BOTÕES DE ATALHO (Estrelas, Conquistas)
+   BOTÕES DE ATALHO (Estrelas, Conquistas, Membro)
    Os listeners ficam no documento pois os botões são injetados
    dinamicamente pelos renderers — delegação no document.body.
    ════════════════════════════════════════════════════════════ */
 function wireShortcutButtons() {
   document.body.addEventListener('click', (e) => {
     if (e.target.closest('#btn-add-goal-shortcut')) {
-      openParentPanelOnTab('extras');
-    } else if (e.target.closest('#btn-bonus-shortcut')) {
+      openNewGoalPopup();
+      return;
+    }
+    if (e.target.closest('#btn-bonus-shortcut')) {
       openParentPanelOnTab('bonus');
+      return;
+    }
+    if (e.target.closest('#btn-add-member-shortcut')) {
+      openNewMemberPopup();
+      return;
+    }
+    const addTaskBtn = e.target.closest('[data-add-task-member]');
+    if (addTaskBtn) {
+      openNewTaskPopup(addTaskBtn.dataset.addTaskMember);
+      return;
+    }
+    const delTaskBtn = e.target.closest('[data-delete-mission]');
+    if (delTaskBtn) {
+      deleteTask(delTaskBtn.dataset.deleteMission);
+      return;
+    }
+    const delGoalBtn = e.target.closest('[data-delete-goal]');
+    if (delGoalBtn) {
+      deleteGoal(delGoalBtn.dataset.deleteGoal);
+      return;
     }
   });
 }
@@ -162,6 +185,9 @@ function wireBadgeActions() {
   const grid = document.getElementById('badge-grid');
   if (!grid) return;
   grid.addEventListener('click', (e) => {
+    const delBtn = e.target.closest('[data-delete-goal]');
+    if (delBtn) { deleteGoal(delBtn.dataset.deleteGoal); return; }
+
     const btn = e.target.closest('[data-goal-action]');
     if (!btn) return;
     const goalId = btn.dataset.goalId;
@@ -204,6 +230,18 @@ function wireParentPanelAccess() {
 function wirePinApprovalBridge() {
   window.addEventListener('gp:request-pin-approve', () => openPinOverlay('approve'));
   window.addEventListener('gp:pin-approved', () => finalizeDay());
+}
+
+/* ════════════════════════════════════════════════════════════
+   QUICK ACTIONS — POPUPS
+   ════════════════════════════════════════════════════════════ */
+function wireQuickActionsPopups() {
+  document.getElementById('btn-qa-task-confirm')?.addEventListener('click', confirmNewTask);
+  document.getElementById('btn-qa-task-cancel')?.addEventListener('click', closeNewTaskPopup);
+  document.getElementById('btn-qa-goal-confirm')?.addEventListener('click', confirmNewGoal);
+  document.getElementById('btn-qa-goal-cancel')?.addEventListener('click', closeNewGoalPopup);
+  document.getElementById('btn-qa-member-confirm')?.addEventListener('click', confirmNewMember);
+  document.getElementById('btn-qa-member-cancel')?.addEventListener('click', closeNewMemberPopup);
 }
 
 /* ════════════════════════════════════════════════════════════

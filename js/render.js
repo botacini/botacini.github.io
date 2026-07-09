@@ -99,7 +99,6 @@ export function renderMissions() {
     ${renderDateNav()}
     ${renderDayBanner()}
     ${boardHTML}
-    ${isSelectedDateToday() ? `<button id="btn-add-mission-shortcut" class="btn-finalize-week" style="margin-top:10px">➕ ADICIONAR NOVA TAREFA</button>` : ''}
   `;
 }
 
@@ -107,7 +106,7 @@ function renderMemberColumn(member) {
   const currentId = getCurrentMissionId();
   const readonly = !isSelectedDateToday();
   // Tarefas que envolvem este membro (atribuídas a ele ou compartilhadas)
-  const memberMissions = state.missions.filter(ms => 
+  const memberMissions = state.missions.filter(ms =>
     assigneeIds(ms).includes(member.id)
   );
 
@@ -134,6 +133,7 @@ function renderMemberColumn(member) {
           <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
           <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
         </div>
+        ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}" title="Remover tarefa">✕</button>` : ''}
       </div>`;
   }).join('');
 
@@ -146,6 +146,7 @@ function renderMemberColumn(member) {
       </div>
       <div class="column-tasks">
         ${rows || '<div class="column-empty">— sem tarefas hoje</div>'}
+        ${!readonly ? `<button class="task-add-btn" data-add-task-member="${member.id}">➕ Adicionar tarefa</button>` : ''}
       </div>
     </div>`;
 }
@@ -225,7 +226,7 @@ export function renderTeamTab() {
   const container = document.getElementById('team-cards');
   if (!container) return;
 
-  container.innerHTML = state.config.members.map(mem => {
+  const memberCards = state.config.members.map(mem => {
     const doneCount = state.missions.filter(ms =>
       assigneeIds(ms).includes(mem.id) &&
       state.missionStatus[ms.id]?.status === 'done'
@@ -243,6 +244,12 @@ export function renderTeamTab() {
         </div>
       </div>`;
   }).join('');
+
+  container.innerHTML = memberCards + `
+    <button id="btn-add-member-shortcut" class="team-member-card team-add-card">
+      <span class="team-member-avatar">➕</span>
+      <div class="team-member-info"><div class="team-member-name">ADICIONAR MEMBRO</div></div>
+    </button>`;
 }
 
 /* ════════════════ ABA CONQUISTAS (FIXAS + METAS PERSONALIZADAS) ════════════════ */
@@ -266,6 +273,7 @@ export function renderBadges() {
 
     return `
       <div class="badge-card custom-goal ${redeemed ? 'claimed' : 'pending'}">
+        <button class="badge-delete-btn" data-delete-goal="${goal.id}" title="Remover conquista">✕</button>
         <div class="badge-icon">${goal.icon}</div>
         <div class="badge-name">${goal.name}</div>
         <div class="badge-desc">${goal.desc || 'Meta personalizada'}</div>
