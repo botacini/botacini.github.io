@@ -1045,3 +1045,107 @@ button { font-family: inherit; cursor: pointer; }
 .member-column {
   flex: 0 0 220px;
 }
+
+/* ════════════════ QUICK ACTIONS — POPUPS ════════════════ */
+.qa-popup { width: min(340px, 90vw); }
+
+.qa-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--card2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.qa-input:focus { outline: none; border-color: var(--gold); }
+
+.qa-time-row { display: flex; gap: 10px; margin-bottom: 4px; }
+.qa-field { flex: 1; }
+.qa-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .05em;
+  margin-bottom: 4px;
+}
+
+/* ════════════════ TASK-CELL: botão X ════════════════ */
+.task-cell { position: relative; }
+
+.task-delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity .15s, color .15s;
+}
+.task-cell:hover .task-delete-btn { opacity: 1; }
+.task-delete-btn:hover { color: var(--red); }
+
+/* ════════════════ BADGE-CARD: botão X ════════════════ */
+.badge-card { position: relative; }
+
+.badge-delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity .15s, color .15s;
+}
+.badge-card:hover .badge-delete-btn { opacity: 1; }
+.badge-delete-btn:hover { color: var(--red); }
+
+/* ════════════════ TASK-ADD-BTN: por coluna ════════════════ */
+.task-add-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .15s, color .15s;
+}
+.task-add-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ════════════════ TEAM-ADD-CARD: aba Time ════════════════ */
+.team-add-card {
+  border: 1px dashed var(--line) !important;
+  border-left: 4px dashed var(--line) !important;
+  background: transparent;
+  cursor: pointer;
+  justify-content: center;
+  color: var(--muted);
+  transition: border-color .15s, color .15s;
+  width: 100%;
+}
+.team-add-card:hover { border-color: var(--gold) !important; color: var(--gold); }
