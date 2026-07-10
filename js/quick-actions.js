@@ -8,10 +8,10 @@
 
 import {
   state, saveConfig, getTodayMissions, persistDayState, persistTotals,
-  timeToMin, nextMemberColor, dateFromKey, todayKey,
+  timeToMin, nextMemberColor, dateFromKey, todayKey, persistBonusLog,
 } from './state.js';
 import { renderDashboard, renderMissions, renderTeamTab, renderBadges } from './render.js';
-import { revokeStars } from './missions.js';
+import { revokeStars, awardStars } from './missions.js';
 import { showToast } from './effects.js';
 
 /* ════════════════ UTILITÁRIOS INTERNOS ════════════════ */
@@ -80,6 +80,12 @@ export function openNewTaskPopup(memberId) {
   if (startEl) startEl.value = '08:00';
   if (endEl) endEl.value = '08:30';
 
+  // Marca o dia atual como selecionado nos checkboxes
+  const dow = currentDow();
+  document.querySelectorAll('.qa-day-checkbox').forEach(cb => {
+    cb.checked = Number(cb.value) === dow;
+  });
+
   overlayShow('qa-task-overlay');
   if (nameEl) nameEl.focus();
 }
@@ -96,19 +102,27 @@ export async function confirmNewTask() {
 
   const start = document.getElementById('qa-task-start')?.value || '08:00';
   const end = document.getElementById('qa-task-end')?.value || '08:30';
-  const dow = currentDow();
 
-  state.config.missionsByDay[dow] = state.config.missionsByDay[dow] || [];
-  state.config.missionsByDay[dow].push({
-    id: genId('ms'),
-    start,
-    end,
-    emoji: '⭐',
-    title: name.toUpperCase(),
-    desc: '',
-    assignee: _newTaskMemberId,
+  // Coleta dias selecionados (frontend only — backend mantém estrutura atual)
+  const selectedDays = Array.from(document.querySelectorAll('.qa-day-checkbox:checked'))
+    .map(cb => Number(cb.value));
+
+  // Garante ao menos o dia atual se nenhum foi marcado
+  const daysToAdd = selectedDays.length > 0 ? selectedDays : [currentDow()];
+
+  daysToAdd.forEach(dow => {
+    state.config.missionsByDay[dow] = state.config.missionsByDay[dow] || [];
+    state.config.missionsByDay[dow].push({
+      id: genId('ms'),
+      start,
+      end,
+      emoji: '⭐',
+      title: name.toUpperCase(),
+      desc: '',
+      assignee: _newTaskMemberId,
+    });
+    state.config.missionsByDay[dow].sort((a, b) => timeToMin(a.start) - timeToMin(b.start));
   });
-  state.config.missionsByDay[dow].sort((a, b) => timeToMin(a.start) - timeToMin(b.start));
 
   await commitMissionsChange();
   closeNewTaskPopup();
@@ -237,5 +251,138 @@ export async function confirmNewMember() {
   await saveConfig();
   await persistDayState();
   closeNewMemberPopup();
+  renderDashboard();
+}
+
+/* ════════════════════════════════════════════════════════════
+   4. BÔNUS / PENALIDADE
+   ════════════════════════════════════════════════════════════ */
+
+// 'bonus' | 'penalty'
+let _bonusPenaltyMode = 'bonus';
+
+export function openBonusPenaltyPopup() {
+  _bonusPenaltyMode = 'bonus';
+
+  // Popula o select de membros
+  const memberSelect = document.getElementById('qa-bp-member');
+  if (memberSelect) {
+    memberSelect.innerHTML = `<option value="">— Escolha um membro —</option>` +
+      state.config.members.map(m =>
+        `<option value="${m.id}">${m.avatar} ${m.name}</option>`
+      ).join('');
+  }
+
+  // Reseta campos
+  const starsEl = document.getElementById('qa-bp-stars');
+  const reasonEl = document.getElementById('qa-bp-reason');
+  if (starsEl) starsEl.value = '1';
+  if (reasonEl) reasonEl.value = '';
+
+  // Reseta botões de modo
+  _updateBonusPenaltyModeUI();
+
+  overlayShow('qa-bp-overlay');
+  if (memberSelect) memberSelect.focus();
+}
+
+export function closeBonusPenaltyPopup() {
+  overlayHide('qa-bp-overlay');
+}
+
+export function setBonusPenaltyMode(mode) {
+  _bonusPenaltyMode = mode;
+  _updateBonusPenaltyModeUI();
+}
+
+function _updateBonusPenaltyModeUI() {
+  const bonusBtn = document.getElementById('qa-bp-btn-bonus');
+  const penaltyBtn = document.getElementById('qa-bp-btn-penalty');
+  if (bonusBtn) {
+    bonusBtn.classList.toggle('active-bonus', _bonusPenaltyMode === 'bonus');
+    bonusBtn.classList.remove('active-penalty');
+  }
+  if (penaltyBtn) {
+    penaltyBtn.classList.toggle('active-penalty', _bonusPenaltyMode === 'penalty');
+    penaltyBtn.classList.remove('active-bonus');
+  }
+
+  // Atualiza label e cor do botão confirmar
+  const confirmBtn = document.getElementById('btn-qa-bp-confirm');
+  if (confirmBtn) {
+    if (_bonusPenaltyMode === 'bonus') {
+      confirmBtn.textContent = '✨ CONCEDER BÔNUS';
+      confirmBtn.style.background = 'var(--green)';
+      confirmBtn.style.color = '#06280a';
+    } else {
+      confirmBtn.textContent = '⚡ APLICAR PENALIDADE';
+      confirmBtn.style.background = 'var(--red)';
+      confirmBtn.style.color = '#fff';
+    }
+  }
+}
+
+export async function confirmBonusPenalty() {
+  const memberId = document.getElementById('qa-bp-member')?.value;
+  const starsVal = Number(document.getElementById('qa-bp-stars')?.value || 1);
+  const reason = document.getElementById('qa-bp-reason')?.value.trim() || '';
+
+  if (!memberId) { alert('Escolha um membro.'); return; }
+  if (starsVal < 1) { alert('Mínimo 1 estrela.'); return; }
+  if (!reason) { alert('Descreva o motivo.'); return; }
+
+  const member = state.config.members.find(m => m.id === memberId);
+
+  if (_bonusPenaltyMode === 'bonus') {
+    // Concede estrelas
+    state.memberStars[memberId] = (state.memberStars[memberId] || 0) + starsVal;
+    state.totals[memberId] = (state.totals[memberId] || 0) + starsVal;
+
+    // Registra no histórico
+    const today = new Date();
+    const dateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    state.bonusLog = state.bonusLog || [];
+    state.bonusLog.push({
+      date: dateKey,
+      memberId,
+      stars: starsVal,
+      reason,
+      type: 'bonus',
+      timestamp: new Date().toISOString(),
+    });
+
+    await persistDayState();
+    await persistTotals();
+    await persistBonusLog();
+
+    showToast(`✨ +${starsVal} ⭐ para ${member?.name || memberId}!`);
+  } else {
+    // Aplica penalidade
+    const current = state.memberStars[memberId] || 0;
+    const deduct = Math.min(starsVal, current); // não vai abaixo de zero
+    state.memberStars[memberId] = current - deduct;
+    state.totals[memberId] = Math.max(0, (state.totals[memberId] || 0) - deduct);
+
+    // Registra no histórico
+    const today = new Date();
+    const dateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    state.bonusLog = state.bonusLog || [];
+    state.bonusLog.push({
+      date: dateKey,
+      memberId,
+      stars: -deduct,
+      reason,
+      type: 'penalty',
+      timestamp: new Date().toISOString(),
+    });
+
+    await persistDayState();
+    await persistTotals();
+    await persistBonusLog();
+
+    showToast(`⚡ -${deduct} ⭐ de ${member?.name || memberId}.`);
+  }
+
+  closeBonusPenaltyPopup();
   renderDashboard();
 }

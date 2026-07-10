@@ -27,6 +27,7 @@ import {
   openNewTaskPopup, closeNewTaskPopup, confirmNewTask, deleteTask,
   openNewGoalPopup, closeNewGoalPopup, confirmNewGoal, deleteGoal,
   openNewMemberPopup, closeNewMemberPopup, confirmNewMember,
+  openBonusPenaltyPopup, closeBonusPenaltyPopup, setBonusPenaltyMode, confirmBonusPenalty,
 } from './quick-actions.js';
 
 /* ════════════════════════════════════════════════════════════
@@ -91,7 +92,7 @@ function wireShortcutButtons() {
       return;
     }
     if (e.target.closest('#btn-bonus-shortcut')) {
-      openParentPanelOnTab('bonus');
+      openBonusPenaltyPopup();
       return;
     }
     if (e.target.closest('#btn-add-member-shortcut')) {
@@ -139,7 +140,7 @@ function wireFinalizeButton() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   POPUP DE BÔNUS
+   POPUP DE BÔNUS (checklist de tarefas concluídas)
    ════════════════════════════════════════════════════════════ */
 function wireBonusPopup() {
   ['capricho', 'pontual', 'semreclamar'].forEach(key => {
@@ -236,12 +237,23 @@ function wirePinApprovalBridge() {
    QUICK ACTIONS — POPUPS
    ════════════════════════════════════════════════════════════ */
 function wireQuickActionsPopups() {
+  // Nova tarefa
   document.getElementById('btn-qa-task-confirm')?.addEventListener('click', confirmNewTask);
   document.getElementById('btn-qa-task-cancel')?.addEventListener('click', closeNewTaskPopup);
+
+  // Nova conquista
   document.getElementById('btn-qa-goal-confirm')?.addEventListener('click', confirmNewGoal);
   document.getElementById('btn-qa-goal-cancel')?.addEventListener('click', closeNewGoalPopup);
+
+  // Novo membro
   document.getElementById('btn-qa-member-confirm')?.addEventListener('click', confirmNewMember);
   document.getElementById('btn-qa-member-cancel')?.addEventListener('click', closeNewMemberPopup);
+
+  // Bônus / Penalidade
+  document.getElementById('qa-bp-btn-bonus')?.addEventListener('click', () => setBonusPenaltyMode('bonus'));
+  document.getElementById('qa-bp-btn-penalty')?.addEventListener('click', () => setBonusPenaltyMode('penalty'));
+  document.getElementById('btn-qa-bp-confirm')?.addEventListener('click', confirmBonusPenalty);
+  document.getElementById('btn-qa-bp-cancel')?.addEventListener('click', closeBonusPenaltyPopup);
 }
 
 /* ════════════════════════════════════════════════════════════

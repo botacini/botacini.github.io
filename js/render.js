@@ -80,7 +80,7 @@ export function renderMembersBar() {
     </div>`).join('');
 }
 
-/* ════════════════ QUADRO DE TAREFAS (NOVO: KANBAN POR MEMBRO) ════════════════ */
+/* ════════════════ QUADRO DE TAREFAS (KANBAN POR MEMBRO) ════════════════ */
 export function renderMissions() {
   const container = document.getElementById('mission-list');
   if (!container) return;
@@ -105,12 +105,11 @@ export function renderMissions() {
 function renderMemberColumn(member) {
   const currentId = getCurrentMissionId();
   const readonly = !isSelectedDateToday();
-  // Tarefas que envolvem este membro (atribuídas a ele ou compartilhadas)
   const memberMissions = state.missions.filter(ms =>
     assigneeIds(ms).includes(member.id)
   );
 
-  const rows = memberMissions.map((ms, idx) => {
+  const rows = memberMissions.map((ms) => {
     const st = state.missionStatus[ms.id];
     const doneClass = st?.status === 'done' ? ' done' : '';
     const failClass = st?.status === 'fail' ? ' fail' : '';
@@ -122,8 +121,10 @@ function renderMemberColumn(member) {
       <div class="task-cell${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}" data-mission-id="${ms.id}">
         <div class="task-time">
           <span class="task-start">${ms.start}</span>
+          <span class="task-sep"> - </span>
           <span class="task-end">${ms.end}</span>
         </div>
+        ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}" title="Remover tarefa">✕</button>` : ''}
         <div class="task-emoji">${ms.emoji}</div>
         <div class="task-body">
           <div class="task-title">${ms.title}</div>
@@ -133,7 +134,6 @@ function renderMemberColumn(member) {
           <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
           <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
         </div>
-        ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}" title="Remover tarefa">✕</button>` : ''}
       </div>`;
   }).join('');
 
@@ -213,7 +213,7 @@ export function renderStarsTab() {
       shortcutBtn.id = 'btn-bonus-shortcut';
       shortcutBtn.className = 'btn-finalize-week';
       shortcutBtn.style.marginTop = '14px';
-      shortcutBtn.textContent = '⭐ CONCEDER BÔNUS';
+      shortcutBtn.textContent = '⭐ CONCEDER BÔNUS / PENALIDADE';
       starsPanel.appendChild(shortcutBtn);
     }
   }
