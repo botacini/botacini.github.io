@@ -3,6 +3,7 @@
    ════════════════════════════════════════════════════════════
    Único ponto de entrada. Não contém regra de negócio nem
    lógica de renderização própria — só:
+   - verifica se há família cadastrada (onboarding)
    - inicializa a aplicação (carrega o estado via state.js)
    - dispara o primeiro render (via render.js)
    - liga os eventos de interface às funções corretas de
@@ -29,18 +30,92 @@ import {
   openNewMemberPopup, closeNewMemberPopup, confirmNewMember,
   openBonusPenaltyPopup, closeBonusPenaltyPopup, setBonusPenaltyMode, confirmBonusPenalty,
 } from './quick-actions.js';
+import { hasSession, setCurrentFamily, selectFamily, listFamilies } from './auth.js';
 
 /* ════════════════════════════════════════════════════════════
-   INICIALIZAÇÃO
+   ONBOARDING — popup de seleção / criação de família
    ════════════════════════════════════════════════════════════ */
-async function init() {
+
+function showOnboarding() {
+  const overlay = document.getElementById('onboarding-overlay');
+  if (overlay) overlay.style.display = 'flex';
+  renderOnboardingFamilyList();
+}
+
+function hideOnboarding() {
+  const overlay = document.getElementById('onboarding-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function renderOnboardingFamilyList() {
+  const families = listFamilies();
+  const listEl = document.getElementById('onboarding-family-list');
+  const sectionEl = document.getElementById('onboarding-existing-section');
+  if (!listEl || !sectionEl) return;
+
+  if (families.length === 0) {
+    sectionEl.style.display = 'none';
+    return;
+  }
+
+  sectionEl.style.display = 'block';
+  listEl.innerHTML = families.map(f => `
+    <button class="onboarding-family-btn" data-family-id="${f.id}">
+      <span class="onboarding-family-icon">🏎️</span>
+      <span class="onboarding-family-name">${f.name}</span>
+      <span class="onboarding-family-arrow">→</span>
+    </button>
+  `).join('');
+
+  listEl.querySelectorAll('[data-family-id]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      selectFamily(btn.dataset.familyId);
+      hideOnboarding();
+      await startApp();
+    });
+  });
+}
+
+async function handleOnboardingSubmit() {
+  const input = document.getElementById('onboarding-family-name');
+  const rawName = input ? input.value.trim() : '';
+  if (!rawName) {
+    input.classList.add('onboarding-input-error');
+    input.placeholder = 'Digite o nome da sua família!';
+    setTimeout(() => input.classList.remove('onboarding-input-error'), 800);
+    return;
+  }
+  const id = setCurrentFamily(rawName);
+  if (!id) {
+    alert('Nome inválido. Use apenas letras e espaços.');
+    return;
+  }
+  hideOnboarding();
+  await startApp();
+}
+
+function wireOnboarding() {
+  const confirmBtn = document.getElementById('btn-onboarding-confirm');
+  if (confirmBtn) confirmBtn.addEventListener('click', handleOnboardingSubmit);
+
+  const input = document.getElementById('onboarding-family-name');
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleOnboardingSubmit();
+    });
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   INICIALIZAÇÃO DO APP (após onboarding)
+   ════════════════════════════════════════════════════════════ */
+async function startApp() {
   await loadState();
 
   renderDashboard();
   updateClock();
   switchTab('missions');
 
-  // Relógio e destaque da tarefa atual — atualiza a cada 30s
   setInterval(() => {
     updateClock();
     renderMissions();
@@ -62,8 +137,21 @@ async function init() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   LISTA DE MISSÕES (delegação — a lista é reconstruída a cada
-   render, então o listener fica no container, não nos botões)
+   INIT — ponto de entrada
+   ════════════════════════════════════════════════════════════ */
+async function init() {
+  wireOnboarding();
+
+  if (!hasSession()) {
+    showOnboarding();
+    return; // app só inicia após o onboarding
+  }
+
+  await startApp();
+}
+
+/* ════════════════════════════════════════════════════════════
+   LISTA DE MISSÕES
    ════════════════════════════════════════════════════════════ */
 function wireMissionList() {
   const list = document.getElementById('mission-list');
@@ -81,9 +169,7 @@ function wireMissionList() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   BOTÕES DE ATALHO (Estrelas, Conquistas, Membro)
-   Os listeners ficam no documento pois os botões são injetados
-   dinamicamente pelos renderers — delegação no document.body.
+   BOTÕES DE ATALHO
    ════════════════════════════════════════════════════════════ */
 function wireShortcutButtons() {
   document.body.addEventListener('click', (e) => {
@@ -123,7 +209,7 @@ async function selectDashboardDate(dateKey) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   ABAS (tab-bar inferior)
+   ABAS
    ════════════════════════════════════════════════════════════ */
 function wireTabBar() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -140,7 +226,7 @@ function wireFinalizeButton() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   POPUP DE BÔNUS (checklist de tarefas concluídas)
+   POPUP DE BÔNUS
    ════════════════════════════════════════════════════════════ */
 function wireBonusPopup() {
   ['capricho', 'pontual', 'semreclamar'].forEach(key => {
@@ -162,7 +248,7 @@ function wireReportPopup() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   FINALIZAR A SEMANA (botão na aba "Semana")
+   FINALIZAR A SEMANA
    ════════════════════════════════════════════════════════════ */
 function wireWeekPanel() {
   const btn = document.getElementById('btn-finalize-week');
@@ -170,7 +256,7 @@ function wireWeekPanel() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   POPUP DE CONQUISTA DESBLOQUEADA
+   POPUP DE CONQUISTA
    ════════════════════════════════════════════════════════════ */
 function wireBadgePopup() {
   const closeBtn = document.getElementById('btn-badge-close');
@@ -197,7 +283,7 @@ function wireBadgeActions() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   ACESSO AO PAINEL DOS PAIS (engrenagem + teclado de PIN)
+   ACESSO AO PAINEL DOS PAIS
    ════════════════════════════════════════════════════════════ */
 function wireParentPanelAccess() {
   const gearBtn = document.getElementById('btn-parent-panel');
@@ -222,12 +308,7 @@ function wireParentPanelAccess() {
 
 /* ════════════════════════════════════════════════════════════
    PONTE DE APROVAÇÃO POR PIN
-   ════════════════════════════════════════════════════════════
-   missions.js dispara 'gp:request-pin-approve' quando é
-   preciso confirmar o PIN para finalizar o dia; parent-panel.js
-   dispara 'gp:pin-approved' quando o PIN digitado está certo.
-   main.js é o único que conhece as duas pontas — por isso
-   missions.js e parent-panel.js nunca precisam se importar. */
+   ════════════════════════════════════════════════════════════ */
 function wirePinApprovalBridge() {
   window.addEventListener('gp:request-pin-approve', () => openPinOverlay('approve'));
   window.addEventListener('gp:pin-approved', () => finalizeDay());
@@ -237,19 +318,15 @@ function wirePinApprovalBridge() {
    QUICK ACTIONS — POPUPS
    ════════════════════════════════════════════════════════════ */
 function wireQuickActionsPopups() {
-  // Nova tarefa
   document.getElementById('btn-qa-task-confirm')?.addEventListener('click', confirmNewTask);
   document.getElementById('btn-qa-task-cancel')?.addEventListener('click', closeNewTaskPopup);
 
-  // Nova conquista
   document.getElementById('btn-qa-goal-confirm')?.addEventListener('click', confirmNewGoal);
   document.getElementById('btn-qa-goal-cancel')?.addEventListener('click', closeNewGoalPopup);
 
-  // Novo membro
   document.getElementById('btn-qa-member-confirm')?.addEventListener('click', confirmNewMember);
   document.getElementById('btn-qa-member-cancel')?.addEventListener('click', closeNewMemberPopup);
 
-  // Bônus / Penalidade
   document.getElementById('qa-bp-btn-bonus')?.addEventListener('click', () => setBonusPenaltyMode('bonus'));
   document.getElementById('qa-bp-btn-penalty')?.addEventListener('click', () => setBonusPenaltyMode('penalty'));
   document.getElementById('btn-qa-bp-confirm')?.addEventListener('click', confirmBonusPenalty);

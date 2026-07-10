@@ -18,6 +18,10 @@
 const LS_FAMILY_ID   = 'gp_family_id';
 const LS_FAMILY_NAME = 'gp_family_name';
 
+// Chave que guarda o índice de todas as famílias já criadas neste browser
+// Formato: [{ id: 'slug', name: 'Nome Bonito' }, ...]
+const LS_FAMILY_INDEX = 'gp_family_index';
+
 /* ── Utilidade privada ──────────────────────────────────── */
 
 function slugify(text) {
@@ -33,28 +37,67 @@ function slugify(text) {
 }
 
 /* ── Cache de sessão em memória ─────────────────────────── */
-// Evita múltiplas leituras de localStorage e fornece a base
-// para quando a sessão vier de uma fonte assíncrona (Supabase).
 let _session = null;
 
 function buildSession() {
   const familyId   = localStorage.getItem(LS_FAMILY_ID)   || null;
   const familyName = localStorage.getItem(LS_FAMILY_NAME) || '';
   return {
-    authenticated: false,   // false até existir Supabase Auth
-    user:          null,     // será { id, email } quando autenticado
+    authenticated: false,
+    user:          null,
     familyId:      familyId || 'familia_a',
     familyName,
   };
+}
+
+/* ════════════════ ÍNDICE DE FAMÍLIAS ════════════════
+   Mantém no localStorage a lista de todas as famílias
+   já criadas neste browser, para o popup de seleção. */
+
+/**
+ * Retorna todas as famílias registradas neste browser.
+ * @returns {Array<{id:string, name:string}>}
+ */
+export function listFamilies() {
+  try {
+    const raw = localStorage.getItem(LS_FAMILY_INDEX);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Registra (ou atualiza) uma família no índice local.
+ * Chamado internamente por setCurrentFamily.
+ */
+function registerFamily(id, name) {
+  const list = listFamilies();
+  const existing = list.findIndex(f => f.id === id);
+  if (existing >= 0) {
+    list[existing].name = name;
+  } else {
+    list.push({ id, name });
+  }
+  localStorage.setItem(LS_FAMILY_INDEX, JSON.stringify(list));
+}
+
+/**
+ * Remove uma família do índice local (mas NÃO apaga os dados
+ * do Supabase — isso é responsabilidade de storage.resetAllData).
+ */
+function unregisterFamily(id) {
+  const list = listFamilies().filter(f => f.id !== id);
+  localStorage.setItem(LS_FAMILY_INDEX, JSON.stringify(list));
 }
 
 /* ════════════════ API PÚBLICA ════════════════ */
 
 /**
  * Inicializa a sessão. Deve ser aguardado antes de qualquer
- * acesso à sessão. Hoje é síncrono via localStorage; no futuro
- * fará await supabase.auth.getSession().
- * Retorna true se houver sessão válida (família definida).
+ * acesso à sessão.
  */
 export async function initialize() {
   _session = buildSession();
@@ -65,16 +108,11 @@ export async function initialize() {
  * Retorna true se existe uma família/sessão ativa.
  */
 export function hasSession() {
-  // Há sessão se o family_id foi explicitamente gravado pelo usuário.
-  // Não depende do valor do cache — lê direto da fonte para ser seguro
-  // mesmo se chamado antes de initialize().
   return !!localStorage.getItem(LS_FAMILY_ID);
 }
 
 /**
  * Retorna o objeto de sessão completo.
- * Estrutura estável — não muda quando o backend mudar:
- * { authenticated, user, familyId, familyName }
  */
 export function getSession() {
   if (!_session) _session = buildSession();
@@ -100,7 +138,6 @@ export function getCurrentFamilyName() {
 /**
  * Define a família a partir do nome digitado pelo usuário.
  * Gera o slug internamente; retorna false se o nome for inválido.
- * Atualiza o cache de sessão imediatamente.
  */
 export function setCurrentFamily(rawName) {
   const id = slugify(rawName);
@@ -108,12 +145,26 @@ export function setCurrentFamily(rawName) {
   localStorage.setItem(LS_FAMILY_ID,   id);
   localStorage.setItem(LS_FAMILY_NAME, rawName.trim());
   _session = buildSession();
+  registerFamily(id, rawName.trim());
   return id;
 }
 
 /**
+ * Seleciona uma família já existente pelo seu id (slug).
+ * Usado no popup de seleção de família.
+ */
+export function selectFamily(id) {
+  const list = listFamilies();
+  const found = list.find(f => f.id === id);
+  if (!found) return false;
+  localStorage.setItem(LS_FAMILY_ID,   found.id);
+  localStorage.setItem(LS_FAMILY_NAME, found.name);
+  _session = buildSession();
+  return true;
+}
+
+/**
  * Remove a sessão ativa (localStorage + cache).
- * Usar para trocar de família ou encerrar a sessão local.
  */
 export function clearSession() {
   localStorage.removeItem(LS_FAMILY_ID);
@@ -122,8 +173,17 @@ export function clearSession() {
 }
 
 /**
+ * Remove completamente a família atual do índice e da sessão.
+ * Chamado por storage.resetAllData() para garantir reset total.
+ */
+export function clearCurrentFamilyFromIndex() {
+  const id = getCurrentFamilyId();
+  if (id) unregisterFamily(id);
+  clearSession();
+}
+
+/**
  * Alias semântico de clearSession para quando vier autenticação real.
- * No futuro fará também supabase.auth.signOut().
  */
 export async function logout() {
   clearSession();
