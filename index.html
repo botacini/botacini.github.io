@@ -88,7 +88,7 @@
 
 </div>
 
-<!-- Popup de bônus -->
+<!-- Popup de bônus (checklist de tarefas concluídas) -->
 <div id="bonus-overlay" class="overlay" style="display:none">
   <div class="popup bonus-popup">
     <div id="bonus-emoji" class="popup-emoji">🏁</div>
@@ -194,6 +194,16 @@
         <input id="qa-task-end" class="qa-input" type="time" value="08:30">
       </div>
     </div>
+    <label class="qa-days-label">REPETIR NOS DIAS</label>
+    <div class="qa-days-grid">
+      <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="0">DOM</label>
+      <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="1">SEG</label>
+      <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="2">TER</label>
+      <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="3">QUA</label>
+      <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="4">QUI</label>
+      <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="5">SEX</label>
+      <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="6">SÁB</label>
+    </div>
     <div class="popup-actions">
       <button id="btn-qa-task-cancel" class="btn-secondary">CANCELAR</button>
       <button id="btn-qa-task-confirm" class="btn-primary">SALVAR ✓</button>
@@ -247,6 +257,35 @@
     <div class="popup-actions">
       <button id="btn-qa-member-cancel" class="btn-secondary">CANCELAR</button>
       <button id="btn-qa-member-confirm" class="btn-primary">SALVAR ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Action: Bônus / Penalidade -->
+<div id="qa-bp-overlay" class="overlay" style="display:none">
+  <div class="popup qa-popup">
+    <div class="popup-emoji">⭐</div>
+    <div class="popup-title">BÔNUS / PENALIDADE</div>
+    <div class="qa-bonus-type-row">
+      <button id="qa-bp-btn-bonus" class="qa-bonus-type-btn active-bonus">✨ BÔNUS</button>
+      <button id="qa-bp-btn-penalty" class="qa-bonus-type-btn">⚡ PENALIDADE</button>
+    </div>
+    <select id="qa-bp-member" class="qa-input">
+      <option value="">— Escolha um membro —</option>
+    </select>
+    <div class="qa-time-row">
+      <div class="qa-field">
+        <label class="qa-label">ESTRELAS</label>
+        <input id="qa-bp-stars" class="qa-input" type="number" min="1" max="20" value="1">
+      </div>
+      <div class="qa-field" style="flex:2">
+        <label class="qa-label">MOTIVO</label>
+        <input id="qa-bp-reason" class="qa-input" placeholder="Ex: ajudou sem pedir" maxlength="60">
+      </div>
+    </div>
+    <div class="popup-actions">
+      <button id="btn-qa-bp-cancel" class="btn-secondary">CANCELAR</button>
+      <button id="btn-qa-bp-confirm" class="btn-primary" style="background:var(--green);color:#06280a">✨ CONCEDER BÔNUS</button>
     </div>
   </div>
 </div>
