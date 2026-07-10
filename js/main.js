@@ -1,41 +1,70 @@
-/* ════════════════════════════════════════════════════════════
-   GP DA FAMÍLIA — main.js
-   ════════════════════════════════════════════════════════════
-   Único ponto de entrada. Não contém regra de negócio nem
-   lógica de renderização própria — só:
+/* ════════════════════════════════════════════════════════════ GP DA FAMÍLIA — main.js ════════════════════════════════════════════════════════════
+   Único ponto de entrada. Não contém regra de negócio nem lógica de renderização
+   própria — só:
    - verifica se há família cadastrada (onboarding)
    - inicializa a aplicação (carrega o estado via state.js)
    - dispara o primeiro render (via render.js)
-   - liga os eventos de interface às funções corretas de
-     missions.js e parent-panel.js
-   - faz a ponte por eventos entre missions.js (que pede PIN)
-     e parent-panel.js (que sabe conferir PIN), sem que esses
-     dois módulos precisem se importar um ao outro.
+   - liga os eventos de interface às funções corretas de missions.js e parent-panel.js
+   - faz a ponte por eventos entre missions.js (que pede PIN) e parent-panel.js
+     (que sabe conferir PIN), sem que esses dois módulos precisem se importar um ao outro.
    ════════════════════════════════════════════════════════════ */
-
-import { loadState, loadDateContext, state } from './state.js';
-import { renderDashboard, renderMissions, updateClock, switchTab } from './render.js';
 import {
-  handleMissionAction, toggleBonus, confirmBonus, cancelBonus,
-  tryFinalizeDay, finalizeDay, restartDay, tryFinalizeWeek,
+  loadState,
+  loadDateContext,
+  state,
+} from './state.js';
+import {
+  renderDashboard,
+  renderMissions,
+  updateClock,
+  switchTab,
+} from './render.js';
+import {
+  handleMissionAction,
+  toggleBonus,
+  confirmBonus,
+  cancelBonus,
+  tryFinalizeDay,
+  finalizeDay,
+  restartDay,
+  tryFinalizeWeek,
 } from './missions.js';
 import {
-  openPinOverlay, closePinOverlay, pressPinDigit, pressPinBackspace,
-  openParentPanel, openParentPanelOnTab, toggleCustomGoalReward,
-  closeParentPanel, wireParentPanelEvents,
+  openPinOverlay,
+  closePinOverlay,
+  pressPinDigit,
+  pressPinBackspace,
+  openParentPanel,
+  openParentPanelOnTab,
+  toggleCustomGoalReward,
+  closeParentPanel,
+  wireParentPanelEvents,
 } from './parent-panel.js';
 import {
-  openNewTaskPopup, closeNewTaskPopup, confirmNewTask, deleteTask,
-  openNewGoalPopup, closeNewGoalPopup, confirmNewGoal, deleteGoal,
-  openNewMemberPopup, closeNewMemberPopup, confirmNewMember,
-  openBonusPenaltyPopup, closeBonusPenaltyPopup, setBonusPenaltyMode, confirmBonusPenalty,
+  openNewTaskPopup,
+  closeNewTaskPopup,
+  confirmNewTask,
+  deleteTask,
+  openNewGoalPopup,
+  closeNewGoalPopup,
+  confirmNewGoal,
+  deleteGoal,
+  openNewMemberPopup,
+  closeNewMemberPopup,
+  confirmNewMember,
+  openBonusPenaltyPopup,
+  closeBonusPenaltyPopup,
+  setBonusPenaltyMode,
+  confirmBonusPenalty,
 } from './quick-actions.js';
-import { hasSession, setCurrentFamily, selectFamily, listFamilies } from './auth.js';
+import {
+  hasSession,
+  setCurrentFamily,
+  selectFamily,
+  listFamilies,
+} from './auth.js';
 
-/* ════════════════════════════════════════════════════════════
-   ONBOARDING — popup de seleção / criação de família
-   ════════════════════════════════════════════════════════════ */
-
+/* ════════════════════════════════════════════════════════════ ONBOARDING — popup de seleção / criação de família ════════════════════════════════════════════════════════════ */
 function showOnboarding() {
   const overlay = document.getElementById('onboarding-overlay');
   if (overlay) overlay.style.display = 'flex';
@@ -57,13 +86,10 @@ function renderOnboardingFamilyList() {
     sectionEl.style.display = 'none';
     return;
   }
-
   sectionEl.style.display = 'block';
   listEl.innerHTML = families.map(f => `
     <button class="onboarding-family-btn" data-family-id="${f.id}">
-      <span class="onboarding-family-icon">🏎️</span>
-      <span class="onboarding-family-name">${f.name}</span>
-      <span class="onboarding-family-arrow">→</span>
+      👨‍👩‍👧‍👦 ${f.name} →
     </button>
   `).join('');
 
@@ -97,7 +123,6 @@ async function handleOnboardingSubmit() {
 function wireOnboarding() {
   const confirmBtn = document.getElementById('btn-onboarding-confirm');
   if (confirmBtn) confirmBtn.addEventListener('click', handleOnboardingSubmit);
-
   const input = document.getElementById('onboarding-family-name');
   if (input) {
     input.addEventListener('keydown', (e) => {
@@ -106,15 +131,19 @@ function wireOnboarding() {
   }
 }
 
-/* ════════════════════════════════════════════════════════════
-   INICIALIZAÇÃO DO APP (após onboarding)
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ INICIALIZAÇÃO DO APP (após onboarding) ════════════════════════════════════════════════════════════ */
 async function startApp() {
   await loadState();
-
   renderDashboard();
   updateClock();
-  switchTab('missions');
+
+  // CORREÇÃO: se não houver membros, redireciona automaticamente para a aba "Time"
+  const members = state.config?.members || [];
+  if (members.length === 0) {
+    switchTab('team');
+  } else {
+    switchTab('missions');
+  }
 
   setInterval(() => {
     updateClock();
@@ -136,23 +165,17 @@ async function startApp() {
   wireQuickActionsPopups();
 }
 
-/* ════════════════════════════════════════════════════════════
-   INIT — ponto de entrada
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ INIT — ponto de entrada ════════════════════════════════════════════════════════════ */
 async function init() {
   wireOnboarding();
-
   if (!hasSession()) {
     showOnboarding();
     return; // app só inicia após o onboarding
   }
-
   await startApp();
 }
 
-/* ════════════════════════════════════════════════════════════
-   LISTA DE MISSÕES
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ LISTA DE MISSÕES ════════════════════════════════════════════════════════════ */
 function wireMissionList() {
   const list = document.getElementById('mission-list');
   if (!list) return;
@@ -168,9 +191,7 @@ function wireMissionList() {
   });
 }
 
-/* ════════════════════════════════════════════════════════════
-   BOTÕES DE ATALHO
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ BOTÕES DE ATALHO ════════════════════════════════════════════════════════════ */
 function wireShortcutButtons() {
   document.body.addEventListener('click', (e) => {
     if (e.target.closest('#btn-add-goal-shortcut')) {
@@ -208,26 +229,20 @@ async function selectDashboardDate(dateKey) {
   renderDashboard();
 }
 
-/* ════════════════════════════════════════════════════════════
-   ABAS
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ ABAS ════════════════════════════════════════════════════════════ */
 function wireTabBar() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 }
 
-/* ════════════════════════════════════════════════════════════
-   FINALIZAR O DIA
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ FINALIZAR O DIA ════════════════════════════════════════════════════════════ */
 function wireFinalizeButton() {
   const btn = document.getElementById('btn-finalize');
   if (btn) btn.addEventListener('click', tryFinalizeDay);
 }
 
-/* ════════════════════════════════════════════════════════════
-   POPUP DE BÔNUS
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ POPUP DE BÔNUS ════════════════════════════════════════════════════════════ */
 function wireBonusPopup() {
   ['capricho', 'pontual', 'semreclamar'].forEach(key => {
     const item = document.getElementById('bci-' + key);
@@ -239,25 +254,19 @@ function wireBonusPopup() {
   if (cancelBtn) cancelBtn.addEventListener('click', cancelBonus);
 }
 
-/* ════════════════════════════════════════════════════════════
-   RELATÓRIO DE FIM DE DIA
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ RELATÓRIO DE FIM DE DIA ════════════════════════════════════════════════════════════ */
 function wireReportPopup() {
   const restartBtn = document.getElementById('btn-restart-day');
   if (restartBtn) restartBtn.addEventListener('click', restartDay);
 }
 
-/* ════════════════════════════════════════════════════════════
-   FINALIZAR A SEMANA
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ FINALIZAR A SEMANA ════════════════════════════════════════════════════════════ */
 function wireWeekPanel() {
   const btn = document.getElementById('btn-finalize-week');
   if (btn) btn.addEventListener('click', tryFinalizeWeek);
 }
 
-/* ════════════════════════════════════════════════════════════
-   POPUP DE CONQUISTA
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ POPUP DE CONQUISTA ════════════════════════════════════════════════════════════ */
 function wireBadgePopup() {
   const closeBtn = document.getElementById('btn-badge-close');
   if (closeBtn) {
@@ -273,8 +282,10 @@ function wireBadgeActions() {
   if (!grid) return;
   grid.addEventListener('click', (e) => {
     const delBtn = e.target.closest('[data-delete-goal]');
-    if (delBtn) { deleteGoal(delBtn.dataset.deleteGoal); return; }
-
+    if (delBtn) {
+      deleteGoal(delBtn.dataset.deleteGoal);
+      return;
+    }
     const btn = e.target.closest('[data-goal-action]');
     if (!btn) return;
     const goalId = btn.dataset.goalId;
@@ -282,58 +293,43 @@ function wireBadgeActions() {
   });
 }
 
-/* ════════════════════════════════════════════════════════════
-   ACESSO AO PAINEL DOS PAIS
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ ACESSO AO PAINEL DOS PAIS ════════════════════════════════════════════════════════════ */
 function wireParentPanelAccess() {
   const gearBtn = document.getElementById('btn-parent-panel');
   if (gearBtn) gearBtn.addEventListener('click', () => {
     if (state.config?.skipParentPanelPin) openParentPanel();
     else openPinOverlay('panel');
   });
-
   const pinCancelBtn = document.getElementById('btn-pin-cancel');
   if (pinCancelBtn) pinCancelBtn.addEventListener('click', closePinOverlay);
-
   const pinBackspaceBtn = document.getElementById('btn-pin-backspace');
   if (pinBackspaceBtn) pinBackspaceBtn.addEventListener('click', pressPinBackspace);
-
   document.querySelectorAll('.pin-key[data-digit]').forEach(key => {
     key.addEventListener('click', () => pressPinDigit(key.dataset.digit));
   });
-
   const closePanelBtn = document.getElementById('btn-parent-panel-close');
   if (closePanelBtn) closePanelBtn.addEventListener('click', closeParentPanel);
 }
 
-/* ════════════════════════════════════════════════════════════
-   PONTE DE APROVAÇÃO POR PIN
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ PONTE DE APROVAÇÃO POR PIN ════════════════════════════════════════════════════════════ */
 function wirePinApprovalBridge() {
   window.addEventListener('gp:request-pin-approve', () => openPinOverlay('approve'));
   window.addEventListener('gp:pin-approved', () => finalizeDay());
 }
 
-/* ════════════════════════════════════════════════════════════
-   QUICK ACTIONS — POPUPS
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ QUICK ACTIONS — POPUPS ════════════════════════════════════════════════════════════ */
 function wireQuickActionsPopups() {
   document.getElementById('btn-qa-task-confirm')?.addEventListener('click', confirmNewTask);
   document.getElementById('btn-qa-task-cancel')?.addEventListener('click', closeNewTaskPopup);
-
   document.getElementById('btn-qa-goal-confirm')?.addEventListener('click', confirmNewGoal);
   document.getElementById('btn-qa-goal-cancel')?.addEventListener('click', closeNewGoalPopup);
-
   document.getElementById('btn-qa-member-confirm')?.addEventListener('click', confirmNewMember);
   document.getElementById('btn-qa-member-cancel')?.addEventListener('click', closeNewMemberPopup);
-
   document.getElementById('qa-bp-btn-bonus')?.addEventListener('click', () => setBonusPenaltyMode('bonus'));
   document.getElementById('qa-bp-btn-penalty')?.addEventListener('click', () => setBonusPenaltyMode('penalty'));
   document.getElementById('btn-qa-bp-confirm')?.addEventListener('click', confirmBonusPenalty);
   document.getElementById('btn-qa-bp-cancel')?.addEventListener('click', closeBonusPenaltyPopup);
 }
 
-/* ════════════════════════════════════════════════════════════
-   START
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════ START ════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', init);
