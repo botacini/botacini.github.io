@@ -46,7 +46,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 76px; /* espaço para tab-bar fixa */
+  padding-bottom: 76px;
 }
 
 button { font-family: inherit; cursor: pointer; }
@@ -228,16 +228,13 @@ button { font-family: inherit; cursor: pointer; }
 
 .board-column {
   flex: 0 0 160px;
-
   display: flex;
   flex-direction: column;
   gap: 8px;
-
   background: var(--card);
   border-left: 4px solid var(--member-color, #ccc);
   border-radius: 12px;
   padding: 10px;
-
   min-width: 160px;
 }
 
@@ -276,7 +273,6 @@ button { font-family: inherit; cursor: pointer; }
 .task-cell.current { border-color: var(--gold); box-shadow: 0 0 8px rgba(232,184,0,.4); }
 .task-cell.shared-task { background: rgba(55, 138, 221, .08); }
 
-/* ── Linha de horário: início à esquerda, fim à direita, X sobreposto ── */
 .task-time {
   display: flex;
   align-items: center;
@@ -285,7 +281,6 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 8px;
   font-weight: 700;
   color: var(--muted);
-  /* deixa espaço à direita para o botão X (14px + 4px de folga) */
   padding-right: 18px;
 }
 
@@ -317,7 +312,7 @@ button { font-family: inherit; cursor: pointer; }
 .task-done.active { background: var(--green); border-color: var(--green); color: #06280a; }
 .task-fail.active { background: var(--red); border-color: var(--red); color: #fff; }
 
-/* -- legacy mission card (para compatibilidade) -- */
+/* -- legacy mission card -- */
 .mission-card {
   display: flex;
   align-items: center;
@@ -411,18 +406,14 @@ button { font-family: inherit; cursor: pointer; }
   width: 100%;
   margin-bottom: 12px;
   padding: 12px;
-
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
-
   text-align: center;
-
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 1px;
-
   color: var(--gold);
 }
 
@@ -494,21 +485,10 @@ button { font-family: inherit; cursor: pointer; }
   filter: grayscale(1);
 }
 .badge-card.unlocked { opacity: 1; filter: none; border-color: var(--gold); box-shadow: 0 0 10px rgba(232,184,0,.2); }
-.badge-card.custom-goal {
-  opacity: 1;
-  filter: none;
-}
-.badge-card.custom-goal.pending {
-  border-color: var(--line);
-}
-.badge-card.custom-goal.available {
-  border-color: var(--gold);
-  box-shadow: 0 0 10px rgba(232,184,0,.14);
-}
-.badge-card.custom-goal.claimed {
-  border-color: var(--green);
-  box-shadow: 0 0 10px rgba(92,184,50,.14);
-}
+.badge-card.custom-goal { opacity: 1; filter: none; }
+.badge-card.custom-goal.pending { border-color: var(--line); }
+.badge-card.custom-goal.available { border-color: var(--gold); box-shadow: 0 0 10px rgba(232,184,0,.14); }
+.badge-card.custom-goal.claimed { border-color: var(--green); box-shadow: 0 0 10px rgba(92,184,50,.14); }
 .badge-icon { font-size: 26px; }
 .badge-name { font-weight: 800; font-size: 11px; margin-top: 6px; letter-spacing: .3px; }
 .badge-desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
@@ -527,10 +507,7 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 11px;
   font-weight: 800;
 }
-.badge-action:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
+.badge-action:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ════════════════ ABA SEMANA ════════════════ */
 .week-days { display: flex; flex-direction: column; gap: 6px; }
@@ -566,12 +543,8 @@ button { font-family: inherit; cursor: pointer; }
   border-top: 2px solid var(--line);
   z-index: 20;
 }
-/* No mobile os wrappers internos são transparentes —
-   os botões ficam lado a lado como filhos diretos do flex */
-.tab-bar-tabs {
-  display: contents; /* expõe os filhos direto ao flex do pai */
-}
-.tab-bar-bottom { display: none; } /* botão de config só aparece no desktop */
+.tab-bar-tabs { display: contents; }
+.tab-bar-bottom { display: none; }
 .tab-btn {
   flex: 1;
   background: none;
@@ -782,26 +755,10 @@ button { font-family: inherit; cursor: pointer; }
 .pp-toggle-row input[type="checkbox"] { accent-color: var(--gold); }
 .pp-field-label { display: block; font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
 
-/* ── Metas personalizadas ── */
-.pp-goal-row {
-  background: var(--card2);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 8px;
-  margin-bottom: 8px;
-}
+.pp-goal-row { background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-bottom: 8px; }
+.pp-goal-info { display: flex; gap: 6px; align-items: center; }
+.pp-goal-info input { margin-bottom: 0; }
 
-.pp-goal-info {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.pp-goal-info input {
-  margin-bottom: 0;
-}
-
-/* ── Bônus manual ── */
 .pp-bonus-entry {
   background: var(--card2);
   border: 1px solid var(--line);
@@ -820,29 +777,14 @@ button { font-family: inherit; cursor: pointer; }
   .m-title { font-size: 12px; }
 }
 
-/* ════════════════ RESPONSIVO — DESKTOP (≥ 768px) ════════════════
-   Layout:
-   ┌──────────────────────────────────────────────────┐
-   │  TOPBAR  (altura fixa, largura 100%)             │
-   ├──────────┬───────────────────────────────────────┤
-   │ SIDEBAR  │  CONTEÚDO PRINCIPAL                   │
-   │ (220px)  │                                       │
-   │  abas    │                                       │
-   │  ──────  │                                       │
-   │  ⚙️ cfg  │                                       │
-   └──────────┴───────────────────────────────────────┘
-   ════════════════════════════════════════════════════ */
+/* ════════════════ RESPONSIVO — DESKTOP (≥ 768px) ════════════════ */
 @media (min-width: 768px) {
-
-  /* ── Raiz: coluna (topbar em cima, depois sidebar+main) ── */
   #app {
     max-width: 100%;
     min-height: 100vh;
     flex-direction: column;
     padding-bottom: 0;
   }
-
-  /* ── TOPBAR: header vira faixa horizontal no topo ── */
   .app-header {
     width: 100%;
     min-width: unset;
@@ -861,15 +803,11 @@ button { font-family: inherit; cursor: pointer; }
     overflow: visible;
     gap: 20px;
   }
-
-  /* Faixa quadriculada volta para a borda inferior */
   .app-header::after {
     left: 0; right: 0; bottom: -2px; top: auto;
     width: auto; height: 6px;
     background: repeating-linear-gradient(90deg, #fff 0 10px, #000 10px 20px);
   }
-
-  /* Título ocupa o espaço restante */
   .header-top {
     flex-direction: row;
     align-items: center;
@@ -879,8 +817,6 @@ button { font-family: inherit; cursor: pointer; }
   .header-flag { font-size: 24px; }
   .header-title { font-size: 20px; letter-spacing: 1.5px; flex: 1; }
   .header-clock { font-size: 17px; padding: 6px 10px; }
-
-  /* Estrelas ficam na topbar, à direita */
   .header-stars {
     margin-top: 0;
     flex-direction: row;
@@ -889,19 +825,13 @@ button { font-family: inherit; cursor: pointer; }
     font-size: 13px;
   }
   #header-team-stars { font-size: 20px; }
-
-  /* Botão de config some da topbar — fica na sidebar */
   .header-gear { display: none; }
-
-  /* ── Área abaixo da topbar: sidebar + main ── */
   .app-body {
     display: flex;
     flex-direction: row;
     flex: 1;
     min-height: 0;
   }
-
-  /* Members bar: lista vertical na sidebar */
   .members-bar {
     flex-direction: column;
     overflow-x: visible;
@@ -916,13 +846,9 @@ button { font-family: inherit; cursor: pointer; }
     max-width: 220px;
   }
   .member-pill { border-radius: 10px; padding: 8px 10px; font-size: 11px; }
-
-  /* ── SIDEBAR: tab-bar vira coluna fixa à esquerda ── */
   .tab-bar {
     position: fixed;
     left: 0;
-    /* começa logo abaixo da topbar — JS seta --topbar-h via CSS var,
-       mas como fallback usamos 64px que é a altura típica */
     top: var(--topbar-h, 64px);
     bottom: 0;
     right: auto;
@@ -935,22 +861,17 @@ button { font-family: inherit; cursor: pointer; }
     border-bottom: none;
     padding: 0;
     z-index: 14;
-    justify-content: space-between; /* abas no topo, config no rodapé */
+    justify-content: space-between;
   }
-
-  /* Grupo de abas (as 5 primeiras) */
   .tab-bar-tabs {
     display: flex;
     flex-direction: column;
     flex: 1;
   }
-
-  /* Área do botão de config no rodapé da sidebar */
   .tab-bar-bottom {
     border-top: 1px solid var(--line);
     padding: 8px 0;
   }
-
   .tab-btn {
     flex-direction: row;
     justify-content: flex-start;
@@ -961,8 +882,6 @@ button { font-family: inherit; cursor: pointer; }
   }
   .tab-icon { font-size: 16px; }
   .tab-label { font-size: 11px; letter-spacing: .4px; }
-
-  /* Botão de config na sidebar */
   .sidebar-gear-btn {
     display: flex;
     align-items: center;
@@ -980,67 +899,45 @@ button { font-family: inherit; cursor: pointer; }
   }
   .sidebar-gear-btn:hover { color: var(--gold); }
   .sidebar-gear-icon { font-size: 16px; }
-
-  /* ── Área de conteúdo principal ── */
   .app-main {
     flex: 1;
     min-width: 0;
     padding: 20px 24px 20px;
     overflow-y: auto;
     min-height: calc(100vh - var(--topbar-h, 64px));
-    margin-left: 220px; /* mesma largura da sidebar */
+    margin-left: 220px;
   }
-
-  /* Kanban: colunas maiores no desktop */
-  .board-column {
-    flex: 0 0 200px;
-    min-width: 200px;
-  }
-
+  .board-column { flex: 0 0 200px; min-width: 200px; }
   .task-cell { font-size: 11px; padding: 8px; gap: 4px; }
   .task-emoji { font-size: 16px; }
   .task-title { font-size: 11px; }
   .task-desc  { font-size: 10px; }
   .task-btn   { font-size: 10px; padding: 4px; }
-
-  /* Navegação de dias maior */
   .day-nav-btn { padding: 10px 0; font-size: 11px; }
-
-  /* Cards de estrelas em grid de 3 colunas */
   .member-stars-grid { grid-template-columns: repeat(3, 1fr); }
-
-  /* Painel dos pais: popup maior */
   .parent-panel-popup { max-width: 560px; max-height: 90vh; }
-
-  /* Popup genérico mais largo */
   .popup { max-width: 460px; }
 }
 
 /* ════════════════ VISÃO EM COLUNAS ════════════════ */
-
 .day-title-card {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px;
   margin-bottom: 12px;
-
   text-align: center;
-
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 900;
   letter-spacing: 1px;
-
   color: var(--gold);
 }
-
 .members-columns-scroll {
   overflow-x: auto;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
 }
-
 .members-columns {
   display: flex;
   flex-wrap: nowrap;
@@ -1048,14 +945,10 @@ button { font-family: inherit; cursor: pointer; }
   width: max-content;
   min-width: 100%;
 }
-
-.member-column {
-  flex: 0 0 220px;
-}
+.member-column { flex: 0 0 220px; }
 
 /* ════════════════ QUICK ACTIONS — POPUPS ════════════════ */
 .qa-popup { width: min(340px, 90vw); }
-
 .qa-input {
   display: block;
   width: 100%;
@@ -1071,7 +964,6 @@ button { font-family: inherit; cursor: pointer; }
   margin-bottom: 12px;
 }
 .qa-input:focus { outline: none; border-color: var(--gold); }
-
 .qa-time-row { display: flex; gap: 10px; margin-bottom: 4px; }
 .qa-field { flex: 1; }
 .qa-label {
@@ -1082,8 +974,6 @@ button { font-family: inherit; cursor: pointer; }
   letter-spacing: .05em;
   margin-bottom: 4px;
 }
-
-/* ── Checkboxes de dias da semana no popup de nova tarefa ── */
 .qa-days-label {
   display: block;
   font-size: 10px;
@@ -1108,14 +998,9 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 800;
   color: var(--muted);
 }
-.qa-day-check input[type="checkbox"] {
-  accent-color: var(--gold);
-  width: 14px;
-  height: 14px;
-}
+.qa-day-check input[type="checkbox"] { accent-color: var(--gold); width: 14px; height: 14px; }
 
 /* ════════════════ TASK-CELL: botão X ════════════════ */
-
 .task-delete-btn {
   position: absolute;
   top: 4px;
@@ -1136,7 +1021,6 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ════════════════ BADGE-CARD: botão X ════════════════ */
 .badge-card { position: relative; }
-
 .badge-delete-btn {
   position: absolute;
   top: 6px;
@@ -1149,8 +1033,6 @@ button { font-family: inherit; cursor: pointer; }
   padding: 2px 4px;
   border-radius: 4px;
   line-height: 1;
-  /* sempre visível em conquistas customizadas — evita sumir
-     quando o DOM é recriado pelo renderBadges() pós-toggle */
   opacity: 1;
   transition: color .15s;
 }
@@ -1188,12 +1070,8 @@ button { font-family: inherit; cursor: pointer; }
 }
 .team-add-card:hover { border-color: var(--gold) !important; color: var(--gold); }
 
-/* ════════════════ POPUP DE BÔNUS/PENALIDADE (qa-bonus) ════════════════ */
-.qa-bonus-type-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
+/* ════════════════ POPUP DE BÔNUS/PENALIDADE ════════════════ */
+.qa-bonus-type-row { display: flex; gap: 8px; margin-bottom: 14px; }
 .qa-bonus-type-btn {
   flex: 1;
   padding: 10px 6px;
@@ -1206,13 +1084,156 @@ button { font-family: inherit; cursor: pointer; }
   letter-spacing: .3px;
   transition: border-color .15s, color .15s, background .15s;
 }
-.qa-bonus-type-btn.active-bonus {
+.qa-bonus-type-btn.active-bonus { border-color: var(--gold); background: #2a2306; color: var(--gold); }
+.qa-bonus-type-btn.active-penalty { border-color: var(--red); background: #260f0f; color: var(--red); }
+
+/* ════════════════ ONBOARDING ════════════════ */
+.onboarding-popup {
+  width: min(400px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: left;
+  padding: 28px 24px;
+  border: 1px solid var(--gold);
+  box-shadow: 0 0 40px rgba(232,184,0,.15);
+}
+
+.onboarding-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.onboarding-flag {
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 0 16px rgba(232,184,0,.5));
+}
+
+.onboarding-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-top: 10px;
+  text-shadow: 0 0 14px rgba(232,184,0,.35);
+}
+
+.onboarding-subtitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  margin-top: 4px;
+}
+
+.onboarding-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+/* Lista de famílias existentes */
+.onboarding-family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.onboarding-family-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  transition: border-color .15s, background .15s;
+  cursor: pointer;
+}
+.onboarding-family-btn:hover {
   border-color: var(--gold);
   background: #2a2306;
   color: var(--gold);
 }
-.qa-bonus-type-btn.active-penalty {
+
+.onboarding-family-icon { font-size: 20px; }
+.onboarding-family-name { flex: 1; }
+.onboarding-family-arrow { color: var(--muted); font-size: 16px; }
+
+/* Divisor "OU" */
+.onboarding-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 16px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.onboarding-divider::before,
+.onboarding-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* Input de nome da família */
+.onboarding-input {
+  display: block;
+  width: 100%;
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  transition: border-color .15s;
+}
+.onboarding-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.onboarding-input.onboarding-input-error {
   border-color: var(--red);
-  background: #260f0f;
-  color: var(--red);
+  animation: pin-shake .38s;
+}
+
+/* Botão principal */
+.onboarding-confirm-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), #c49a00);
+  color: #1a1200;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 1px;
+  transition: opacity .15s;
+  margin-bottom: 14px;
+}
+.onboarding-confirm-btn:hover { opacity: .88; }
+
+/* Dica inferior */
+.onboarding-hint {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.5;
 }
