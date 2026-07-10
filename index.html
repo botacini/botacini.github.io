@@ -88,6 +88,40 @@
 
 </div>
 
+<!-- ════════════ ONBOARDING — Seleção / criação de família ════════════ -->
+<div id="onboarding-overlay" class="overlay" style="display:none">
+  <div class="popup onboarding-popup">
+    <div class="onboarding-header">
+      <div class="onboarding-flag">🏁</div>
+      <div class="onboarding-title">GP DA FAMÍLIA</div>
+      <div class="onboarding-subtitle">O CAMPEONATO DA SUA CASA</div>
+    </div>
+
+    <!-- Famílias existentes neste browser -->
+    <div id="onboarding-existing-section" style="display:none">
+      <div class="onboarding-section-label">CONTINUAR COMO</div>
+      <div id="onboarding-family-list" class="onboarding-family-list"></div>
+      <div class="onboarding-divider"><span>OU</span></div>
+    </div>
+
+    <!-- Criar nova família -->
+    <div class="onboarding-section-label">NOVA FAMÍLIA</div>
+    <input
+      id="onboarding-family-name"
+      class="onboarding-input"
+      placeholder="Ex: Família Silva"
+      maxlength="40"
+      autocomplete="off"
+    >
+    <button id="btn-onboarding-confirm" class="onboarding-confirm-btn">
+      🏎️ ENTRAR NA PISTA
+    </button>
+    <div class="onboarding-hint">
+      Cada família tem seus próprios membros, tarefas e conquistas.
+    </div>
+  </div>
+</div>
+
 <!-- Popup de bônus (checklist de tarefas concluídas) -->
 <div id="bonus-overlay" class="overlay" style="display:none">
   <div class="popup bonus-popup">
