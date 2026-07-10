@@ -259,6 +259,7 @@ button { font-family: inherit; cursor: pointer; }
 .column-empty { text-align: center; font-size: 10px; color: var(--muted); padding: 8px 0; }
 
 .task-cell {
+  position: relative;
   background: var(--card2);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -275,17 +276,23 @@ button { font-family: inherit; cursor: pointer; }
 .task-cell.current { border-color: var(--gold); box-shadow: 0 0 8px rgba(232,184,0,.4); }
 .task-cell.shared-task { background: rgba(55, 138, 221, .08); }
 
+/* ── Linha de horário: início à esquerda, fim à direita, X sobreposto ── */
 .task-time {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
   font-family: var(--font-display);
   font-size: 8px;
   font-weight: 700;
   color: var(--muted);
+  /* deixa espaço à direita para o botão X (14px + 4px de folga) */
+  padding-right: 18px;
 }
 
 .task-start { color: var(--text); }
-.task-end { color: var(--muted); }
+.task-sep   { color: var(--muted); }
+.task-end   { color: var(--muted); }
+
 .task-emoji { font-size: 14px; text-align: center; }
 .task-body { display: flex; flex-direction: column; gap: 1px; }
 .task-title { font-weight: 700; color: var(--text); }
@@ -1076,8 +1083,38 @@ button { font-family: inherit; cursor: pointer; }
   margin-bottom: 4px;
 }
 
+/* ── Checkboxes de dias da semana no popup de nova tarefa ── */
+.qa-days-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .05em;
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+.qa-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.qa-day-check {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--muted);
+}
+.qa-day-check input[type="checkbox"] {
+  accent-color: var(--gold);
+  width: 14px;
+  height: 14px;
+}
+
 /* ════════════════ TASK-CELL: botão X ════════════════ */
-.task-cell { position: relative; }
 
 .task-delete-btn {
   position: absolute;
@@ -1112,10 +1149,11 @@ button { font-family: inherit; cursor: pointer; }
   padding: 2px 4px;
   border-radius: 4px;
   line-height: 1;
-  opacity: 0;
-  transition: opacity .15s, color .15s;
+  /* sempre visível em conquistas customizadas — evita sumir
+     quando o DOM é recriado pelo renderBadges() pós-toggle */
+  opacity: 1;
+  transition: color .15s;
 }
-.badge-card:hover .badge-delete-btn { opacity: 1; }
 .badge-delete-btn:hover { color: var(--red); }
 
 /* ════════════════ TASK-ADD-BTN: por coluna ════════════════ */
@@ -1149,3 +1187,32 @@ button { font-family: inherit; cursor: pointer; }
   width: 100%;
 }
 .team-add-card:hover { border-color: var(--gold) !important; color: var(--gold); }
+
+/* ════════════════ POPUP DE BÔNUS/PENALIDADE (qa-bonus) ════════════════ */
+.qa-bonus-type-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.qa-bonus-type-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 2px solid var(--line);
+  background: var(--card2);
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .3px;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.qa-bonus-type-btn.active-bonus {
+  border-color: var(--gold);
+  background: #2a2306;
+  color: var(--gold);
+}
+.qa-bonus-type-btn.active-penalty {
+  border-color: var(--red);
+  background: #260f0f;
+  color: var(--red);
+}
