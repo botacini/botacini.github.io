@@ -95,66 +95,71 @@ export function renderMissions() {
   updateHeaderStarsDisplay();
   const readonly = !isSelectedDateToday();
 
-  // CORREÇÃO: SEMPRE exibe a estrutura do board, mesmo sem membros ou tarefas
   const members = state.config.members || [];
-  const boardHTML = `
-    <div class="mission-board">
-      ${members.length === 0
-        ? `<div class="empty-members-message">👨‍👩‍👧‍👦 Adicione os membros da família para lhes atribuir tarefas.</div>`
-        : members.map(mem => renderMemberColumn(mem)).join('')
-      }
-    </div>
-  `;
+  let boardHTML = '';
+
+  if (members.length === 0) {
+    boardHTML = `<div class="empty-members-message">👨‍👩‍👧‍👦 Adicione os membros da família para lhes atribuir tarefas.</div>`;
+  } else {
+    boardHTML = members.map(mem => renderMemberColumn(mem, readonly)).join('');
+  }
 
   container.innerHTML = `
     ${renderDateNav()}
     ${renderDayBanner()}
-    ${boardHTML}
+    <div class="mission-board">
+      ${boardHTML}
+    </div>
   `;
 }
 
-function renderMemberColumn(member) {
+function renderMemberColumn(member, readonly) {
   const currentId = getCurrentMissionId();
-  const readonly = !isSelectedDateToday();
 
   // Filtra as tarefas deste membro
   const memberMissions = state.missions.filter(ms =>
     assigneeIds(ms).includes(member.id)
   );
 
-  // Linhas de tarefas (ou mensagem de vazio)
-  const rows = memberMissions.length === 0
-    ? `<div class="no-tasks-message">— sem tarefas hoje</div>`
-    : memberMissions.map((ms) => {
-        const st = state.missionStatus[ms.id];
-        const doneClass = st?.status === 'done' ? ' done' : '';
-        const failClass = st?.status === 'fail' ? ' fail' : '';
-        const currentClass = currentId === ms.id && !st ? ' current' : '';
-        const sharedMemberIds = assigneeIds(ms);
-        const isShared = sharedMemberIds.length > 1;
-        return `
-          <div class="mission-row${doneClass}${failClass}${currentClass}" data-mission-id="${ms.id}">
-            <div class="mission-time">${ms.start} - ${ms.end}</div>
-            <div class="mission-actions">
-              ${!isShared && !readonly ? `<button class="mission-delete" data-delete-mission="${ms.id}">✕</button>` : ''}
-            </div>
-            <div class="mission-content">
-              <span class="mission-emoji">${ms.emoji}</span>
-              <span class="mission-title">${ms.title}</span>
-              <span class="mission-desc">${ms.desc}</span>
-            </div>
-            <div class="mission-status-buttons">
-              <button class="mission-done" data-mission-action="done" data-mission-id="${ms.id}">✓</button>
-              <button class="mission-fail" data-mission-action="fail" data-mission-id="${ms.id}">✕</button>
-            </div>
+  // Conteúdo do corpo (apenas linhas de tarefas ou mensagem vazia)
+  let bodyContent = '';
+  if (memberMissions.length === 0) {
+    bodyContent = `<div class="no-tasks-message">— sem tarefas hoje</div>`;
+  } else {
+    bodyContent = memberMissions.map((ms) => {
+      const st = state.missionStatus[ms.id];
+      const doneClass = st?.status === 'done' ? ' done' : '';
+      const failClass = st?.status === 'fail' ? ' fail' : '';
+      const currentClass = currentId === ms.id && !st ? ' current' : '';
+      const sharedMemberIds = assigneeIds(ms);
+      const isShared = sharedMemberIds.length > 1;
+      return `
+        <div class="mission-row${doneClass}${failClass}${currentClass}" data-mission-id="${ms.id}">
+          <div class="mission-time">${ms.start} - ${ms.end}</div>
+          <div class="mission-actions">
+            ${!isShared && !readonly ? `<button class="mission-delete" data-delete-mission="${ms.id}">✕</button>` : ''}
           </div>
-        `;
-      }).join('');
+          <div class="mission-content">
+            <span class="mission-emoji">${ms.emoji}</span>
+            <span class="mission-title">${ms.title}</span>
+            <span class="mission-desc">${ms.desc}</span>
+          </div>
+          <div class="mission-status-buttons">
+            <button class="mission-done" data-mission-action="done" data-mission-id="${ms.id}">✓</button>
+            <button class="mission-fail" data-mission-action="fail" data-mission-id="${ms.id}">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 
-  // CORREÇÃO: botão "Adicionar tarefa" SEMPRE visível, mas desabilitado se não houver membros
+  // Botão "Adicionar tarefa" – sempre visível, fora do body
   const addBtnDisabled = state.config.members.length === 0 ? 'disabled' : '';
   const addBtnTitle = state.config.members.length === 0
     ? 'Adicione membros antes de criar tarefas'
+    : '';
+  const addBtn = !readonly
+    ? `<button class="add-task-btn" data-add-task-member="${member.id}" ${addBtnDisabled} title="${addBtnTitle}">➕ Adicionar tarefa</button>`
     : '';
 
   return `
@@ -165,13 +170,9 @@ function renderMemberColumn(member) {
         <span class="member-stars">⭐${state.memberStars[member.id] || 0}</span>
       </div>
       <div class="member-column-body">
-        ${rows}
-        ${!readonly ? `
-          <button class="add-task-btn" data-add-task-member="${member.id}" ${addBtnDisabled} title="${addBtnTitle}">
-            ➕ Adicionar tarefa
-          </button>
-        ` : ''}
+        ${bodyContent}
       </div>
+      ${addBtn}
     </div>
   `;
 }
