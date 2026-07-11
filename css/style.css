@@ -1237,3 +1237,31 @@ button { font-family: inherit; cursor: pointer; }
   text-align: center;
   line-height: 1.5;
 }
+
+
+/* Botão "Adicionar tarefa" – sempre visível abaixo da coluna */
+.add-task-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--accent, #4a6fa5);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  text-align: center;
+}
+.add-task-btn:hover:not(:disabled) {
+  background: #3a5a8a;
+}
+.add-task-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.add-task-btn:not(:disabled) {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
