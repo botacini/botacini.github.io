@@ -209,6 +209,10 @@ export function renderStarsTab() {
   const goalEl = document.getElementById('team-stars-goal');
   const grid = document.getElementById('member-stars-grid');
   if (!totalEl || !grid) return;
+
+  // Garante que o container tenha a classe esperada pelo CSS
+  grid.classList.add('member-stars-grid');
+
   const total = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
   const goal = state.config.teamStarsGoal || 20;
   totalEl.textContent = total;
@@ -245,6 +249,9 @@ export function renderTeamTab() {
   const container = document.getElementById('team-cards');
   if (!container) return;
 
+  // Garante que o container tenha a classe esperada pelo CSS
+  container.classList.add('team-cards');
+
   const memberCards = state.config.members.map(mem => {
     const doneCount = state.missions.filter(ms =>
       assigneeIds(ms).includes(mem.id) &&
@@ -272,6 +279,9 @@ export function renderTeamTab() {
 export function renderBadges() {
   const grid = document.getElementById('badge-grid');
   if (!grid) return;
+
+  // Garante que o container tenha a classe esperada pelo CSS
+  grid.classList.add('badge-grid');
 
   const fixedBadgesHTML = ALL_BADGES.map(goal => {
     const unlocked = state.badgesUnlocked.includes(goal.id);
@@ -324,6 +334,9 @@ export function renderWeek() {
   const avgNum = document.getElementById('week-avg-num');
   const avgSub = document.getElementById('week-avg-sub');
   if (!daysEl) return;
+
+  // Garante que o container tenha a classe esperada pelo CSS
+  daysEl.classList.add('week-days');
 
   const days = state.weekState?.days || {};
   const monday = new Date(state.weekState.weekKey + 'T00:00:00');
