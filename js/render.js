@@ -1,19 +1,17 @@
-/* ════════════════════════════════════════════════════════════ GP DA FAMÍLIA — render.js ════════════════════════════════════════════════════════════
-   Responsabilidade única: pintar a interface a partir do que está em `state`
-   (state.js). Não decide nada, não persiste nada, não muda estrelas nem status —
-   só lê e desenha. As únicas mutações de estado feitas aqui são as puramente
-   visuais (ex: qual aba está ativa), que não precisam ser persistidas.
+/* ════════════════════════════════════════════════════════════
+   GP DA FAMÍLIA — render.js
+   ════════════════════════════════════════════════════════════
+   Responsabilidade única: pintar a interface a partir do que
+   está em `state` (state.js). Não decide nada, não persiste
+   nada, não muda estrelas nem status — só lê e desenha. As
+   únicas mutações de estado feitas aqui são as puramente
+   visuais (ex: qual aba está ativa), que não precisam ser
+   persistidas.
    ════════════════════════════════════════════════════════════ */
+
 import {
-  state,
-  DAY_FULL,
-  DAY_NAMES,
-  ALL_BADGES,
-  timeToMin,
-  assigneeIds,
-  dateFromKey,
-  todayKey,
-  isSelectedDateToday,
+  state, DAY_FULL, DAY_NAMES, ALL_BADGES,
+  timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
 } from './state.js';
 
 /* ════════════════ RELÓGIO ════════════════ */
@@ -21,9 +19,7 @@ export function updateClock() {
   const el = document.getElementById('live-clock');
   if (!el) return;
   const now = new Date();
-  el.textContent =
-    String(now.getHours()).padStart(2, '0') + ':' +
-    String(now.getMinutes()).padStart(2, '0');
+  el.textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 }
 
 function nowMin() {
@@ -53,25 +49,21 @@ function renderDateNav() {
   const selected = dateFromKey(selectedDateKey());
   const sunday = new Date(selected);
   sunday.setDate(selected.getDate() - selected.getDay());
+
   return `
-    <div class="date-nav">
+    <div class="day-nav" aria-label="Navegação por data">
       ${DAY_NAMES.map((label, index) => {
         const day = new Date(sunday);
         day.setDate(sunday.getDate() + index);
         const key = todayKey(day);
         const active = key === selectedDateKey();
-        return `<button class="date-nav-btn${active ? ' active' : ''}" data-date-key="${key}">${label}</button>`;
+        return `<button class="day-nav-btn${active ? ' active' : ''}" data-date-key="${key}" aria-pressed="${active ? 'true' : 'false'}">${label}</button>`;
       }).join('')}
-    </div>
-  `;
+    </div>`;
 }
 
 function renderDayBanner() {
-  return `
-    <div class="day-banner">
-      <span>${selectedDateLabel()}</span>
-    </div>
-  `;
+  return `<div class="day-banner">${selectedDateLabel()}</div>`;
 }
 
 /* ════════════════ BARRA DE MEMBROS (HEADER) ════════════════ */
@@ -79,117 +71,117 @@ export function renderMembersBar() {
   const bar = document.getElementById('members-bar');
   if (!bar) return;
   bar.innerHTML = state.config.members.map(mem => `
-    <div class="member-pill">
-      ${mem.avatar} ${mem.name} ⭐${state.memberStars[mem.id] || 0}
-    </div>
-  `).join('');
+    <div class="member-pill" style="border-color:${mem.color};background:${mem.color}22">
+      <span class="pill-avatar">${mem.avatar}</span>
+      <span class="pill-name">${mem.name}</span>
+      <span class="pill-stars">⭐${state.memberStars[mem.id] || 0}</span>
+    </div>`).join('');
 }
 
 /* ════════════════ QUADRO DE TAREFAS (KANBAN POR MEMBRO) ════════════════ */
 export function renderMissions() {
   const container = document.getElementById('mission-list');
   if (!container) return;
+
   updateProgress();
   updateHeaderStarsDisplay();
+
   const readonly = !isSelectedDateToday();
+  const members = state.config.members;
 
-  const members = state.config.members || [];
-  let boardHTML = '';
-
+  let boardHTML;
   if (members.length === 0) {
-    boardHTML = `<div class="empty-members-message">👨‍👩‍👧‍👦 Adicione os membros da família para lhes atribuir tarefas.</div>`;
+    boardHTML = `<div class="empty-state">
+      <span class="empty-state-icon">👨‍👩‍👧‍👦</span>
+      Adicione os membros da família na aba <strong>TIME</strong> para começar.
+    </div>`;
+  } else if (state.missions.length === 0) {
+    boardHTML = `<div class="empty-state"><span class="empty-state-icon">🏁</span>Nenhuma tarefa para este dia.</div>`;
   } else {
-    boardHTML = members.map(mem => renderMemberColumn(mem, readonly)).join('');
+    boardHTML = `<div class="missions-board${readonly ? ' consultation-mode' : ''}">
+      ${members.map(mem => renderMemberColumn(mem)).join('')}
+    </div>`;
   }
 
   container.innerHTML = `
     ${renderDateNav()}
     ${renderDayBanner()}
-    <div class="missions-board">
-      ${boardHTML}
-    </div>
+    ${boardHTML}
   `;
 }
 
-function renderMemberColumn(member, readonly) {
+function renderMemberColumn(member) {
   const currentId = getCurrentMissionId();
+  const readonly = !isSelectedDateToday();
   const memberMissions = state.missions.filter(ms =>
     assigneeIds(ms).includes(member.id)
   );
 
-  // Conteúdo das tarefas
-  let tasksContent = '';
-  if (memberMissions.length === 0) {
-    tasksContent = `<div class="column-empty">— sem tarefas hoje</div>`;
-  } else {
-    tasksContent = memberMissions.map((ms) => {
-      const st = state.missionStatus[ms.id];
-      const doneClass = st?.status === 'done' ? ' done' : '';
-      const failClass = st?.status === 'fail' ? ' fail' : '';
-      const currentClass = currentId === ms.id && !st ? ' current' : '';
-      const sharedMemberIds = assigneeIds(ms);
-      const isShared = sharedMemberIds.length > 1;
-      return `
-        <div class="task-cell${doneClass}${failClass}${currentClass}" data-mission-id="${ms.id}">
-          <div class="task-time">
-            <span class="task-start">${ms.start}</span>
-            <span class="task-sep">-</span>
-            <span class="task-end">${ms.end}</span>
-            ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}">✕</button>` : ''}
-          </div>
-          <div class="task-emoji">${ms.emoji}</div>
-          <div class="task-body">
-            <div class="task-title">${ms.title}</div>
-            <div class="task-desc">${ms.desc}</div>
-          </div>
-          <div class="task-actions">
-            <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}">✓</button>
-            <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}">✕</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
+  const rows = memberMissions.map((ms) => {
+    const st = state.missionStatus[ms.id];
+    const doneClass = st?.status === 'done' ? ' done' : '';
+    const failClass = st?.status === 'fail' ? ' fail' : '';
+    const currentClass = currentId === ms.id && !st ? ' current' : '';
+    const sharedMemberIds = assigneeIds(ms);
+    const isShared = sharedMemberIds.length > 1;
 
-  // Botão "Adicionar tarefa" – sempre visível
-  const addBtnDisabled = state.config.members.length === 0 ? 'disabled' : '';
-  const addBtnTitle = state.config.members.length === 0
-    ? 'Adicione membros antes de criar tarefas'
-    : '';
+    return `
+      <div class="task-cell${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}" data-mission-id="${ms.id}">
+        <div class="task-time">
+          <span class="task-start">${ms.start}</span>
+          <span class="task-sep"> - </span>
+          <span class="task-end">${ms.end}</span>
+        </div>
+        ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}" title="Remover tarefa">✕</button>` : ''}
+        <div class="task-emoji">${ms.emoji}</div>
+        <div class="task-body">
+          <div class="task-title">${ms.title}</div>
+          <div class="task-desc">${ms.desc}</div>
+        </div>
+        <div class="task-actions">
+          <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
+          <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
+        </div>
+      </div>`;
+  }).join('');
+
   const addBtn = !readonly
-    ? `<button class="add-task-btn" data-add-task-member="${member.id}" ${addBtnDisabled} title="${addBtnTitle}">➕ Adicionar tarefa</button>`
+    ? `<button class="task-add-btn" data-add-task-member="${member.id}">➕ Adicionar tarefa</button>`
     : '';
 
   return `
-    <div class="board-column" style="--member-color: ${member.color || '#ccc'}">
+    <div class="board-column" style="--member-color:${member.color || '#ccc'}">
       <div class="column-header">
         <span class="column-avatar">${member.avatar}</span>
         <span class="column-name">${member.name}</span>
         <span class="column-stars">⭐${state.memberStars[member.id] || 0}</span>
       </div>
       <div class="column-tasks">
-        ${tasksContent}
+        ${rows || '<div class="column-empty">— sem tarefas hoje</div>'}
+        ${addBtn}
       </div>
-      ${addBtn}
-    </div>
-  `;
+    </div>`;
 }
 
 function updateProgress() {
   const total = state.missions.length;
   const done = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'done').length;
   const pct = total ? Math.round((done / total) * 100) : 0;
+
   const label = document.getElementById('prog-label');
   const pctEl = document.getElementById('prog-pct');
   const bar = document.getElementById('prog-bar');
   if (label) label.textContent = `${done} DE ${total} TAREFAS ✅`;
   if (pctEl) pctEl.textContent = `${pct}%`;
   if (bar) bar.style.width = pct + '%';
+
   const car = document.getElementById('car-avatar');
   if (car) car.style.left = pct + '%';
+
   const finalizeBtn = document.getElementById('btn-finalize');
   if (finalizeBtn) finalizeBtn.disabled = !isSelectedDateToday();
   if (finalizeBtn) finalizeBtn.classList.toggle('is-readonly', !isSelectedDateToday());
+
   const weekBtn = document.getElementById('btn-finalize-week');
   if (weekBtn) weekBtn.disabled = !isSelectedDateToday();
   if (weekBtn) weekBtn.classList.toggle('is-readonly', !isSelectedDateToday());
@@ -210,24 +202,21 @@ export function renderStarsTab() {
   const grid = document.getElementById('member-stars-grid');
   if (!totalEl || !grid) return;
 
-  // Garante que o container tenha a classe esperada pelo CSS
-  grid.classList.add('member-stars-grid');
-
   const total = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
   const goal = state.config.teamStarsGoal || 20;
   totalEl.textContent = total;
   if (barEl) barEl.style.width = Math.min(100, Math.round((total / goal) * 100)) + '%';
   if (goalEl) goalEl.textContent = `META DA SEMANA: ${goal} ⭐`;
-  grid.innerHTML = state.config.members.map(mem => `
-    <div class="member-star-card">
-      <span class="member-avatar">${mem.avatar}</span>
-      <span class="member-name">${mem.name}</span>
-      <span class="member-stars">⭐ ${state.memberStars[mem.id] || 0}</span>
-      <span class="member-day-label">${isSelectedDateToday() ? 'HOJE' : selectedDateLabel()}</span>
-    </div>
-  `).join('');
 
-  // Botão de atalho para bônus
+  grid.innerHTML = state.config.members.map(mem => `
+      <div class="member-star-card">
+      <div class="member-star-avatar">${mem.avatar}</div>
+      <div class="member-star-name">${mem.name}</div>
+      <div class="member-star-count">⭐ ${state.memberStars[mem.id] || 0}</div>
+      <div class="member-star-sub">${isSelectedDateToday() ? 'HOJE' : selectedDateLabel()}</div>
+    </div>`).join('');
+
+  // Botão de atalho fora do grid
   const starsPanel = document.getElementById('panel-stars');
   if (starsPanel) {
     let shortcutBtn = document.getElementById('btn-bonus-shortcut');
@@ -249,70 +238,65 @@ export function renderTeamTab() {
   const container = document.getElementById('team-cards');
   if (!container) return;
 
-  // Garante que o container tenha a classe esperada pelo CSS
-  container.classList.add('team-cards');
-
   const memberCards = state.config.members.map(mem => {
     const doneCount = state.missions.filter(ms =>
       assigneeIds(ms).includes(mem.id) &&
       state.missionStatus[ms.id]?.status === 'done'
     ).length;
     return `
-      <div class="team-card">
-        <span class="member-avatar">${mem.avatar}</span>
-        <span class="member-name">${mem.name}</span>
-        <span class="member-role">${ROLE_LABEL[mem.role] || mem.role.toUpperCase()}</span>
-        <span class="member-stars">⭐ ${state.memberStars[mem.id] || 0}</span>
-        <span class="member-tasks">${doneCount} TAREFAS ${isSelectedDateToday() ? 'HOJE' : 'NO DIA'}</span>
-      </div>
-    `;
+      <div class="team-member-card" style="border-left:4px solid ${mem.color}">
+        <span class="team-member-avatar">${mem.avatar}</span>
+        <div class="team-member-info">
+          <div class="team-member-name">${mem.name}</div>
+          <span class="role-badge role-${mem.role}">${ROLE_LABEL[mem.role] || mem.role.toUpperCase()}</span>
+        </div>
+        <div class="team-member-stats">
+          <div class="team-member-stars">⭐ ${state.memberStars[mem.id] || 0}</div>
+          <div class="team-member-done">${doneCount} TAREFAS ${isSelectedDateToday() ? 'HOJE' : 'NO DIA'}</div>
+        </div>
+      </div>`;
   }).join('');
 
   container.innerHTML = memberCards + `
-    <button class="add-member-btn" id="btn-add-member-shortcut">
-      ➕ ADICIONAR MEMBRO
-    </button>
-  `;
+    <button id="btn-add-member-shortcut" class="team-member-card team-add-card">
+      <span class="team-member-avatar">➕</span>
+      <div class="team-member-info"><div class="team-member-name">ADICIONAR MEMBRO</div></div>
+    </button>`;
 }
 
-/* ════════════════ ABA CONQUISTAS ════════════════ */
+/* ════════════════ ABA CONQUISTAS (FIXAS + METAS PERSONALIZADAS) ════════════════ */
 export function renderBadges() {
   const grid = document.getElementById('badge-grid');
   if (!grid) return;
 
-  // Garante que o container tenha a classe esperada pelo CSS
-  grid.classList.add('badge-grid');
-
   const fixedBadgesHTML = ALL_BADGES.map(goal => {
     const unlocked = state.badgesUnlocked.includes(goal.id);
     return `
-      <div class="badge-card${unlocked ? ' unlocked' : ' locked'}">
-        <span class="badge-icon">${goal.icon}</span>
-        <span class="badge-name">${goal.name}</span>
-        <span class="badge-desc">${goal.desc}</span>
-        <span class="badge-status">${unlocked ? '✅ DESBLOQUEADA' : '🔒 BLOQUEADA'}</span>
-      </div>
-    `;
+      <div class="badge-card${unlocked ? ' unlocked' : ''}">
+        <div class="badge-icon">${goal.icon}</div>
+        <div class="badge-name">${goal.name}</div>
+        <div class="badge-desc">${goal.desc}</div>
+      </div>`;
   }).join('');
 
   const customGoalsHTML = (state.config.customGoals || []).map(goal => {
     const redeemed = !!goal.redeemed;
     const label = redeemed ? 'Cancelar conquista' : 'Resgatar conquista';
+
     return `
-      <div class="badge-card custom-goal${redeemed ? ' redeemed' : ''}">
-        <button class="badge-delete" data-delete-goal="${goal.id}">✕</button>
-        <span class="badge-icon">${goal.icon}</span>
-        <span class="badge-name">${goal.name}</span>
-        <span class="badge-desc">${goal.desc || 'Meta personalizada'}</span>
-        <span class="badge-status">${redeemed ? 'RESGATADA' : 'NÃO RESGATADA'}</span>
-        <button class="badge-redeem" data-goal-action="${goal.id}">${label}</button>
-      </div>
-    `;
+      <div class="badge-card custom-goal ${redeemed ? 'claimed' : 'pending'}">
+        <button class="badge-delete-btn" data-delete-goal="${goal.id}" title="Remover conquista">✕</button>
+        <div class="badge-icon">${goal.icon}</div>
+        <div class="badge-name">${goal.name}</div>
+        <div class="badge-desc">${goal.desc || 'Meta personalizada'}</div>
+        <div class="badge-state">${redeemed ? 'RESGATADA' : 'NÃO RESGATADA'}</div>
+        <button class="badge-action" data-goal-action="toggle" data-goal-id="${goal.id}">${label}</button>
+      </div>`;
   }).join('');
 
   grid.innerHTML = fixedBadgesHTML + customGoalsHTML;
 
-  // Botão de atalho para criar conquista
+  // Botão de atalho fora do grid
   const badgesPanel = document.getElementById('panel-badges');
   if (badgesPanel) {
     let shortcutBtn = document.getElementById('btn-add-goal-shortcut');
@@ -335,9 +319,6 @@ export function renderWeek() {
   const avgSub = document.getElementById('week-avg-sub');
   if (!daysEl) return;
 
-  // Garante que o container tenha a classe esperada pelo CSS
-  daysEl.classList.add('week-days');
-
   const days = state.weekState?.days || {};
   const monday = new Date(state.weekState.weekKey + 'T00:00:00');
   let rows = '';
@@ -351,18 +332,17 @@ export function renderWeek() {
     const dow = d.getDay();
     const info = days[key];
     const pct = info ? info.pct : null;
-    if (pct !== null && pct !== undefined) {
-      pctSum += pct;
-      pctCount++;
-    }
-    rows += `
-      <div class="week-day">
-        <span class="week-day-label">${DAY_FULL[dow].slice(0, 3).toUpperCase()}</span>
-        <span class="week-day-pct">${pct !== null && pct !== undefined ? pct + '%' : '—'}</span>
-      </div>
-    `;
-  }
+    if (pct !== null && pct !== undefined) { pctSum += pct; pctCount++; }
 
+    rows += `
+      <div class="day-row">
+        <span class="day-name">${DAY_FULL[dow].slice(0, 3).toUpperCase()}</span>
+        <div class="progress-track" style="flex:1">
+          <div class="progress-fill" style="width:${pct ?? 0}%"></div>
+        </div>
+        <span style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">${pct !== null && pct !== undefined ? pct + '%' : '—'}</span>
+      </div>`;
+  }
   daysEl.innerHTML = rows;
 
   if (pctCount > 0 && avgBox && avgNum && avgSub) {
@@ -376,10 +356,7 @@ export function renderWeek() {
 
 /* ════════════════ TROCA DE ABAS ════════════════ */
 const TAB_RENDERERS = {
-  missions: () => {
-    renderMembersBar();
-    renderMissions();
-  },
+  missions: () => { renderMembersBar(); renderMissions(); },
   stars: renderStarsTab,
   team: renderTeamTab,
   badges: renderBadges,
