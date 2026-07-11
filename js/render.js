@@ -74,9 +74,7 @@ function renderDayBanner() {
   `;
 }
 
-/* ════════════════ BARRA DE MEMBROS (HEADER) ════════════════
-   Mostra apenas as estrelas de hoje de cada um — sem filtro, já que o kanban
-   mostra todas as colunas de uma vez. */
+/* ════════════════ BARRA DE MEMBROS (HEADER) ════════════════ */
 export function renderMembersBar() {
   const bar = document.getElementById('members-bar');
   if (!bar) return;
@@ -107,7 +105,7 @@ export function renderMissions() {
   container.innerHTML = `
     ${renderDateNav()}
     ${renderDayBanner()}
-    <div class="mission-board">
+    <div class="missions-board">
       ${boardHTML}
     </div>
   `;
@@ -115,18 +113,16 @@ export function renderMissions() {
 
 function renderMemberColumn(member, readonly) {
   const currentId = getCurrentMissionId();
-
-  // Filtra as tarefas deste membro
   const memberMissions = state.missions.filter(ms =>
     assigneeIds(ms).includes(member.id)
   );
 
-  // Conteúdo do corpo (apenas linhas de tarefas ou mensagem vazia)
-  let bodyContent = '';
+  // Conteúdo das tarefas
+  let tasksContent = '';
   if (memberMissions.length === 0) {
-    bodyContent = `<div class="no-tasks-message">— sem tarefas hoje</div>`;
+    tasksContent = `<div class="column-empty">— sem tarefas hoje</div>`;
   } else {
-    bodyContent = memberMissions.map((ms) => {
+    tasksContent = memberMissions.map((ms) => {
       const st = state.missionStatus[ms.id];
       const doneClass = st?.status === 'done' ? ' done' : '';
       const failClass = st?.status === 'fail' ? ' fail' : '';
@@ -134,26 +130,28 @@ function renderMemberColumn(member, readonly) {
       const sharedMemberIds = assigneeIds(ms);
       const isShared = sharedMemberIds.length > 1;
       return `
-        <div class="mission-row${doneClass}${failClass}${currentClass}" data-mission-id="${ms.id}">
-          <div class="mission-time">${ms.start} - ${ms.end}</div>
-          <div class="mission-actions">
-            ${!isShared && !readonly ? `<button class="mission-delete" data-delete-mission="${ms.id}">✕</button>` : ''}
+        <div class="task-cell${doneClass}${failClass}${currentClass}" data-mission-id="${ms.id}">
+          <div class="task-time">
+            <span class="task-start">${ms.start}</span>
+            <span class="task-sep">-</span>
+            <span class="task-end">${ms.end}</span>
+            ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}">✕</button>` : ''}
           </div>
-          <div class="mission-content">
-            <span class="mission-emoji">${ms.emoji}</span>
-            <span class="mission-title">${ms.title}</span>
-            <span class="mission-desc">${ms.desc}</span>
+          <div class="task-emoji">${ms.emoji}</div>
+          <div class="task-body">
+            <div class="task-title">${ms.title}</div>
+            <div class="task-desc">${ms.desc}</div>
           </div>
-          <div class="mission-status-buttons">
-            <button class="mission-done" data-mission-action="done" data-mission-id="${ms.id}">✓</button>
-            <button class="mission-fail" data-mission-action="fail" data-mission-id="${ms.id}">✕</button>
+          <div class="task-actions">
+            <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}">✓</button>
+            <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}">✕</button>
           </div>
         </div>
       `;
     }).join('');
   }
 
-  // Botão "Adicionar tarefa" – sempre visível, fora do body
+  // Botão "Adicionar tarefa" – sempre visível
   const addBtnDisabled = state.config.members.length === 0 ? 'disabled' : '';
   const addBtnTitle = state.config.members.length === 0
     ? 'Adicione membros antes de criar tarefas'
@@ -163,14 +161,14 @@ function renderMemberColumn(member, readonly) {
     : '';
 
   return `
-    <div class="member-column">
-      <div class="member-column-header">
-        <span class="member-avatar">${member.avatar}</span>
-        <span class="member-name">${member.name}</span>
-        <span class="member-stars">⭐${state.memberStars[member.id] || 0}</span>
+    <div class="board-column" style="--member-color: ${member.color || '#ccc'}">
+      <div class="column-header">
+        <span class="column-avatar">${member.avatar}</span>
+        <span class="column-name">${member.name}</span>
+        <span class="column-stars">⭐${state.memberStars[member.id] || 0}</span>
       </div>
-      <div class="member-column-body">
-        ${bodyContent}
+      <div class="column-tasks">
+        ${tasksContent}
       </div>
       ${addBtn}
     </div>
@@ -225,7 +223,7 @@ export function renderStarsTab() {
     </div>
   `).join('');
 
-  // Botão de atalho fora do grid
+  // Botão de atalho para bônus
   const starsPanel = document.getElementById('panel-stars');
   if (starsPanel) {
     let shortcutBtn = document.getElementById('btn-bonus-shortcut');
@@ -270,7 +268,7 @@ export function renderTeamTab() {
   `;
 }
 
-/* ════════════════ ABA CONQUISTAS (FIXAS + METAS PERSONALIZADAS) ════════════════ */
+/* ════════════════ ABA CONQUISTAS ════════════════ */
 export function renderBadges() {
   const grid = document.getElementById('badge-grid');
   if (!grid) return;
@@ -304,7 +302,7 @@ export function renderBadges() {
 
   grid.innerHTML = fixedBadgesHTML + customGoalsHTML;
 
-  // Botão de atalho fora do grid
+  // Botão de atalho para criar conquista
   const badgesPanel = document.getElementById('panel-badges');
   if (badgesPanel) {
     let shortcutBtn = document.getElementById('btn-add-goal-shortcut');
