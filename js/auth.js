@@ -83,9 +83,9 @@ export async function initialize() {
  */
 export function onAuthStateChange(callback) {
   try {
-    getClient().auth.onAuthStateChange((_event, session) => {
+    getClient().auth.onAuthStateChange((event, session) => {
       _session = buildSession(session);
-      callback(_session);
+      callback(event, _session);
     });
   } catch (e) {
     console.error('[auth] erro ao registrar listener de auth:', e);

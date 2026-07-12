@@ -180,8 +180,12 @@ async function init() {
 
   const authenticated = await initialize();
 
-  // Monitora mudanças de sessão (logout em outra aba, token expirado)
-  onAuthStateChange((session) => {
+  // Monitora mudanças de sessão (logout em outra aba, token expirado).
+  // ATENÇÃO: o Supabase dispara INITIAL_SESSION imediatamente ao registrar
+  // o listener — inclusive com session=null quando não há usuário logado.
+  // Ignoramos esse evento inicial para não causar loop de reload.
+  onAuthStateChange((event, session) => {
+    if (event === 'INITIAL_SESSION') return; // ignora disparo automático
     if (!session.authenticated) {
       invalidateCache();
       location.reload();
