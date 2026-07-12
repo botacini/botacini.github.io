@@ -1,154 +1,161 @@
-/* ════════════════════════════════════════════════════════════ GP DA FAMÍLIA — main.js ════════════════════════════════════════════════════════════
-   Único ponto de entrada. Não contém regra de negócio nem lógica de renderização
-   própria — só:
-   - verifica se há família cadastrada (onboarding)
-   - inicializa a aplicação (carrega o estado via state.js)
-   - dispara o primeiro render (via render.js)
-   - liga os eventos de interface às funções corretas de missions.js e parent-panel.js
-   - faz a ponte por eventos entre missions.js (que pede PIN) e parent-panel.js
-     (que sabe conferir PIN), sem que esses dois módulos precisem se importar um ao outro.
+/* ════════════════════════════════════════════════════════════
+   GP DA FAMÍLIA — main.js
+   ════════════════════════════════════════════════════════════
+   Único ponto de entrada. Responsabilidades:
+   - Verificar sessão (auth.js) e exibir tela de login/cadastro
+     se necessário, ou iniciar o app se já autenticado.
+   - Inicializar o estado (state.js) e disparar o primeiro render.
+   - Ligar todos os eventos de interface aos módulos corretos.
+   - Fazer a ponte PIN entre missions.js e parent-panel.js.
    ════════════════════════════════════════════════════════════ */
+
+import { loadState, loadDateContext, state } from './state.js';
+import { renderDashboard, renderMissions, updateClock, switchTab } from './render.js';
 import {
-  loadState,
-  loadDateContext,
-  state,
-} from './state.js';
-import {
-  renderDashboard,
-  renderMissions,
-  updateClock,
-  switchTab,
-} from './render.js';
-import {
-  handleMissionAction,
-  toggleBonus,
-  confirmBonus,
-  cancelBonus,
-  tryFinalizeDay,
-  finalizeDay,
-  restartDay,
-  tryFinalizeWeek,
+  handleMissionAction, toggleBonus, confirmBonus, cancelBonus,
+  tryFinalizeDay, finalizeDay, restartDay, tryFinalizeWeek,
 } from './missions.js';
 import {
-  openPinOverlay,
-  closePinOverlay,
-  pressPinDigit,
-  pressPinBackspace,
-  openParentPanel,
-  openParentPanelOnTab,
-  toggleCustomGoalReward,
-  closeParentPanel,
-  wireParentPanelEvents,
+  openPinOverlay, closePinOverlay, pressPinDigit, pressPinBackspace,
+  openParentPanel, openParentPanelOnTab, toggleCustomGoalReward,
+  closeParentPanel, wireParentPanelEvents,
 } from './parent-panel.js';
 import {
-  openNewTaskPopup,
-  closeNewTaskPopup,
-  confirmNewTask,
-  deleteTask,
-  openNewGoalPopup,
-  closeNewGoalPopup,
-  confirmNewGoal,
-  deleteGoal,
-  openNewMemberPopup,
-  closeNewMemberPopup,
-  confirmNewMember,
-  openBonusPenaltyPopup,
-  closeBonusPenaltyPopup,
-  setBonusPenaltyMode,
-  confirmBonusPenalty,
+  openNewTaskPopup, closeNewTaskPopup, confirmNewTask, deleteTask,
+  openNewGoalPopup, closeNewGoalPopup, confirmNewGoal, deleteGoal,
+  openNewMemberPopup, closeNewMemberPopup, confirmNewMember,
+  openBonusPenaltyPopup, closeBonusPenaltyPopup,
+  setBonusPenaltyMode, confirmBonusPenalty,
 } from './quick-actions.js';
 import {
-  hasSession,
-  setCurrentFamily,
-  selectFamily,
-  listFamilies,
+  initialize, onAuthStateChange, hasSession,
+  signIn, signUp, logout,
 } from './auth.js';
+import { invalidateCache } from './storage.js';
 
-/* ════════════════════════════════════════════════════════════ ONBOARDING — popup de seleção / criação de família ════════════════════════════════════════════════════════════ */
-function showOnboarding() {
-  const overlay = document.getElementById('onboarding-overlay');
-  if (overlay) overlay.style.display = 'flex';
-  renderOnboardingFamilyList();
+/* ════════════════════════════════════════════════════════════
+   TELA DE AUTENTICAÇÃO (Login / Cadastro)
+   ════════════════════════════════════════════════════════════ */
+
+function showAuthScreen() {
+  document.getElementById('auth-overlay').style.display = 'flex';
+  showAuthTab('login');
 }
 
-function hideOnboarding() {
-  const overlay = document.getElementById('onboarding-overlay');
-  if (overlay) overlay.style.display = 'none';
+function hideAuthScreen() {
+  document.getElementById('auth-overlay').style.display = 'none';
 }
 
-function renderOnboardingFamilyList() {
-  const families = listFamilies();
-  const listEl = document.getElementById('onboarding-family-list');
-  const sectionEl = document.getElementById('onboarding-existing-section');
-  if (!listEl || !sectionEl) return;
+function showAuthTab(tab) {
+  // Alterna abas login / cadastro
+  document.getElementById('auth-tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('auth-tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('auth-form-login').style.display  = tab === 'login'  ? 'block' : 'none';
+  document.getElementById('auth-form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+  setAuthError('');
+}
 
-  if (families.length === 0) {
-    sectionEl.style.display = 'none';
-    return;
-  }
-  sectionEl.style.display = 'block';
-  listEl.innerHTML = families.map(f => `
-    <button class="onboarding-family-btn" data-family-id="${f.id}">
-      👨‍👩‍👧‍👦 ${f.name} →
-    </button>
-  `).join('');
+function setAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  if (el) { el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+}
 
-  listEl.querySelectorAll('[data-family-id]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      selectFamily(btn.dataset.familyId);
-      hideOnboarding();
-      await startApp();
-    });
+function setAuthLoading(loading) {
+  const btns = document.querySelectorAll('.auth-submit-btn');
+  btns.forEach(btn => {
+    btn.disabled = loading;
+    btn.textContent = loading ? 'AGUARDE...' : btn.dataset.label;
   });
 }
 
-async function handleOnboardingSubmit() {
-  const input = document.getElementById('onboarding-family-name');
-  const rawName = input ? input.value.trim() : '';
-  if (!rawName) {
-    input.classList.add('onboarding-input-error');
-    input.placeholder = 'Digite o nome da sua família!';
-    setTimeout(() => input.classList.remove('onboarding-input-error'), 800);
-    return;
-  }
-  const id = setCurrentFamily(rawName);
-  if (!id) {
-    alert('Nome inválido. Use apenas letras e espaços.');
-    return;
-  }
-  hideOnboarding();
+async function handleLogin() {
+  const email    = document.getElementById('auth-login-email').value.trim();
+  const password = document.getElementById('auth-login-password').value;
+  if (!email || !password) { setAuthError('Preencha email e senha.'); return; }
+
+  setAuthLoading(true);
+  const result = await signIn(email, password);
+  setAuthLoading(false);
+
+  if (!result.ok) { setAuthError(result.error); return; }
+
+  invalidateCache();
+  hideAuthScreen();
   await startApp();
 }
 
-function wireOnboarding() {
-  const confirmBtn = document.getElementById('btn-onboarding-confirm');
-  if (confirmBtn) confirmBtn.addEventListener('click', handleOnboardingSubmit);
-  const input = document.getElementById('onboarding-family-name');
-  if (input) {
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleOnboardingSubmit();
-    });
+async function handleSignup() {
+  const familyName = document.getElementById('auth-signup-family').value.trim();
+  const email      = document.getElementById('auth-signup-email').value.trim();
+  const password   = document.getElementById('auth-signup-password').value;
+  const confirm    = document.getElementById('auth-signup-confirm').value;
+
+  if (!familyName)        { setAuthError('Digite o nome da sua família.');     return; }
+  if (!email)             { setAuthError('Digite seu email.');                  return; }
+  if (password.length < 6){ setAuthError('A senha deve ter pelo menos 6 caracteres.'); return; }
+  if (password !== confirm){ setAuthError('As senhas não coincidem.');           return; }
+
+  setAuthLoading(true);
+  const result = await signUp(email, password, familyName);
+  setAuthLoading(false);
+
+  if (!result.ok) { setAuthError(result.error); return; }
+
+  if (result.needsConfirmation) {
+    // Supabase enviou email de confirmação — informa o usuário
+    setAuthError('');
+    document.getElementById('auth-form-signup').style.display = 'none';
+    document.getElementById('auth-confirmation-msg').style.display = 'block';
+    return;
   }
+
+  invalidateCache();
+  hideAuthScreen();
+  await startApp();
 }
 
-/* ════════════════════════════════════════════════════════════ INICIALIZAÇÃO DO APP (após onboarding) ════════════════════════════════════════════════════════════ */
+function wireAuthScreen() {
+  document.getElementById('auth-tab-login') ?.addEventListener('click', () => showAuthTab('login'));
+  document.getElementById('auth-tab-signup')?.addEventListener('click', () => showAuthTab('signup'));
+
+  document.getElementById('btn-auth-login') ?.addEventListener('click', handleLogin);
+  document.getElementById('btn-auth-signup')?.addEventListener('click', handleSignup);
+
+  // Enter nos campos de senha
+  document.getElementById('auth-login-password')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleLogin();
+  });
+  document.getElementById('auth-signup-confirm')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSignup();
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   LOGOUT (botão no painel dos pais / ajustes)
+   ════════════════════════════════════════════════════════════ */
+async function handleLogout() {
+  if (!confirm('Sair da conta? Você precisará fazer login novamente.')) return;
+  await logout();
+  invalidateCache();
+  // Recarrega a página — garante estado completamente limpo
+  location.reload();
+}
+
+// Expõe para parent-panel.js acessar via evento customizado
+window.addEventListener('gp:logout', handleLogout);
+
+/* ════════════════════════════════════════════════════════════
+   INICIALIZAÇÃO DO APP (após autenticação bem-sucedida)
+   ════════════════════════════════════════════════════════════ */
 async function startApp() {
   await loadState();
   renderDashboard();
   updateClock();
 
-  // CORREÇÃO: se não houver membros, redireciona automaticamente para a aba "Time"
   const members = state.config?.members || [];
-  if (members.length === 0) {
-    switchTab('team');
-  } else {
-    switchTab('missions');
-  }
+  switchTab(members.length === 0 ? 'team' : 'missions');
 
-  setInterval(() => {
-    updateClock();
-    renderMissions();
-  }, 30000);
+  setInterval(() => { updateClock(); renderMissions(); }, 30000);
 
   wireMissionList();
   wireTabBar();
@@ -165,62 +172,62 @@ async function startApp() {
   wireQuickActionsPopups();
 }
 
-/* ════════════════════════════════════════════════════════════ INIT — ponto de entrada ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   INIT — ponto de entrada
+   ════════════════════════════════════════════════════════════ */
 async function init() {
-  wireOnboarding();
-  if (!hasSession()) {
-    showOnboarding();
-    return; // app só inicia após o onboarding
+  wireAuthScreen();
+
+  const authenticated = await initialize();
+
+  // Monitora mudanças de sessão (logout em outra aba, token expirado)
+  onAuthStateChange((session) => {
+    if (!session.authenticated) {
+      invalidateCache();
+      location.reload();
+    }
+  });
+
+  if (!authenticated) {
+    showAuthScreen();
+    return;
   }
+
   await startApp();
 }
 
-/* ════════════════════════════════════════════════════════════ LISTA DE MISSÕES ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   LISTA DE MISSÕES
+   ════════════════════════════════════════════════════════════ */
 function wireMissionList() {
   const list = document.getElementById('mission-list');
   if (!list) return;
   list.addEventListener('click', (e) => {
     const dateBtn = e.target.closest('[data-date-key]');
-    if (dateBtn) {
-      void selectDashboardDate(dateBtn.dataset.dateKey);
-      return;
-    }
+    if (dateBtn) { void selectDashboardDate(dateBtn.dataset.dateKey); return; }
     const btn = e.target.closest('[data-mission-action]');
     if (!btn) return;
     handleMissionAction(btn.dataset.missionId, btn.dataset.missionAction);
   });
 }
 
-/* ════════════════════════════════════════════════════════════ BOTÕES DE ATALHO ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   BOTÕES DE ATALHO
+   ════════════════════════════════════════════════════════════ */
 function wireShortcutButtons() {
   document.body.addEventListener('click', (e) => {
-    if (e.target.closest('#btn-add-goal-shortcut')) {
-      openNewGoalPopup();
-      return;
-    }
-    if (e.target.closest('#btn-bonus-shortcut')) {
-      openBonusPenaltyPopup();
-      return;
-    }
-    if (e.target.closest('#btn-add-member-shortcut')) {
-      openNewMemberPopup();
-      return;
-    }
+    if (e.target.closest('#btn-add-goal-shortcut'))   { openNewGoalPopup();      return; }
+    if (e.target.closest('#btn-bonus-shortcut'))       { openBonusPenaltyPopup(); return; }
+    if (e.target.closest('#btn-add-member-shortcut'))  { openNewMemberPopup();    return; }
+
     const addTaskBtn = e.target.closest('[data-add-task-member]');
-    if (addTaskBtn) {
-      openNewTaskPopup(addTaskBtn.dataset.addTaskMember);
-      return;
-    }
+    if (addTaskBtn) { openNewTaskPopup(addTaskBtn.dataset.addTaskMember); return; }
+
     const delTaskBtn = e.target.closest('[data-delete-mission]');
-    if (delTaskBtn) {
-      deleteTask(delTaskBtn.dataset.deleteMission);
-      return;
-    }
+    if (delTaskBtn) { deleteTask(delTaskBtn.dataset.deleteMission); return; }
+
     const delGoalBtn = e.target.closest('[data-delete-goal]');
-    if (delGoalBtn) {
-      deleteGoal(delGoalBtn.dataset.deleteGoal);
-      return;
-    }
+    if (delGoalBtn) { deleteGoal(delGoalBtn.dataset.deleteGoal); return; }
   });
 }
 
@@ -229,52 +236,54 @@ async function selectDashboardDate(dateKey) {
   renderDashboard();
 }
 
-/* ════════════════════════════════════════════════════════════ ABAS ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   ABAS
+   ════════════════════════════════════════════════════════════ */
 function wireTabBar() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 }
 
-/* ════════════════════════════════════════════════════════════ FINALIZAR O DIA ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   FINALIZAR O DIA
+   ════════════════════════════════════════════════════════════ */
 function wireFinalizeButton() {
-  const btn = document.getElementById('btn-finalize');
-  if (btn) btn.addEventListener('click', tryFinalizeDay);
+  document.getElementById('btn-finalize')?.addEventListener('click', tryFinalizeDay);
 }
 
-/* ════════════════════════════════════════════════════════════ POPUP DE BÔNUS ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   POPUP DE BÔNUS
+   ════════════════════════════════════════════════════════════ */
 function wireBonusPopup() {
   ['capricho', 'pontual', 'semreclamar'].forEach(key => {
-    const item = document.getElementById('bci-' + key);
-    if (item) item.addEventListener('click', () => toggleBonus(key));
+    document.getElementById('bci-' + key)?.addEventListener('click', () => toggleBonus(key));
   });
-  const confirmBtn = document.getElementById('btn-bonus-confirm');
-  if (confirmBtn) confirmBtn.addEventListener('click', confirmBonus);
-  const cancelBtn = document.getElementById('btn-bonus-cancel');
-  if (cancelBtn) cancelBtn.addEventListener('click', cancelBonus);
+  document.getElementById('btn-bonus-confirm')?.addEventListener('click', confirmBonus);
+  document.getElementById('btn-bonus-cancel') ?.addEventListener('click', cancelBonus);
 }
 
-/* ════════════════════════════════════════════════════════════ RELATÓRIO DE FIM DE DIA ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   RELATÓRIO DE FIM DE DIA
+   ════════════════════════════════════════════════════════════ */
 function wireReportPopup() {
-  const restartBtn = document.getElementById('btn-restart-day');
-  if (restartBtn) restartBtn.addEventListener('click', restartDay);
+  document.getElementById('btn-restart-day')?.addEventListener('click', restartDay);
 }
 
-/* ════════════════════════════════════════════════════════════ FINALIZAR A SEMANA ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   FINALIZAR A SEMANA
+   ════════════════════════════════════════════════════════════ */
 function wireWeekPanel() {
-  const btn = document.getElementById('btn-finalize-week');
-  if (btn) btn.addEventListener('click', tryFinalizeWeek);
+  document.getElementById('btn-finalize-week')?.addEventListener('click', tryFinalizeWeek);
 }
 
-/* ════════════════════════════════════════════════════════════ POPUP DE CONQUISTA ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   POPUP DE CONQUISTA
+   ════════════════════════════════════════════════════════════ */
 function wireBadgePopup() {
-  const closeBtn = document.getElementById('btn-badge-close');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      const overlay = document.getElementById('badge-popup-overlay');
-      if (overlay) overlay.style.display = 'none';
-    });
-  }
+  document.getElementById('btn-badge-close')?.addEventListener('click', () => {
+    document.getElementById('badge-popup-overlay').style.display = 'none';
+  });
 }
 
 function wireBadgeActions() {
@@ -282,54 +291,54 @@ function wireBadgeActions() {
   if (!grid) return;
   grid.addEventListener('click', (e) => {
     const delBtn = e.target.closest('[data-delete-goal]');
-    if (delBtn) {
-      deleteGoal(delBtn.dataset.deleteGoal);
-      return;
-    }
+    if (delBtn) { deleteGoal(delBtn.dataset.deleteGoal); return; }
     const btn = e.target.closest('[data-goal-action]');
     if (!btn) return;
-    const goalId = btn.dataset.goalId;
-    void toggleCustomGoalReward(goalId);
+    void toggleCustomGoalReward(btn.dataset.goalId);
   });
 }
 
-/* ════════════════════════════════════════════════════════════ ACESSO AO PAINEL DOS PAIS ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   ACESSO AO PAINEL DOS PAIS
+   ════════════════════════════════════════════════════════════ */
 function wireParentPanelAccess() {
-  const gearBtn = document.getElementById('btn-parent-panel');
-  if (gearBtn) gearBtn.addEventListener('click', () => {
+  document.getElementById('btn-parent-panel')?.addEventListener('click', () => {
     if (state.config?.skipParentPanelPin) openParentPanel();
     else openPinOverlay('panel');
   });
-  const pinCancelBtn = document.getElementById('btn-pin-cancel');
-  if (pinCancelBtn) pinCancelBtn.addEventListener('click', closePinOverlay);
-  const pinBackspaceBtn = document.getElementById('btn-pin-backspace');
-  if (pinBackspaceBtn) pinBackspaceBtn.addEventListener('click', pressPinBackspace);
+  document.getElementById('btn-pin-cancel')    ?.addEventListener('click', closePinOverlay);
+  document.getElementById('btn-pin-backspace') ?.addEventListener('click', pressPinBackspace);
   document.querySelectorAll('.pin-key[data-digit]').forEach(key => {
     key.addEventListener('click', () => pressPinDigit(key.dataset.digit));
   });
-  const closePanelBtn = document.getElementById('btn-parent-panel-close');
-  if (closePanelBtn) closePanelBtn.addEventListener('click', closeParentPanel);
+  document.getElementById('btn-parent-panel-close')?.addEventListener('click', closeParentPanel);
 }
 
-/* ════════════════════════════════════════════════════════════ PONTE DE APROVAÇÃO POR PIN ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   PONTE DE APROVAÇÃO POR PIN
+   ════════════════════════════════════════════════════════════ */
 function wirePinApprovalBridge() {
   window.addEventListener('gp:request-pin-approve', () => openPinOverlay('approve'));
   window.addEventListener('gp:pin-approved', () => finalizeDay());
 }
 
-/* ════════════════════════════════════════════════════════════ QUICK ACTIONS — POPUPS ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   QUICK ACTIONS
+   ════════════════════════════════════════════════════════════ */
 function wireQuickActionsPopups() {
-  document.getElementById('btn-qa-task-confirm')?.addEventListener('click', confirmNewTask);
-  document.getElementById('btn-qa-task-cancel')?.addEventListener('click', closeNewTaskPopup);
-  document.getElementById('btn-qa-goal-confirm')?.addEventListener('click', confirmNewGoal);
-  document.getElementById('btn-qa-goal-cancel')?.addEventListener('click', closeNewGoalPopup);
+  document.getElementById('btn-qa-task-confirm')  ?.addEventListener('click', confirmNewTask);
+  document.getElementById('btn-qa-task-cancel')   ?.addEventListener('click', closeNewTaskPopup);
+  document.getElementById('btn-qa-goal-confirm')  ?.addEventListener('click', confirmNewGoal);
+  document.getElementById('btn-qa-goal-cancel')   ?.addEventListener('click', closeNewGoalPopup);
   document.getElementById('btn-qa-member-confirm')?.addEventListener('click', confirmNewMember);
-  document.getElementById('btn-qa-member-cancel')?.addEventListener('click', closeNewMemberPopup);
-  document.getElementById('qa-bp-btn-bonus')?.addEventListener('click', () => setBonusPenaltyMode('bonus'));
-  document.getElementById('qa-bp-btn-penalty')?.addEventListener('click', () => setBonusPenaltyMode('penalty'));
-  document.getElementById('btn-qa-bp-confirm')?.addEventListener('click', confirmBonusPenalty);
-  document.getElementById('btn-qa-bp-cancel')?.addEventListener('click', closeBonusPenaltyPopup);
+  document.getElementById('btn-qa-member-cancel') ?.addEventListener('click', closeNewMemberPopup);
+  document.getElementById('qa-bp-btn-bonus')      ?.addEventListener('click', () => setBonusPenaltyMode('bonus'));
+  document.getElementById('qa-bp-btn-penalty')    ?.addEventListener('click', () => setBonusPenaltyMode('penalty'));
+  document.getElementById('btn-qa-bp-confirm')    ?.addEventListener('click', confirmBonusPenalty);
+  document.getElementById('btn-qa-bp-cancel')     ?.addEventListener('click', closeBonusPenaltyPopup);
 }
 
-/* ════════════════════════════════════════════════════════════ START ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   START
+   ════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', init);

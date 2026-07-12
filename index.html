@@ -88,36 +88,65 @@
 
 </div>
 
-<!-- ════════════ ONBOARDING — Seleção / criação de família ════════════ -->
-<div id="onboarding-overlay" class="overlay" style="display:none">
-  <div class="popup onboarding-popup">
-    <div class="onboarding-header">
-      <div class="onboarding-flag">🏁</div>
-      <div class="onboarding-title">GP DA FAMÍLIA</div>
-      <div class="onboarding-subtitle">O CAMPEONATO DA SUA CASA</div>
+<!-- ════════════ AUTENTICAÇÃO — Login / Cadastro ════════════ -->
+<div id="auth-overlay" class="overlay" style="display:none">
+  <div class="popup auth-popup">
+
+    <!-- Cabeçalho -->
+    <div class="auth-header">
+      <div class="auth-flag">🏁</div>
+      <div class="auth-title">GP DA FAMÍLIA</div>
+      <div class="auth-subtitle">O CAMPEONATO DA SUA CASA</div>
     </div>
 
-    <!-- Famílias existentes neste browser -->
-    <div id="onboarding-existing-section" style="display:none">
-      <div class="onboarding-section-label">CONTINUAR COMO</div>
-      <div id="onboarding-family-list" class="onboarding-family-list"></div>
-      <div class="onboarding-divider"><span>OU</span></div>
+    <!-- Abas Login / Cadastro -->
+    <div class="auth-tabs">
+      <button id="auth-tab-login"  class="auth-tab active">ENTRAR</button>
+      <button id="auth-tab-signup" class="auth-tab">CRIAR CONTA</button>
     </div>
 
-    <!-- Criar nova família -->
-    <div class="onboarding-section-label">NOVA FAMÍLIA</div>
-    <input
-      id="onboarding-family-name"
-      class="onboarding-input"
-      placeholder="Ex: Família Silva"
-      maxlength="40"
-      autocomplete="off"
-    >
-    <button id="btn-onboarding-confirm" class="onboarding-confirm-btn">
-      🏎️ ENTRAR NA PISTA
-    </button>
-    <div class="onboarding-hint">
-      Cada família tem seus próprios membros, tarefas e conquistas.
+    <!-- Mensagem de erro -->
+    <div id="auth-error" class="auth-error" style="display:none"></div>
+
+    <!-- Formulário: Login -->
+    <div id="auth-form-login">
+      <label class="auth-label">EMAIL</label>
+      <input id="auth-login-email" class="auth-input" type="email"
+             placeholder="seu@email.com" autocomplete="email">
+      <label class="auth-label">SENHA</label>
+      <input id="auth-login-password" class="auth-input" type="password"
+             placeholder="••••••••" autocomplete="current-password">
+      <button id="btn-auth-login" class="auth-submit-btn" data-label="🏎️ ENTRAR NA PISTA">
+        🏎️ ENTRAR NA PISTA
+      </button>
+    </div>
+
+    <!-- Formulário: Cadastro -->
+    <div id="auth-form-signup" style="display:none">
+      <label class="auth-label">NOME DA FAMÍLIA</label>
+      <input id="auth-signup-family" class="auth-input" type="text"
+             placeholder="Ex: Família Silva" maxlength="40" autocomplete="off">
+      <label class="auth-label">EMAIL</label>
+      <input id="auth-signup-email" class="auth-input" type="email"
+             placeholder="seu@email.com" autocomplete="email">
+      <label class="auth-label">SENHA</label>
+      <input id="auth-signup-password" class="auth-input" type="password"
+             placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      <label class="auth-label">CONFIRMAR SENHA</label>
+      <input id="auth-signup-confirm" class="auth-input" type="password"
+             placeholder="Repita a senha" autocomplete="new-password">
+      <button id="btn-auth-signup" class="auth-submit-btn" data-label="🏎️ CRIAR MINHA FAMÍLIA">
+        🏎️ CRIAR MINHA FAMÍLIA
+      </button>
+    </div>
+
+    <!-- Mensagem pós-cadastro (quando email de confirmação é enviado) -->
+    <div id="auth-confirmation-msg" class="auth-hint" style="display:none">
+      📬 Verifique seu email e clique no link de confirmação para ativar sua conta.
+    </div>
+
+    <div class="auth-hint" id="auth-hint-default">
+      Seus dados ficam protegidos e acessíveis de qualquer dispositivo.
     </div>
   </div>
 </div>

@@ -1087,8 +1087,8 @@ button { font-family: inherit; cursor: pointer; }
 .qa-bonus-type-btn.active-bonus { border-color: var(--gold); background: #2a2306; color: var(--gold); }
 .qa-bonus-type-btn.active-penalty { border-color: var(--red); background: #260f0f; color: var(--red); }
 
-/* ════════════════ ONBOARDING ════════════════ */
-.onboarding-popup {
+/* ════════════════ AUTENTICAÇÃO ════════════════ */
+.auth-popup {
   width: min(400px, 92vw);
   max-height: 90vh;
   overflow-y: auto;
@@ -1098,18 +1098,18 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: 0 0 40px rgba(232,184,0,.15);
 }
 
-.onboarding-header {
+.auth-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 22px;
 }
 
-.onboarding-flag {
+.auth-flag {
   font-size: 48px;
   line-height: 1;
   filter: drop-shadow(0 0 16px rgba(232,184,0,.5));
 }
 
-.onboarding-title {
+.auth-title {
   font-family: var(--font-display);
   font-size: 22px;
   font-weight: 900;
@@ -1119,7 +1119,7 @@ button { font-family: inherit; cursor: pointer; }
   text-shadow: 0 0 14px rgba(232,184,0,.35);
 }
 
-.onboarding-subtitle {
+.auth-subtitle {
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
@@ -1127,95 +1127,86 @@ button { font-family: inherit; cursor: pointer; }
   margin-top: 4px;
 }
 
-.onboarding-section-label {
-  font-size: 10px;
-  font-weight: 800;
-  color: var(--muted);
-  letter-spacing: 1px;
-  margin-bottom: 10px;
-}
-
-/* Lista de famílias existentes */
-.onboarding-family-list {
+/* Abas Login / Cadastro */
+.auth-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.onboarding-family-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  background: var(--card2);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 14px;
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 700;
-  text-align: left;
-  transition: border-color .15s, background .15s;
-  cursor: pointer;
-}
-.onboarding-family-btn:hover {
-  border-color: var(--gold);
-  background: #2a2306;
-  color: var(--gold);
-}
-
-.onboarding-family-icon { font-size: 20px; }
-.onboarding-family-name { flex: 1; }
-.onboarding-family-arrow { color: var(--muted); font-size: 16px; }
-
-/* Divisor "OU" */
-.onboarding-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 16px 0 16px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-.onboarding-divider::before,
-.onboarding-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
-
-/* Input de nome da família */
-.onboarding-input {
-  display: block;
-  width: 100%;
+  gap: 6px;
+  margin-bottom: 18px;
   background: var(--card2);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 4px;
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  padding: 8px 4px;
+  transition: background .15s, color .15s;
+  cursor: pointer;
+}
+
+.auth-tab.active {
+  background: var(--card);
+  color: var(--gold);
+  border: 1px solid var(--line);
+}
+
+/* Label dos campos */
+.auth-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: .8px;
+  margin-bottom: 5px;
+  margin-top: 12px;
+}
+
+/* Inputs */
+.auth-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 14px;
   color: var(--text);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 14px;
   transition: border-color .15s;
 }
-.onboarding-input:focus {
+.auth-input:focus {
   outline: none;
   border-color: var(--gold);
 }
-.onboarding-input.onboarding-input-error {
-  border-color: var(--red);
-  animation: pin-shake .38s;
+
+/* Mensagem de erro */
+.auth-error {
+  background: #260f0f;
+  border: 1px solid var(--red);
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 12px;
+  margin-top: 12px;
+  line-height: 1.4;
 }
 
-/* Botão principal */
-.onboarding-confirm-btn {
+/* Botão de submit */
+.auth-submit-btn {
   width: 100%;
+  margin-top: 18px;
   padding: 14px;
   border: none;
   border-radius: 12px;
@@ -1225,17 +1216,24 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 900;
   font-size: 14px;
   letter-spacing: 1px;
+  cursor: pointer;
   transition: opacity .15s;
-  margin-bottom: 14px;
 }
-.onboarding-confirm-btn:hover { opacity: .88; }
+.auth-submit-btn:hover:not(:disabled) { opacity: .88; }
+.auth-submit-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  background: var(--card2);
+  color: var(--muted);
+}
 
-/* Dica inferior */
-.onboarding-hint {
+/* Dica / mensagem de confirmação */
+.auth-hint {
   font-size: 11px;
   color: var(--muted);
   text-align: center;
   line-height: 1.5;
+  margin-top: 16px;
 }
 
 

@@ -406,7 +406,8 @@ function ajustesHTML() {
     <div class="pp-hint">Salve o arquivo exportado em local seguro (e-mail, nuvem). Importar substitui TODOS os dados atuais pelos do arquivo.</div>
 
     <div class="pp-section-title" style="margin-top:18px;color:var(--red)">ZONA DE PERIGO</div>
-    <button class="pp-btn-danger" id="pp-reset-data">🗑️ ZERAR TODOS OS DADOS</button>`;
+    <button class="pp-btn-danger" id="pp-logout">🔓 SAIR DA CONTA</button>
+    <button class="pp-btn-danger" style="margin-top:8px" id="pp-reset-data">🗑️ ZERAR TODOS OS DADOS</button>`;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -492,6 +493,8 @@ export function wireParentPanelEvents() {
     } else if (e.target.id === 'pp-import-data') {
       const fileInput = document.getElementById('pp-import-file');
       if (fileInput) fileInput.click();
+    } else if (e.target.id === 'pp-logout') {
+      window.dispatchEvent(new CustomEvent('gp:logout'));
     } else if (e.target.id === 'pp-reset-data') {
       if (confirm('Isso vai apagar TODOS os dados salvos (membros, tarefas, estrelas, conquistas). Tem certeza?')) {
         resetAllData().then(() => location.reload());
