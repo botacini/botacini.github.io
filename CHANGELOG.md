@@ -1,3 +1,4 @@
+
 # 📊 Changelog — GP da Família v2.0
 
 ## Versão 2.0 (2026-07-05) ✨
