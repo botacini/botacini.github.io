@@ -95,8 +95,6 @@ export function renderMissions() {
       <span class="empty-state-icon">👨‍👩‍👧‍👦</span>
       Adicione os membros da família na aba <strong>TIME</strong> para começar.
     </div>`;
-  } else if (state.missions.length === 0) {
-    boardHTML = `<div class="empty-state"><span class="empty-state-icon">🏁</span>Nenhuma tarefa para este dia.</div>`;
   } else {
     boardHTML = `<div class="missions-board${readonly ? ' consultation-mode' : ''}">
       ${members.map(mem => renderMemberColumn(mem)).join('')}

@@ -310,6 +310,7 @@ function wireParentPanelAccess() {
     if (state.config?.skipParentPanelPin) openParentPanel();
     else openPinOverlay('panel');
   });
+  document.getElementById('btn-logout')?.addEventListener('click', handleLogout);
   document.getElementById('btn-pin-cancel')    ?.addEventListener('click', closePinOverlay);
   document.getElementById('btn-pin-backspace') ?.addEventListener('click', pressPinBackspace);
   document.querySelectorAll('.pin-key[data-digit]').forEach(key => {
