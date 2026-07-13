@@ -22,6 +22,7 @@ import {
 } from './parent-panel.js';
 import {
   openNewTaskPopup, closeNewTaskPopup, confirmNewTask, deleteTask,
+  openEditTaskPopup,
   openNewGoalPopup, closeNewGoalPopup, confirmNewGoal, deleteGoal,
   openNewMemberPopup, closeNewMemberPopup, confirmNewMember,
   openBonusPenaltyPopup, closeBonusPenaltyPopup,
@@ -225,7 +226,16 @@ function wireShortcutButtons() {
     if (e.target.closest('#btn-add-member-shortcut'))  { openNewMemberPopup();    return; }
 
     const addTaskBtn = e.target.closest('[data-add-task-member]');
-    if (addTaskBtn) { openNewTaskPopup(addTaskBtn.dataset.addTaskMember); return; }
+    if (addTaskBtn) {
+      openNewTaskPopup(addTaskBtn.dataset.addTaskMember, null, addTaskBtn.dataset.addTaskDate);
+      return;
+    }
+
+    const editTaskBtn = e.target.closest('[data-edit-mission]');
+    if (editTaskBtn) {
+      openEditTaskPopup(editTaskBtn.dataset.editMission, state.selectedDate || state.today);
+      return;
+    }
 
     const delTaskBtn = e.target.closest('[data-delete-mission]');
     if (delTaskBtn) { deleteTask(delTaskBtn.dataset.deleteMission); return; }

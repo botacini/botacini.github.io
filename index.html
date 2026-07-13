@@ -245,9 +245,18 @@
 <!-- Quick Action: Nova Tarefa -->
 <div id="qa-task-overlay" class="overlay" style="display:none">
   <div class="popup qa-popup">
-    <div class="popup-emoji">⭐</div>
+    <div class="popup-emoji" id="qa-task-popup-emoji">⭐</div>
     <div id="qa-task-member-label" class="popup-title">NOVA TAREFA</div>
-    <input id="qa-task-name" class="qa-input" placeholder="NOME DA TAREFA" maxlength="50">
+    <div class="qa-time-row">
+      <div class="qa-field" style="flex:0 0 64px">
+        <label class="qa-label">ÍCONE</label>
+        <input id="qa-task-emoji" class="qa-input" maxlength="2" value="⭐" style="text-align:center;font-size:18px">
+      </div>
+      <div class="qa-field">
+        <label class="qa-label">NOME DA TAREFA</label>
+        <input id="qa-task-name" class="qa-input" placeholder="NOME DA TAREFA" maxlength="50">
+      </div>
+    </div>
     <div class="qa-time-row">
       <div class="qa-field">
         <label class="qa-label">INÍCIO</label>
@@ -271,6 +280,7 @@
     <div class="popup-actions">
       <button id="btn-qa-task-cancel" class="btn-secondary">CANCELAR</button>
       <button id="btn-qa-task-confirm" class="btn-primary">SALVAR ✓</button>
+      <input type="hidden" id="qa-task-edit-id" value="">
     </div>
   </div>
 </div>

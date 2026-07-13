@@ -63,75 +63,170 @@ async function commitMissionsChange() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   1. NOVA TAREFA
+   1. NOVA TAREFA / EDITAR TAREFA
    ════════════════════════════════════════════════════════════ */
 let _newTaskMemberId = null;
+let _editTaskId = null;      // null = modo criação; string = modo edição
+let _editTaskSourceDow = null; // dia de origem da tarefa editada
 
-export function openNewTaskPopup(memberId) {
+/**
+ * Abre popup no modo criação (memberId obrigatório) ou edição (mission obrigatório).
+ * Chamada de criação:  openNewTaskPopup(memberId, null, dateKey)
+ * Chamada de edição:   openNewTaskPopup(memberId, mission)
+ */
+export function openNewTaskPopup(memberId, missionToEdit, targetDateKey) {
   _newTaskMemberId = memberId;
+  _editTaskId = missionToEdit ? missionToEdit.id : null;
+
   const member = state.config.members.find(m => m.id === memberId);
   const labelEl = document.getElementById('qa-task-member-label');
-  if (labelEl) labelEl.textContent = member ? `TAREFA PARA ${member.name}` : 'NOVA TAREFA';
+  const confirmBtn = document.getElementById('btn-qa-task-confirm');
+  const editIdEl = document.getElementById('qa-task-edit-id');
 
-  const nameEl = document.getElementById('qa-task-name');
-  const startEl = document.getElementById('qa-task-start');
-  const endEl = document.getElementById('qa-task-end');
-  if (nameEl) nameEl.value = '';
-  if (startEl) startEl.value = '08:00';
-  if (endEl) endEl.value = '08:30';
+  if (missionToEdit) {
+    // ── MODO EDIÇÃO ──────────────────────────────────────
+    if (labelEl) labelEl.textContent = `EDITAR TAREFA${member ? ` DE ${member.name}` : ''}`;
+    if (confirmBtn) confirmBtn.textContent = 'ATUALIZAR ✓';
+    if (editIdEl) editIdEl.value = missionToEdit.id;
 
-  // Marca o dia atual como selecionado nos checkboxes
-  const dow = currentDow();
-  document.querySelectorAll('.qa-day-checkbox').forEach(cb => {
-    cb.checked = Number(cb.value) === dow;
-  });
+    // Descobre em quais dias esta tarefa já existe (pelo id)
+    const existingDows = [];
+    for (let d = 0; d < 7; d++) {
+      if ((state.config.missionsByDay[d] || []).some(m => m.id === missionToEdit.id)) {
+        existingDows.push(d);
+        if (_editTaskSourceDow === null) _editTaskSourceDow = d;
+      }
+    }
+    // Descobre o dia de origem pelo dateKey ou pelo primeiro dow encontrado
+    const originDow = targetDateKey
+      ? dateFromKey(targetDateKey).getDay()
+      : (existingDows[0] ?? currentDow());
+    _editTaskSourceDow = originDow;
+
+    document.getElementById('qa-task-name').value = missionToEdit.title || '';
+    document.getElementById('qa-task-start').value = missionToEdit.start || '08:00';
+    document.getElementById('qa-task-end').value = missionToEdit.end || '08:30';
+    document.getElementById('qa-task-emoji').value = missionToEdit.emoji || '⭐';
+
+    // Marca os dias onde a tarefa já existe
+    document.querySelectorAll('.qa-day-checkbox').forEach(cb => {
+      cb.checked = existingDows.includes(Number(cb.value));
+    });
+  } else {
+    // ── MODO CRIAÇÃO ─────────────────────────────────────
+    _editTaskSourceDow = null;
+    if (labelEl) labelEl.textContent = member ? `TAREFA PARA ${member.name}` : 'NOVA TAREFA';
+    if (confirmBtn) confirmBtn.textContent = 'SALVAR ✓';
+    if (editIdEl) editIdEl.value = '';
+
+    document.getElementById('qa-task-name').value = '';
+    document.getElementById('qa-task-start').value = '08:00';
+    document.getElementById('qa-task-end').value = '08:30';
+    document.getElementById('qa-task-emoji').value = '⭐';
+
+    // Marca o dia do dateKey fornecido (pode ser dia passado/futuro)
+    const dow = targetDateKey ? dateFromKey(targetDateKey).getDay() : currentDow();
+    document.querySelectorAll('.qa-day-checkbox').forEach(cb => {
+      cb.checked = Number(cb.value) === dow;
+    });
+  }
 
   overlayShow('qa-task-overlay');
-  if (nameEl) nameEl.focus();
+  document.getElementById('qa-task-name')?.focus();
 }
 
 export function closeNewTaskPopup() {
   overlayHide('qa-task-overlay');
   _newTaskMemberId = null;
+  _editTaskId = null;
+  _editTaskSourceDow = null;
 }
 
 export async function confirmNewTask() {
-  const nameEl = document.getElementById('qa-task-name');
-  const name = nameEl ? nameEl.value.trim() : '';
+  const name = document.getElementById('qa-task-name')?.value.trim() || '';
   if (!name) { alert('Digite o nome da tarefa.'); return; }
 
-  const start = document.getElementById('qa-task-start')?.value || '08:00';
-  const end = document.getElementById('qa-task-end')?.value || '08:30';
+  const start  = document.getElementById('qa-task-start')?.value  || '08:00';
+  const end    = document.getElementById('qa-task-end')?.value    || '08:30';
+  const emoji  = document.getElementById('qa-task-emoji')?.value  || '⭐';
+  const editId = document.getElementById('qa-task-edit-id')?.value || '';
 
-  // Coleta dias selecionados (frontend only — backend mantém estrutura atual)
   const selectedDays = Array.from(document.querySelectorAll('.qa-day-checkbox:checked'))
     .map(cb => Number(cb.value));
+  const daysToUse = selectedDays.length > 0 ? selectedDays : [currentDow()];
 
-  // Garante ao menos o dia atual se nenhum foi marcado
-  const daysToAdd = selectedDays.length > 0 ? selectedDays : [currentDow()];
-
-  daysToAdd.forEach(dow => {
-    state.config.missionsByDay[dow] = state.config.missionsByDay[dow] || [];
-    state.config.missionsByDay[dow].push({
-      id: genId('ms'),
-      start,
-      end,
-      emoji: '⭐',
-      title: name.toUpperCase(),
-      desc: '',
-      assignee: _newTaskMemberId,
+  if (editId) {
+    // ── MODO EDIÇÃO ──────────────────────────────────────
+    // Para cada dia marcado: atualiza a missão se existir lá, ou adiciona nova cópia
+    // Para dias NÃO marcados onde ela existia: remove
+    for (let d = 0; d < 7; d++) {
+      const list = state.config.missionsByDay[d] || [];
+      const idx = list.findIndex(m => m.id === editId);
+      if (daysToUse.includes(d)) {
+        if (idx >= 0) {
+          // Atualiza no lugar
+          list[idx] = { ...list[idx], start, end, emoji, title: name.toUpperCase() };
+        } else {
+          // Adiciona neste dia (nova cópia com id novo, exceto no dia de origem)
+          list.push({
+            id: d === _editTaskSourceDow ? editId : genId('ms'),
+            start, end, emoji,
+            title: name.toUpperCase(),
+            desc: list.find(m => m.id === editId)?.desc || '',
+            assignee: _newTaskMemberId,
+          });
+          state.config.missionsByDay[d] = list;
+        }
+        list.sort((a, b) => timeToMin(a.start) - timeToMin(b.start));
+      } else if (idx >= 0) {
+        // Remove dos dias desmarcados
+        list.splice(idx, 1);
+        state.config.missionsByDay[d] = list;
+      }
+    }
+    showToast('✏️ Tarefa atualizada.');
+  } else {
+    // ── MODO CRIAÇÃO ─────────────────────────────────────
+    daysToUse.forEach(dow => {
+      state.config.missionsByDay[dow] = state.config.missionsByDay[dow] || [];
+      state.config.missionsByDay[dow].push({
+        id: genId('ms'),
+        start, end, emoji,
+        title: name.toUpperCase(),
+        desc: '',
+        assignee: _newTaskMemberId,
+      });
+      state.config.missionsByDay[dow].sort((a, b) => timeToMin(a.start) - timeToMin(b.start));
     });
-    state.config.missionsByDay[dow].sort((a, b) => timeToMin(a.start) - timeToMin(b.start));
-  });
+  }
 
   await commitMissionsChange();
   closeNewTaskPopup();
   renderDashboard();
 }
 
+/**
+ * Abre o popup no modo edição a partir de um missionId e do dateKey do dia exibido.
+ */
+export function openEditTaskPopup(missionId, dateKey) {
+  const dow = dateFromKey(dateKey || state.selectedDate || state.today || todayKey()).getDay();
+  const mission = (state.config.missionsByDay[dow] || []).find(m => m.id === missionId);
+  if (!mission) return;
+
+  // Determina o memberId: assignee pode ser string, array ou 'compartilhada'
+  let memberId = null;
+  if (mission.assignee !== 'compartilhada') {
+    memberId = Array.isArray(mission.assignee) ? mission.assignee[0] : mission.assignee;
+  }
+
+  openNewTaskPopup(memberId, mission, dateKey);
+}
+
 export async function deleteTask(missionId) {
   if (!confirm('Remover esta tarefa?')) return;
-  const dow = currentDow();
+
+  // Busca a missão no dia atualmente exibido
+  const dow = dateFromKey(state.selectedDate || state.today || todayKey()).getDay();
   const mission = (state.config.missionsByDay[dow] || []).find(m => m.id === missionId);
 
   if (mission) {
@@ -144,6 +239,7 @@ export async function deleteTask(missionId) {
     }
   }
 
+  // Remove apenas do dia exibido (tarefa pode existir em outros dias)
   state.config.missionsByDay[dow] = (state.config.missionsByDay[dow] || []).filter(m => m.id !== missionId);
   await saveConfig();
   state.missions = getTodayMissions();

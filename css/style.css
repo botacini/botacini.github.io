@@ -1013,11 +1013,27 @@ button { font-family: inherit; cursor: pointer; }
   padding: 2px 4px;
   border-radius: 4px;
   line-height: 1;
-  opacity: 0;
-  transition: opacity .15s, color .15s;
+  opacity: 1;
+  transition: color .15s;
 }
-.task-cell:hover .task-delete-btn { opacity: 1; }
 .task-delete-btn:hover { color: var(--red); }
+
+.task-edit-btn {
+  position: absolute;
+  top: 20px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  opacity: 1;
+  transition: color .15s;
+}
+.task-edit-btn:hover { color: var(--gold); }
 
 /* ════════════════ BADGE-CARD: botão X ════════════════ */
 .badge-card { position: relative; }

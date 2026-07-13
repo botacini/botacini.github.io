@@ -130,7 +130,8 @@ function renderMemberColumn(member) {
           <span class="task-sep"> - </span>
           <span class="task-end">${ms.end}</span>
         </div>
-        ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}" title="Remover tarefa">✕</button>` : ''}
+        ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}" title="Remover tarefa">✕</button>
+        <button class="task-edit-btn" data-edit-mission="${ms.id}" title="Editar tarefa">✏️</button>` : ''}
         <div class="task-emoji">${ms.emoji}</div>
         <div class="task-body">
           <div class="task-title">${ms.title}</div>
@@ -143,9 +144,7 @@ function renderMemberColumn(member) {
       </div>`;
   }).join('');
 
-  const addBtn = !readonly
-    ? `<button class="task-add-btn" data-add-task-member="${member.id}">➕ Adicionar tarefa</button>`
-    : '';
+  const addBtn = `<button class="task-add-btn" data-add-task-member="${member.id}" data-add-task-date="${selectedDateKey()}">➕ Adicionar tarefa</button>`;
 
   return `
     <div class="board-column" style="--member-color:${member.color || '#ccc'}">
