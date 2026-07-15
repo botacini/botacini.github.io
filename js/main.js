@@ -10,7 +10,7 @@
    ════════════════════════════════════════════════════════════ */
 
 import { loadState, loadDateContext, state } from './state.js';
-import { renderDashboard, renderMissions, updateClock, switchTab } from './render.js';
+import { renderDashboard, renderMissions, updateClock, switchTab, updateFamilyName } from './render.js';
 import {
   handleMissionAction, toggleBonus, confirmBonus, cancelBonus,
   tryFinalizeDay, finalizeDay, restartDay, tryFinalizeWeek,
@@ -152,6 +152,7 @@ async function startApp() {
   await loadState();
   renderDashboard();
   updateClock();
+  updateFamilyName();
 
   const members = state.config?.members || [];
   switchTab(members.length === 0 ? 'team' : 'missions');
@@ -210,9 +211,30 @@ function wireMissionList() {
   list.addEventListener('click', (e) => {
     const dateBtn = e.target.closest('[data-date-key]');
     if (dateBtn) { void selectDashboardDate(dateBtn.dataset.dateKey); return; }
+
+    // Menu ⋯ toggle
+    const menuBtn = e.target.closest('[data-open-task-menu]');
+    if (menuBtn) {
+      e.stopPropagation();
+      const missionId = menuBtn.dataset.openTaskMenu;
+      const dropdown = document.getElementById(`task-menu-${missionId}`);
+      const isOpen = dropdown?.classList.contains('open');
+      // Fecha todos os dropdowns abertos
+      document.querySelectorAll('.task-dropdown.open').forEach(d => d.classList.remove('open'));
+      if (dropdown && !isOpen) dropdown.classList.add('open');
+      return;
+    }
+
     const btn = e.target.closest('[data-mission-action]');
     if (!btn) return;
     handleMissionAction(btn.dataset.missionId, btn.dataset.missionAction);
+  });
+
+  // Fecha dropdowns ao clicar fora
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.task-dropdown') && !e.target.closest('[data-open-task-menu]')) {
+      document.querySelectorAll('.task-dropdown.open').forEach(d => d.classList.remove('open'));
+    }
   });
 }
 
@@ -316,11 +338,14 @@ function wireBadgeActions() {
    ACESSO AO PAINEL DOS PAIS
    ════════════════════════════════════════════════════════════ */
 function wireParentPanelAccess() {
-  document.getElementById('btn-parent-panel')?.addEventListener('click', () => {
+  const openPanel = () => {
     if (state.config?.skipParentPanelPin) openParentPanel();
     else openPinOverlay('panel');
-  });
+  };
+  document.getElementById('btn-parent-panel')?.addEventListener('click', openPanel);
+  document.getElementById('btn-sidebar-panel')?.addEventListener('click', openPanel);
   document.getElementById('btn-logout')?.addEventListener('click', handleLogout);
+  document.getElementById('btn-sidebar-logout')?.addEventListener('click', handleLogout);
   document.getElementById('btn-pin-cancel')    ?.addEventListener('click', closePinOverlay);
   document.getElementById('btn-pin-backspace') ?.addEventListener('click', pressPinBackspace);
   document.querySelectorAll('.pin-key[data-digit]').forEach(key => {

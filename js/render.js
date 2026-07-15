@@ -14,6 +14,14 @@ import {
   timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
 } from './state.js';
 
+/* ════════════════ NOME DA FAMÍLIA ════════════════ */
+export function updateFamilyName() {
+  const el = document.getElementById('header-family-name');
+  if (!el) return;
+  const name = state.config?.familyName || '';
+  el.textContent = name ? ` · ${name}` : '';
+}
+
 /* ════════════════ RELÓGIO ════════════════ */
 export function updateClock() {
   const el = document.getElementById('live-clock');
@@ -123,6 +131,7 @@ function renderMemberColumn(member) {
     const sharedMemberIds = assigneeIds(ms);
     const isShared = sharedMemberIds.length > 1;
 
+    const menuId = `task-menu-${ms.id}`;
     return `
       <div class="task-cell${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}" data-mission-id="${ms.id}">
         <div class="task-time">
@@ -130,8 +139,13 @@ function renderMemberColumn(member) {
           <span class="task-sep"> - </span>
           <span class="task-end">${ms.end}</span>
         </div>
-        ${!isShared && !readonly ? `<button class="task-delete-btn" data-delete-mission="${ms.id}" title="Remover tarefa">✕</button>
-        <button class="task-edit-btn" data-edit-mission="${ms.id}" title="Editar tarefa">✏️</button>` : ''}
+        ${!isShared ? `<div class="task-menu-wrapper">
+          <button class="task-menu-btn" data-open-task-menu="${ms.id}" title="Opções">⋯</button>
+          <div class="task-dropdown" id="${menuId}">
+            <button class="task-dropdown-item" data-edit-mission="${ms.id}">✏️ Editar</button>
+            <button class="task-dropdown-item danger" data-delete-mission="${ms.id}">✕ Excluir</button>
+          </div>
+        </div>` : ''}
         <div class="task-emoji">${ms.emoji}</div>
         <div class="task-body">
           <div class="task-title">${ms.title}</div>

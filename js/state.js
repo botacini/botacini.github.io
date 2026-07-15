@@ -106,7 +106,7 @@ function defaultConfig() {
     missionsByDay: {},         // ← sem tarefas pré-definidas
     pin: '1234',
     requireApproval: false,
-    skipParentPanelPin: false,
+    skipParentPanelPin: true,
     teamStarsGoal: 20,
     customGoals: [],
   };
@@ -199,7 +199,7 @@ export async function loadState() {
   }
 
   if (typeof state.config.skipParentPanelPin !== 'boolean') {
-    state.config.skipParentPanelPin = false;
+    state.config.skipParentPanelPin = true;
     needsResave = true;
   }
 

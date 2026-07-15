@@ -12,10 +12,10 @@
   <header class="app-header">
     <div class="header-top">
       <span class="header-flag">🏁</span>
-      <h1 class="header-title">GP DA FAMÍLIA</h1>
+      <h1 class="header-title">GP DA FAMÍLIA<span id="header-family-name"></span></h1>
       <span id="live-clock" class="header-clock">00:00</span>
       <button id="btn-parent-panel" class="header-gear" aria-label="Painel dos pais">⚙️</button>
-      <button id="btn-logout" class="header-gear" aria-label="Sair da conta">🔓</button>
+      <button id="btn-logout" class="header-gear" aria-label="Sair da conta">🚪</button>
     </div>
     <div class="header-stars">
       <span class="header-stars-icon">⭐</span>
@@ -70,21 +70,31 @@
   </main>
 
   <nav class="tab-bar">
-    <button id="tab-missions" class="tab-btn active" data-tab="missions">
-      <span class="tab-icon">🏁</span><span class="tab-label">MISSÕES</span>
-    </button>
-    <button id="tab-stars" class="tab-btn" data-tab="stars">
-      <span class="tab-icon">⭐</span><span class="tab-label">ESTRELAS</span>
-    </button>
-    <button id="tab-team" class="tab-btn" data-tab="team">
-      <span class="tab-icon">👨‍👩‍👧‍👦</span><span class="tab-label">TIME</span>
-    </button>
-    <button id="tab-badges" class="tab-btn" data-tab="badges">
-      <span class="tab-icon">🏆</span><span class="tab-label">CONQUISTAS</span>
-    </button>
-    <button id="tab-week" class="tab-btn" data-tab="week">
-      <span class="tab-icon">📅</span><span class="tab-label">SEMANA</span>
-    </button>
+    <div class="tab-bar-tabs">
+      <button id="tab-missions" class="tab-btn active" data-tab="missions">
+        <span class="tab-icon">🏁</span><span class="tab-label">MISSÕES</span>
+      </button>
+      <button id="tab-stars" class="tab-btn" data-tab="stars">
+        <span class="tab-icon">⭐</span><span class="tab-label">ESTRELAS</span>
+      </button>
+      <button id="tab-team" class="tab-btn" data-tab="team">
+        <span class="tab-icon">👨‍👩‍👧‍👦</span><span class="tab-label">TIME</span>
+      </button>
+      <button id="tab-badges" class="tab-btn" data-tab="badges">
+        <span class="tab-icon">🏆</span><span class="tab-label">CONQUISTAS</span>
+      </button>
+      <button id="tab-week" class="tab-btn" data-tab="week">
+        <span class="tab-icon">📅</span><span class="tab-label">SEMANA</span>
+      </button>
+    </div>
+    <div class="tab-bar-bottom">
+      <button class="sidebar-gear-btn" id="btn-sidebar-panel">
+        <span class="sidebar-gear-icon">⚙️</span><span class="tab-label">PAINEL DOS PAIS</span>
+      </button>
+      <button class="sidebar-gear-btn" id="btn-sidebar-logout">
+        <span class="sidebar-gear-icon">🚪</span><span class="tab-label">SAIR</span>
+      </button>
+    </div>
   </nav>
 
 </div>

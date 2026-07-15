@@ -1279,3 +1279,91 @@ button { font-family: inherit; cursor: pointer; }
 .add-task-btn:not(:disabled) {
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+/* ════════════════════════════════════════════════════════════
+   ADIÇÕES — menu ⋯, kanban responsivo, sidebar footer
+   ════════════════════════════════════════════════════════════ */
+
+/* ── 1d: Menu ⋯ por tarefa ── */
+.task-menu-wrapper {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.task-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  line-height: 1;
+  letter-spacing: 1px;
+  opacity: 0;
+  transition: opacity .15s, color .15s;
+}
+.task-cell:hover .task-menu-btn { opacity: 1; }
+.task-menu-btn:hover { color: var(--gold); }
+
+.task-dropdown {
+  display: none;
+  position: absolute;
+  top: 22px;
+  right: 0;
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 130px;
+  z-index: 30;
+  box-shadow: 0 4px 16px rgba(0,0,0,.45);
+  overflow: hidden;
+}
+.task-dropdown.open { display: block; }
+
+.task-dropdown-item {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.task-dropdown-item:hover { background: var(--line); }
+.task-dropdown-item.danger { color: var(--red); }
+.task-dropdown-item.danger:hover { background: #260f0f; }
+
+/* ── 2a: Kanban ocupa toda a largura disponível ── */
+@media (min-width: 480px) {
+  .missions-board {
+    /* Colunas se expandem quando há espaço sobrando */
+    align-items: stretch;
+  }
+  .board-column {
+    /* Cresce igualmente até preencher o espaço; rola se não couber */
+    flex: 1 1 160px;
+  }
+}
+
+/* ── 2b: Sidebar footer no desktop ── */
+@media (min-width: 768px) {
+  /* Garante que a sidebar usa flex-column com espaçamento entre topo e rodapé */
+  .tab-bar {
+    justify-content: space-between;
+  }
+
+  /* Botões de configuração (⚙️) e logout (🚪) ficam no rodapé da sidebar */
+  .tab-bar-bottom {
+    display: flex !important;
+    flex-direction: column;
+    border-top: 1px solid var(--line);
+    padding: 6px 0;
+  }
+}

@@ -14,6 +14,7 @@
 
 import { state, saveConfig, getTodayMissions, persistDayState, persistTotals, persistBonusLog, timeToMin, DAY_FULL, MEMBER_COLOR_PALETTE, dateFromKey, todayKey } from './state.js';
 import { resetAllData, exportAllData, importAllData } from './storage.js';
+import { getSession } from './auth.js';
 import { renderDashboard } from './render.js';
 import { checkAndUnlockBadges } from './missions.js';
 import { awardStars, revokeStars } from './missions.js';
@@ -383,15 +384,23 @@ function bonusHTML() {
 
 /* ── AJUSTES ─────────────────────────────────────────────── */
 function ajustesHTML() {
+  const session = getSession();
+  const email = session?.user?.email || '';
   return `
-    <div class="pp-section-title">SEGURANÇA</div>
+    <div class="pp-section-title">CONTA</div>
+    <div class="pp-toggle-row" style="cursor:default">
+      <span>EMAIL DA CONTA</span>
+      <span style="color:var(--muted);font-size:12px;font-weight:700">${email || '—'}</span>
+    </div>
+
+    <div class="pp-section-title" style="margin-top:12px">SEGURANÇA</div>
     <label class="pp-field-label">PIN DOS PAIS (4 a 8 dígitos)</label>
     <input id="pp-pin-input" class="pp-input" maxlength="8" inputmode="numeric" value="${state.config.pin}">
     <button class="pp-btn-add" id="pp-save-pin">SALVAR PIN</button>
 
     <div class="pp-toggle-row">
-      <span>NÃO SOLICITAR SENHA PARA ABRIR O PAINEL DOS PAIS</span>
-      <input type="checkbox" id="pp-skip-parent-pin" ${state.config.skipParentPanelPin ? 'checked' : ''}>
+      <span>SOLICITAR PIN PARA ABRIR O PAINEL DOS PAIS</span>
+      <input type="checkbox" id="pp-skip-parent-pin" ${!state.config.skipParentPanelPin ? 'checked' : ''}>
     </div>
 
     <div class="pp-toggle-row">
@@ -406,7 +415,7 @@ function ajustesHTML() {
     <div class="pp-hint">Salve o arquivo exportado em local seguro (e-mail, nuvem). Importar substitui TODOS os dados atuais pelos do arquivo.</div>
 
     <div class="pp-section-title" style="margin-top:18px;color:var(--red)">ZONA DE PERIGO</div>
-    <button class="pp-btn-danger" id="pp-logout">🔓 SAIR DA CONTA</button>
+    <button class="pp-btn-danger" id="pp-logout">🚪 SAIR DA CONTA</button>
     <button class="pp-btn-danger" style="margin-top:8px" id="pp-reset-data">🗑️ ZERAR TODOS OS DADOS</button>`;
 }
 
@@ -614,7 +623,7 @@ export function wireParentPanelEvents() {
       const dow = Number(e.target.dataset.copyTarget);
       if (e.target.checked) copyTargets.add(dow); else copyTargets.delete(dow);
     } else if (e.target.id === 'pp-skip-parent-pin') {
-      state.config.skipParentPanelPin = e.target.checked;
+      state.config.skipParentPanelPin = !e.target.checked;
       saveConfig();
     } else if (e.target.id === 'pp-require-approval') {
       state.config.requireApproval = e.target.checked;
