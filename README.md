@@ -314,12 +314,25 @@ O acesso ao banco usa upsert com `onConflict: 'family_id'`, garantindo que grava
 
 ---
 
-## Próximos passos
+## Estado atual e bugs conhecidos
 
-As funcionalidades abaixo **não estão implementadas**. Estão listadas aqui apenas como direção futura.
+### Implementado (v2.1)
 
-- **Login com Supabase Auth** — substituir a identificação por `localStorage` por autenticação real com e-mail/senha ou OAuth
-- **`family_id` baseado em UUID** — trocar o slug pelo `id` do usuário ou de um registro de família no banco
-- **Múltiplos responsáveis por família** — permitir que mais de um adulto administre a mesma família com permissões distintas
-- **Convites para família** — gerar link ou código para que outros membros se juntem à família existente
-- **Migração completa da sessão** — quando `auth.js` for atualizado para Supabase Auth, `getSession()` passará a retornar `authenticated: true` e `user: { id, email }`, sem que nenhum outro módulo precise mudar
+- Supabase Auth com e-mail/senha — `family_id` é UUID do `user_metadata`, separado do `user.id`
+- Dashboard kanban com cores por membro, menu ⋯ nos cards (Editar / Excluir)
+- Nome da família no cabeçalho; sidebar desktop com rodapé fixo (⚙️ / 🚪)
+- Painel dos pais abre sem PIN por padrão; e-mail da conta exibido na aba Ajustes
+
+### Bugs conhecidos (pendentes)
+
+Todos concentrados em `quick-actions.js`:
+
+- **Edição cria duplicatas** — ao editar tarefa recorrente e selecionar dias onde ela já existe, cria nova entrada em vez de atualizar
+- **Checkboxes de dias incorretos** — popup de edição não pré-marca os dias onde a tarefa realmente existe
+- **Exclusão remove só uma ocorrência** — deveria remover o mesmo `id` de todos os dias da semana onde ele aparece
+
+### Próximos passos
+
+- Corrigir os 3 bugs de edição/exclusão de tarefas recorrentes em `quick-actions.js`
+- Múltiplos responsáveis por família (roles admin/membro, fase 2 de auth)
+- Convites para família via link ou código
