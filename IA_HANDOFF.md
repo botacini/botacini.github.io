@@ -1,6 +1,6 @@
 # IA_HANDOFF — estado técnico
 
-Atualizado em 2026-07-23.
+Atualizado em 2026-07-24.
 
 ## Situação atual
 
