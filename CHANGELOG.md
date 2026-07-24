@@ -16,6 +16,7 @@
 - A autorização foi movida para family_access e auth.uid().
 - As políticas RLS não usam user_metadata nem raw_user_meta_data.
 - Índices foram incluídos nas relações e colunas usadas para isolamento de família.
+- Adicionada migration de integridade que bloqueia responsáveis de tarefas, metas por membro e eventos manuais que referenciem membros de outra família.
 
 ### Infraestrutura e documentação
 
@@ -26,9 +27,10 @@
 
 ### Validação local realizada
 
-- tests/static_contract_test.py: 6 verificações estáticas aprovadas.
+- tests/static_contract_test.py: 7 verificações estáticas aprovadas.
 - git diff --check: aprovado.
 - Smoke visual estático com python -m http.server: tela de login carregou.
+- Migrations aplicadas em PostgreSQL embarcado com dados fictícios; as três tentativas de referência cruzada família–membro foram rejeitadas.
 
 ### Pendências de release
 
