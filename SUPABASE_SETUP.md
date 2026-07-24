@@ -4,7 +4,7 @@
 
 As migrations e a adaptação do frontend estão prontas no repositório, porém ainda não foram aplicadas nem validadas em um banco Supabase real. A validação local cobriu apenas contrato estático e smoke visual. Aplicar as migrations e executar os testes integrados e de RLS deste documento é obrigatório antes de produção.
 
-Nenhum comando remoto foi executado neste ambiente. O Supabase CLI, Node.js, Docker e PostgreSQL local não estavam disponíveis; também não havia project-ref, vínculo local ou credenciais de banco configurados.
+Nenhum comando remoto foi executado neste ambiente. O Supabase CLI pôde ser executado temporariamente, mas o stack local não iniciou porque o daemon Docker não está acessível. Também não havia project-ref, vínculo local ou credenciais de banco configurados.
 
 ## O que obter no painel
 
@@ -29,10 +29,11 @@ Preencha somente a URL do projeto e a chave pública. Não use service_role no n
 
 ## Instalar e autenticar o Supabase CLI
 
-Instale o CLI pelo método oficial adequado ao sistema operacional. Depois confirme a instalação e autentique no navegador:
+Instale o CLI e Docker Desktop pelo método oficial adequado ao sistema operacional. Confirme que o daemon Docker está acessível antes de autenticar no navegador:
 
 ~~~powershell
 supabase --version
+docker info
 supabase login
 ~~~
 
@@ -72,7 +73,7 @@ supabase db push
 supabase migration list
 ~~~
 
-Verifique no painel ou com o CLI que todas as migrations de 202607230001 até 202607230006 foram aplicadas. A agenda antiga não será migrada; o aplicativo passará a usar as tabelas novas.
+Verifique no painel ou com o CLI que todas as migrations de 202607230001 até 202607240001 foram aplicadas. A agenda antiga não será migrada; o aplicativo passará a usar as tabelas novas.
 
 ## Validar após a aplicação
 
@@ -92,7 +93,7 @@ Depois, em um ambiente Supabase real ou banco local limpo, valide obrigatoriamen
 4. exclusão de ocorrência e de série;
 5. conclusão em datas distintas, mudança de domingo, mês e ano e ausência de deslocamento UTC;
 6. recarga sem duplicação e repetidas gravações de série sem criar tarefas extras;
-7. duas famílias isoladas por RLS, inclusive tentativa de forjar family_id;
+7. duas famílias isoladas por RLS, inclusive tentativa de forjar family_id e de atribuir um membro da outra família a tarefa, meta ou evento manual;
 8. duas abas alterando registros distintos;
 9. exportação e importação do novo backup;
 10. aplicação em banco limpo.
