@@ -18,6 +18,7 @@ class RelationalPersistenceContract(unittest.TestCase):
             "202607230004_functions.sql",
             "202607230005_rls.sql",
             "202607230006_legacy_family_config_retained.sql",
+            "202607240001_member_family_integrity.sql",
         ])
         core = self.read("supabase/migrations/202607230002_relational_core.sql")
         for table in ("families", "family_access", "family_members", "family_settings", "tasks", "task_assignees", "task_schedules", "task_schedule_overrides", "task_occurrence_status"):
@@ -64,6 +65,13 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("getMonth() + 1", state)
         self.assertIn("getDate()", state)
         self.assertNotIn("toISOString", state)
+
+    def test_member_references_cannot_cross_family_boundaries(self):
+        integrity = self.read("supabase/migrations/202607240001_member_family_integrity.sql")
+        self.assertIn("security definer", integrity)
+        self.assertIn("member must belong to the same family", integrity)
+        for table in ("task_assignees", "family_custom_goals", "manual_star_events"):
+            self.assertIn(f"on public.{table}", integrity)
 
 
 if __name__ == "__main__":
