@@ -4,7 +4,7 @@ Atualizado em 2026-07-23.
 
 ## Situação atual
 
-A persistência da agenda foi refatorada localmente de family_config JSONB para schema relacional versionado em supabase/migrations. O frontend usa exclusivamente esse novo modelo. Nenhuma migration foi aplicada em um projeto remoto nesta estação: Supabase CLI, Docker, Node e PostgreSQL não estavam disponíveis, não havia project-ref ou vínculo local e nenhuma credencial foi solicitada ou registrada.
+A persistência da agenda foi refatorada localmente de family_config JSONB para schema relacional versionado em supabase/migrations. O frontend usa exclusivamente esse novo modelo. Nenhuma migration foi aplicada em um projeto remoto nesta estação: não há project-ref, vínculo local ou credencial registrada. O Supabase CLI pôde ser executado temporariamente, mas o stack local não iniciou porque o socket do Docker não está acessível neste sandbox.
 
 O trabalho não deve ser considerado liberado para produção até aplicar o banco correto e executar os testes integrados descritos em SUPABASE_SETUP.md.
 
@@ -42,19 +42,21 @@ tasks guarda a definição; task_schedules guarda regras once ou weekly; task_sc
 4. 202607230004_functions.sql
 5. 202607230005_rls.sql
 6. 202607230006_legacy_family_config_retained.sql
+7. 202607240001_member_family_integrity.sql
 
 SUPABASE_SETUP.md contém pré-requisitos, checagem do vínculo, aplicação controlada, testes e rollback. Nunca usar db reset no projeto remoto.
 
 ## Validação realizada
 
-- python -m unittest -v tests\static_contract_test.py: 6 testes estáticos aprovados.
+- python -m unittest -v tests\static_contract_test.py: 7 testes estáticos aprovados.
 - git diff --check: aprovado.
 - Smoke visual por python -m http.server e navegador headless: tela de login carregou.
+- Todas as migrations foram aplicadas em PostgreSQL embarcado com schemas/usuários fictícios; referências cruzadas de membro foram rejeitadas para tarefa, meta e evento manual.
 
 ## Pendências bloqueantes
 
-1. Instalar e autenticar o Supabase CLI e identificar o project-ref correto.
-2. Executar link e aplicar migrations manualmente no ambiente confirmado, sem reset.
+1. Disponibilizar Docker com daemon acessível e iniciar o Supabase local, ou usar PostgreSQL/Supabase de desenvolvimento confirmado.
+2. Identificar o project-ref correto e executar link e aplicação das migrations manualmente, sem reset.
 3. Criar js/supabase-config.js local a partir do exemplo com URL e chave pública do projeto.
 4. Validar schema em banco limpo e as políticas com duas famílias e usuários.
 5. Executar cenários de recorrência, concorrência, importação/exportação e transições de data.
@@ -66,3 +68,4 @@ SUPABASE_SETUP.md contém pré-requisitos, checagem do vínculo, aplicação con
 - O backup novo não aceita o formato JSONB antigo.
 - A restauração e as RPCs ainda exigem validação em PostgreSQL real; os testes atuais não executam SQL.
 - Os escopos de edição essenciais estão implementados, mas a ergonomia precisa de revisão após uso integrado.
+- A migration 202607240001 protege referências a membros contra cruzamento entre famílias; ainda deve ser exercitada com RLS em banco local ou Supabase de desenvolvimento.
