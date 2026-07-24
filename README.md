@@ -24,7 +24,7 @@ As edições suportam esta ocorrência, toda a série e esta e as próximas. Dat
 
 ## Segurança
 
-O acesso é autorizado por family_access, ligado a auth.uid(). As políticas RLS não usam user_metadata nem raw_user_meta_data como fonte de autorização. Operações com várias alterações usam RPCs transacionais para proteger o isolamento da família e evitar séries parcialmente alteradas.
+O acesso é autorizado por family_access, ligado a auth.uid(). As políticas RLS não usam user_metadata nem raw_user_meta_data como fonte de autorização. Operações com várias alterações usam RPCs transacionais para proteger o isolamento da família e evitar séries parcialmente alteradas. Triggers de integridade também impedem que responsáveis, metas de membro e eventos manuais apontem para membros de outra família.
 
 family_config foi mantida apenas como estrutura legada temporária para rollback; o aplicativo novo não a lê nem grava. A agenda e o histórico antigos não são migrados.
 
@@ -42,7 +42,7 @@ family_config foi mantida apenas como estrutura legada temporária para rollback
 
 ## Migrations
 
-As migrations em supabase/migrations são ordenadas por extensões, tabelas, constraints e índices, funções, RLS e retenção reversível do legado. supabase/config.toml e supabase/seed.sql fazem parte da estrutura local do Supabase CLI.
+As migrations em supabase/migrations são ordenadas por extensões, tabelas, constraints e índices, funções, RLS, retenção reversível do legado e integridade entre família e membro. supabase/config.toml e supabase/seed.sql fazem parte da estrutura local do Supabase CLI.
 
 js/supabase-config.js é ignorado pelo Git. Crie-o a partir de js/supabase-config.example.js somente no ambiente local, com URL e chave pública válidas.
 
@@ -52,6 +52,6 @@ O backup exporta um formato lógico versionado com família, membros, configura�
 
 ## Validação atual
 
-Foram aprovados testes estáticos em tests/static_contract_test.py, verificação de whitespace e um smoke visual estático servido por Python. Ainda faltam todos os testes contra PostgreSQL/Supabase real: banco limpo, RLS entre famílias, recorrência, concorrência, datas locais, sessão e importação/exportação.
+Foram aprovados sete testes estáticos em tests/static_contract_test.py, verificação de whitespace, um smoke visual estático servido por Python e a aplicação das migrations em PostgreSQL embarcado com dados fictícios para validar a integridade família–membro. Ainda faltam os testes contra um stack Supabase/PostgreSQL completo: banco limpo, RLS entre famílias, recorrência, concorrência, datas locais, sessão e importação/exportação.
 
 Não trate esta refatoração como pronta para produção antes dessas validações. Consulte [SUPABASE_SETUP.md](SUPABASE_SETUP.md) para os comandos e a sequência controlada.
