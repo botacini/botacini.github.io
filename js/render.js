@@ -143,7 +143,8 @@ function renderMemberColumn(member) {
           <button class="task-menu-btn" data-open-task-menu="${ms.id}" title="Opções">⋯</button>
           <div class="task-dropdown" id="${menuId}">
             <button class="task-dropdown-item" data-edit-mission="${ms.id}">✏️ Editar</button>
-            <button class="task-dropdown-item danger" data-delete-mission="${ms.id}">✕ Excluir</button>
+            <button class="task-dropdown-item danger" data-delete-mission="${ms.id}" data-delete-scope="occurrence">✕ Excluir esta ocorrência</button>
+            <button class="task-dropdown-item danger" data-delete-mission="${ms.id}" data-delete-scope="series">✕ Excluir série</button>
           </div>
         </div>` : ''}
         <div class="task-emoji">${ms.emoji}</div>

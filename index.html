@@ -277,6 +277,19 @@
         <input id="qa-task-end" class="qa-input" type="time" value="08:30">
       </div>
     </div>
+    <div class="qa-time-row">
+      <div class="qa-field">
+        <label class="qa-label">AGENDAMENTO</label>
+        <select id="qa-task-schedule-type" class="qa-input">
+          <option value="weekly">SEMANAL</option>
+          <option value="once">DATA ÚNICA</option>
+        </select>
+      </div>
+      <div class="qa-field">
+        <label class="qa-label">DATA</label>
+        <input id="qa-task-date" class="qa-input" type="date">
+      </div>
+    </div>
     <label class="qa-days-label">REPETIR NOS DIAS</label>
     <div class="qa-days-grid">
       <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="0">DOM</label>
@@ -288,6 +301,11 @@
       <label class="qa-day-check"><input type="checkbox" class="qa-day-checkbox" value="6">SÁB</label>
     </div>
     <div class="popup-actions">
+      <select id="qa-task-edit-scope" class="qa-input" style="display:none;margin-bottom:0">
+        <option value="series">TODA A SÉRIE</option>
+        <option value="occurrence">SOMENTE ESTA OCORRÊNCIA</option>
+        <option value="future">ESTA E AS PRÓXIMAS</option>
+      </select>
       <button id="btn-qa-task-cancel" class="btn-secondary">CANCELAR</button>
       <button id="btn-qa-task-confirm" class="btn-primary">SALVAR ✓</button>
       <input type="hidden" id="qa-task-edit-id" value="">
@@ -377,7 +395,9 @@
 <div id="toast" class="toast" style="display:none"></div>
 <div id="confetti-container" class="confetti-container"></div>
 
-<!-- Supabase SDK (necessário para storage.js) -->
+  <!-- Configuração local ignorada pelo Git; veja js/supabase-config.example.js -->
+  <script src="js/supabase-config.js"></script>
+  <!-- Supabase SDK (necessário para storage.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>

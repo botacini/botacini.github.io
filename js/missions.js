@@ -13,9 +13,10 @@
 
 import {
   state, ALL_BADGES, assigneeIds,
-  persistDayState, persistTotals, persistWeekState, persistBadges,
+  persistWeekState, persistBadges,
   isSelectedDateToday,
 } from './state.js';
+import { setOccurrenceStatus, clearOccurrenceStatus } from './storage.js';
 import { renderMembersBar, renderMissions, renderWeek } from './render.js';
 import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti } from './effects.js';
 
@@ -61,8 +62,10 @@ function markFail(missionId) {
   if (prev && prev.status === 'done' && prev.stars) revokeStars(mission, prev.stars);
 
   state.missionStatus[missionId] = { status: 'fail', stars: 0 };
-  persistDayState();
-  persistTotals();
+  void setOccurrenceStatus(mission, state.missionStatus[missionId]).catch(error => {
+    console.error('[missions] falha ao salvar status:', error);
+    showToast('Falha ao salvar. Recarregue a página.');
+  });
   playSound('fail');
   vibrate([80]);
   renderMembersBar();
@@ -77,8 +80,10 @@ export function unmarkMission(missionId) {
   if (prev.status === 'done' && prev.stars) revokeStars(mission, prev.stars);
 
   delete state.missionStatus[missionId];
-  persistDayState();
-  persistTotals();
+  void clearOccurrenceStatus(mission).catch(error => {
+    console.error('[missions] falha ao limpar status:', error);
+    showToast('Falha ao salvar. Recarregue a página.');
+  });
   renderMembersBar();
   renderMissions();
 }
@@ -95,8 +100,10 @@ function setDoneWithBonus(missionId, bonusFlags) {
   state.missionStatus[missionId] = { status: 'done', stars, bonus: { ...bonusFlags } };
   awardStars(mission, stars);
 
-  persistDayState();
-  persistTotals();
+  void setOccurrenceStatus(mission, state.missionStatus[missionId]).catch(error => {
+    console.error('[missions] falha ao salvar status:', error);
+    showToast('Falha ao salvar. Recarregue a página.');
+  });
   playSound('done');
   vibrate([30, 30, 60]);
   renderMembersBar();
@@ -239,10 +246,14 @@ function setText(id, value) {
 
 export function restartDay() {
   if (!isSelectedDateToday()) return;
+  const previousMissions = state.missions.filter(ms => state.missionStatus[ms.id]);
   state.missionStatus = {};
   state.memberStars = {};
   state.config.members.forEach(mem => { state.memberStars[mem.id] = 0; });
-  persistDayState();
+  void Promise.all(previousMissions.map(clearOccurrenceStatus)).catch(error => {
+    console.error('[missions] falha ao reiniciar dia:', error);
+    showToast('Falha ao salvar. Recarregue a página.');
+  });
 
   const overlay = document.getElementById('report-overlay');
   if (overlay) overlay.style.display = 'none';

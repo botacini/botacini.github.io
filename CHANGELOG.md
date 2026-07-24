@@ -1,69 +1,57 @@
 # Changelog — GP da Família
 
----
+## v3.0 (2026-07-23) — Persistência relacional versionada [PENDENTE DE APLICAÇÃO NO SUPABASE]
+
+### Alterado
+
+- A agenda deixou de ser armazenada como um documento JSONB único em family_config.
+- Foram adicionadas migrations versionadas para famílias, acessos, membros, configurações, tarefas, responsáveis, regras, exceções, estados de ocorrência, eventos manuais e resumos.
+- Tarefas suportam regra única por data e recorrência semanal sem materializar ocorrências futuras.
+- Edições distinguem ocorrência, série e esta e as próximas; a divisão de série é transacional.
+- Conclusões, bônus e exclusões de ocorrência persistem por data concreta, sem regravar o estado integral da família.
+- Backup e importação foram atualizados para um formato lógico versionado; backups JSONB antigos não são compatíveis.
+
+### Segurança
+
+- A autorização foi movida para family_access e auth.uid().
+- As políticas RLS não usam user_metadata nem raw_user_meta_data.
+- Índices foram incluídos nas relações e colunas usadas para isolamento de família.
+
+### Infraestrutura e documentação
+
+- Adicionada estrutura supabase/config.toml, supabase/migrations e supabase/seed.sql.
+- Adicionado js/supabase-config.example.js; a configuração local real é ignorada pelo Git.
+- Adicionado SUPABASE_SETUP.md com instalação, vínculo seguro, aplicação manual, validação e rollback.
+- README e IA_HANDOFF refletem a arquitetura relacional e o estado de implantação.
+
+### Validação local realizada
+
+- tests/static_contract_test.py: 6 verificações estáticas aprovadas.
+- git diff --check: aprovado.
+- Smoke visual estático com python -m http.server: tela de login carregou.
+
+### Pendências de release
+
+- As migrations ainda não foram aplicadas no Supabase remoto.
+- Ainda é obrigatório confirmar project-ref, vínculo, permissões e ambiente antes de db push.
+- Ainda devem ser realizados testes com PostgreSQL/Supabase real: migrations em banco limpo, RLS entre famílias, recorrência, concorrência, datas locais, exportação/importação e recuperação de sessão.
+- Não promover esta mudança para produção antes dessas validações.
+
+### Compatibilidade
+
+- A agenda e o histórico JSONB antigos não são migrados.
+- family_config é retida temporariamente somente para rollback e não é usada pelo aplicativo novo.
 
 ## v2.1 (2026-07-15) — UI, layout e painel dos pais
 
-### Implementado
+- Evolução visual do kanban, responsividade e painel dos pais.
+- Inclusão de menu de tarefas e ajustes de conta.
+- O modelo JSONB desta versão foi substituído pela refatoração v3.0.
 
-**Visual e conteúdo**
-- Botão de logout trocado de 🔓 para 🚪 (header e painel)
-- Nome da família exibido no cabeçalho: `GP DA FAMÍLIA · <nome>`
-- `updateFamilyName()` exportada de `render.js`, chamada em `main.js`
+## v2.0 (2026-07-05) — Kanban, metas personalizadas e bônus manual
 
-**Layout responsivo (CSS only)**
-- Colunas do kanban expandem para preencher a largura disponível em telas ≥ 480px (`flex: 1 1 160px`)
-- Sidebar desktop: abas no topo, botões ⚙️ e 🚪 fixos no rodapé separados por linha divisória
-- `tab-bar` reestruturada com `tab-bar-tabs` + `tab-bar-bottom` no `index.html`
-
-**Menu ⋯ nos cards de tarefa**
-- Cada tarefa não-compartilhada exibe botão ⋯ que abre dropdown com "✏️ Editar" e "✕ Excluir"
-- Dropdown fecha ao clicar fora ou ao abrir outro
-- Visível em todos os dias (inclusive modo leitura)
-
-**Painel dos pais**
-- `skipParentPanelPin` default alterado para `true` (painel abre sem PIN por padrão)
-- Toggle renomeado para "SOLICITAR PIN PARA ABRIR O PAINEL DOS PAIS" com lógica invertida (`= !e.target.checked`)
-- Seção "CONTA" adicionada à aba Ajustes com e-mail da conta logada (somente leitura)
-- `getSession()` importado de `auth.js` em `parent-panel.js`
-
-**Arquivos modificados:** `index.html`, `css/style.css`, `js/render.js`, `js/main.js`, `js/parent-panel.js`, `js/state.js`
-
-### Bugs conhecidos (pendentes de correção)
-
-**Bug 1 — Edição cria duplicatas**
-Ao editar uma tarefa recorrente e selecionar dias onde ela já existe, o sistema adiciona nova entrada em vez de atualizar a existente.
-
-**Bug 2 — Checkboxes de dias incorretos no popup de edição**
-Os checkboxes não são pré-marcados com os dias onde a tarefa realmente existe em `missionsByDay`.
-
-**Bug 3 — Exclusão remove apenas uma ocorrência**
-`deleteTask` remove somente o `dow` atual; deveria remover todas as ocorrências do mesmo `id` nos 7 dias.
-
-Os três bugs estão em `quick-actions.js`.
-
----
-
-## v2.0 (2026-07-05) — Kanban, metas personalizadas, bônus manual
-
-- Dashboard kanban com 1 coluna por membro
-- Cores por membro (paleta automática estilo F1)
-- `assigneeIds()` em `state.js` normaliza os 3 formatos de `assignee` (retrocompat total)
-- Metas personalizadas (aba Extras no painel dos pais)
-- Bônus manual com histórico do dia (aba Bônus no painel dos pais)
-- `checkAndUnlockBadges()` exportada para uso externo
-- Supabase Auth com e-mail/senha; `family_id` = UUID separado do `user.id`
-- Auto-cura de configs antigas (cores ausentes, campos novos)
-
-**Arquivos modificados:** `state.js`, `storage.js`, `render.js`, `missions.js`, `parent-panel.js`, `quick-actions.js`, `style.css`, `index.html`
-
----
+- Dashboard por membro, metas personalizadas, bônus manual e integração inicial com Supabase Auth.
 
 ## v1.0 — Base
 
-- Lista de tarefas por dia da semana com horários
-- Checklist de bônus (capricho, pontualidade, sem reclamar)
-- Finalização de dia e semana com relatório
-- 4 conquistas fixas desbloqueáveis
-- Painel dos pais com PIN (membros, tarefas, ajustes)
-- Persistência localStorage → migrado para Supabase
+- Agenda semanal, bônus, relatórios, conquistas e painel dos pais.

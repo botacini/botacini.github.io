@@ -1,81 +1,68 @@
-# GP da Família — IA Handoff
+# IA_HANDOFF — estado técnico
 
-## O que é
+Atualizado em 2026-07-23.
 
-PWA de gamificação de rotina doméstica com tema de F1. Vanilla JS ES Modules, sem bundler, GitHub Pages + Supabase. Família acessa tudo pela mesma conta; todos veem o mesmo estado em tempo real.
+## Situação atual
 
-## Arquitetura
+A persistência da agenda foi refatorada localmente de family_config JSONB para schema relacional versionado em supabase/migrations. O frontend usa exclusivamente esse novo modelo. Nenhuma migration foi aplicada em um projeto remoto nesta estação: Supabase CLI, Docker, Node e PostgreSQL não estavam disponíveis, não havia project-ref ou vínculo local e nenhuma credencial foi solicitada ou registrada.
 
-```
-auth.js      → sessão (Supabase Auth com e-mail/senha)
-storage.js   → único acesso ao Supabase (family_config JSONB)
-state.js     → estado global em memória; todos os módulos leem/mutam
-main.js      → único orquestrador; módulos nunca se importam lateralmente
-render.js    → lê state, desenha DOM, sem efeitos colaterais
-missions.js  → regras de negócio (marcar tarefa, bônus, finalizar dia/semana)
-effects.js   → som (Web Audio API), vibração, toast, confete
-parent-panel.js → painel admin (PIN, membros, tarefas, bônus, ajustes)
-quick-actions.js → popups rápidos (nova tarefa, conquista, membro sem abrir painel)
-```
+O trabalho não deve ser considerado liberado para produção até aplicar o banco correto e executar os testes integrados descritos em SUPABASE_SETUP.md.
 
-**Regras arquiteturais:**
-- `main.js` é o único orquestrador — módulos não se importam lateralmente
-- `auth.js`, `storage.js`, `effects.js`, `missions.js` → nunca tocados salvo indicação explícita
-- CSS → apenas adicionar ao final de `style.css`, nunca modificar regras existentes
+## Fonte de verdade e autorização
 
-## Estado atual do app (julho 2026)
+- family_access é a associação confiável entre usuário e família, por auth.uid().
+- RLS não consulta user_metadata nem raw_user_meta_data.
+- bootstrap_current_family cria a família inicial e o acesso owner para uma sessão autenticada.
+- auth.js não deriva familyId de metadados de usuário; usa o bootstrap RPC.
+- family_config é legado retido apenas para rollback e não possui mais leitura ou escrita no aplicativo.
 
-### Implementado e funcionando
-- Kanban por membro (1 coluna por pessoa)
-- Tarefas por dia da semana com horário, emoji, responsável (individual/compartilhada/multi)
-- Checklist de bônus (capricho, pontualidade, sem reclamar) → estrelas extras
-- Finalização de dia e semana com relatório
-- Conquistas fixas + metas personalizadas dos pais
-- Painel dos pais com abas: Membros, Tarefas, Extras, Bônus, Ajustes
-- Bônus manual (estrelas fora da agenda) com histórico do dia
-- Cores por membro (paleta F1 automática)
-- Navegação por data (modo leitura em dias passados)
-- Backup/restore JSON
-- Supabase Auth (e-mail/senha) — `auth.js` completo com `signUp`, `signIn`, `logout`, `onAuthStateChange`
-- `family_id` = UUID do `user_metadata` (separado do `user.id`, pronto para multi-usuário)
-- Popup de criação/edição de tarefa rápida (`quick-actions.js`) com campo emoji
-- Nome da família exibido no cabeçalho via `updateFamilyName()` em `render.js`
-- Menu ⋯ nos cards de tarefa (dropdown com Editar / Excluir)
-- Botão de logout 🚪 (header mobile + rodapé sidebar desktop)
-- Sidebar desktop com abas no topo e ⚙️/🚪 fixos no rodapé
-- `skipParentPanelPin` default `true` (sem PIN para abrir painel por padrão)
-- Toggle do painel renomeado para "SOLICITAR PIN…" com lógica invertida corretamente
-- Email da conta exibido na aba Ajustes do painel
+## Modelo relacional
 
-### Pendente de implementação
-- Fase 3c completa: botão ➕ em todos os dias (modo leitura incluído), passando `dateKey` correto
-- Fase 5b completa: lógica de edição de tarefa (`confirmNewTask` no modo edição)
+- Núcleo: families, family_access e family_members.
+- Configuração: family_settings, family_custom_goals e family_badges.
+- Agenda: tasks, task_assignees, task_schedules, task_schedule_overrides e task_occurrence_status.
+- Histórico e resumos: manual_star_events, daily_summaries e weekly_summaries.
 
-### Bugs conhecidos (ainda não corrigidos)
+tasks guarda a definição; task_schedules guarda regras once ou weekly; task_schedule_overrides representa skip ou patch por data; task_occurrence_status é único por schedule_id e occurrence_date. Ocorrências futuras não são pré-geradas.
 
-**Bug 1 — Edição cria duplicatas em vez de atualizar**
-Tarefas recorrentes existem como ocorrências independentes em cada `missionsByDay[dow]`. Ao editar e selecionar dias onde a tarefa já existe, o código atual adiciona uma nova entrada em vez de atualizar a existente. Comportamento esperado: se o dia já tem aquele `id`, atualizar no lugar; só criar nova entrada quando o dia ainda não tiver a tarefa.
+## Fluxos do frontend
 
-**Bug 2 — Checkboxes de dias não refletem ocorrências existentes**
-Ao abrir o popup de edição, os checkboxes dos dias da semana não são pré-marcados com base em onde a tarefa realmente existe. Deveriam ser marcados automaticamente todos os dias onde aquele `id` aparece em `missionsByDay`.
+- storage.js é a camada relacional. Criação, edição, divisão de série, overrides, conclusão, exclusão, totais e restauração chamam RPCs transacionais.
+- state.js chama get_occurrences_for_date e compõe o dia selecionado com datas locais YYYY-MM-DD.
+- quick-actions.js expõe tarefa única ou semanal e os escopos ocorrência, série e esta e próximas.
+- missions.js grava status por ocorrência sem regravar a agenda.
+- parent-panel.js opera membros, settings, metas, bônus e backup lógico.
+- render.js e main.js encaminham exclusão de ocorrência e série como ações distintas.
 
-**Bug 3 — Exclusão remove apenas uma ocorrência**
-`deleteTask` remove a entrada de um único `dow`. Deveria identificar todos os dias onde aquele `id` existe e remover todas as ocorrências, da mesma forma que a edição identificará as ocorrências para atualizar.
+## Migrations
 
-Os três bugs estão concentrados em `quick-actions.js` (`openNewTaskPopup`, `openEditTaskPopup`, `confirmNewTask`, `deleteTask`).
+1. 202607230001_extensions.sql
+2. 202607230002_relational_core.sql
+3. 202607230003_constraints_and_indices.sql
+4. 202607230004_functions.sql
+5. 202607230005_rls.sql
+6. 202607230006_legacy_family_config_retained.sql
 
-## Estrutura de dados relevante
+SUPABASE_SETUP.md contém pré-requisitos, checagem do vínculo, aplicação controlada, testes e rollback. Nunca usar db reset no projeto remoto.
 
-```js
-// state.config.missionsByDay[0..6] = array de tarefas do dia (0=Dom)
-// Cada tarefa: { id, start, end, emoji, title, desc, assignee }
-// assignee: 'compartilhada' | memberId (string) | [memberId, ...] (array)
+## Validação realizada
 
-// Supabase: tabela family_config
-// family_id (PK, UUID do user_metadata) | config (JSONB)
-// Chaves do JSONB: 'config', 'day:YYYY-MM-DD', 'week:YYYY-MM-DD', 'totals', 'badges', 'bonusLog'
-```
+- python -m unittest -v tests\static_contract_test.py: 6 testes estáticos aprovados.
+- git diff --check: aprovado.
+- Smoke visual por python -m http.server e navegador headless: tela de login carregou.
 
-## Próximo passo recomendado
+## Pendências bloqueantes
 
-Corrigir os 3 bugs em `quick-actions.js`, concentrando a lógica de "encontrar todas as ocorrências de um id nos 7 dias" em uma função auxiliar reutilizada por edição e exclusão.
+1. Instalar e autenticar o Supabase CLI e identificar o project-ref correto.
+2. Executar link e aplicar migrations manualmente no ambiente confirmado, sem reset.
+3. Criar js/supabase-config.js local a partir do exemplo com URL e chave pública do projeto.
+4. Validar schema em banco limpo e as políticas com duas famílias e usuários.
+5. Executar cenários de recorrência, concorrência, importação/exportação e transições de data.
+6. Registrar os resultados antes de promover a mudança.
+
+## Riscos conhecidos
+
+- A agenda legada não será preservada por decisão de escopo.
+- O backup novo não aceita o formato JSONB antigo.
+- A restauração e as RPCs ainda exigem validação em PostgreSQL real; os testes atuais não executam SQL.
+- Os escopos de edição essenciais estão implementados, mas a ergonomia precisa de revisão após uso integrado.

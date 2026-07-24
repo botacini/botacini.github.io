@@ -1,0 +1,13 @@
+# Supabase CLI local state and credentials
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+
+# Browser runtime configuration. Keep the publishable key out of Git.
+js/supabase-config.js
+
+# Local test/build artifacts
+coverage/
+node_modules/
+tests/__pycache__/
+tests/headless-smoke.png

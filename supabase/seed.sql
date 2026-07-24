@@ -1,0 +1,2 @@
+-- Intentionally empty. Production data is created by authenticated users via
+-- bootstrap_current_family(); do not put account or family data in Git.

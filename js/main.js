@@ -260,7 +260,7 @@ function wireShortcutButtons() {
     }
 
     const delTaskBtn = e.target.closest('[data-delete-mission]');
-    if (delTaskBtn) { deleteTask(delTaskBtn.dataset.deleteMission); return; }
+    if (delTaskBtn) { deleteTask(delTaskBtn.dataset.deleteMission, delTaskBtn.dataset.deleteScope || 'series'); return; }
 
     const delGoalBtn = e.target.closest('[data-delete-goal]');
     if (delGoalBtn) { deleteGoal(delGoalBtn.dataset.deleteGoal); return; }

@@ -3,16 +3,8 @@
    ════════════════════════════════════════════════════════════
    Única fonte de verdade sobre a sessão atual da aplicação.
 
-   FASE 1: Supabase Auth com email + senha.
-             Uma conta = uma família.
-             family_id é um UUID gerado no cadastro e gravado
-             em user_metadata — separado de auth.uid() para
-             que a Fase 2 (múltiplos usuários por família) não
-             exija mudança de schema nem de outros módulos.
-
-   FASE 2 (futura): convidar membros (filhos) para a mesma
-             família. Basta criar a conta com o mesmo
-             family_id no metadata. O resto do app não muda.
+   A autorização de família não depende de metadata: storage.js cria e
+   consulta a relação family_access(user_id = auth.uid()).
 
    NENHUM outro arquivo deve:
    - chamar supabase.auth diretamente
@@ -21,8 +13,13 @@
    ════════════════════════════════════════════════════════════ */
 
 /* ── Supabase SDK (singleton compartilhado com storage.js) ─ */
-const SUPABASE_URL  = 'https://yomngetgdfnjipfdckzp.supabase.co';
-const SUPABASE_KEY  = 'sb_publishable_2mtzblJVo_4mIS_rB82C9w_4X3ozk50';
+function getRuntimeConfig() {
+  const config = window.GP_SUPABASE_CONFIG || {};
+  if (!config.url || !config.publishableKey) {
+    throw new Error('[auth] configura\u00e7\u00e3o do Supabase ausente.');
+  }
+  return config;
+}
 
 let _client = null;
 function getClient() {
@@ -30,7 +27,8 @@ function getClient() {
   if (typeof window.supabase === 'undefined' || typeof window.supabase.createClient !== 'function') {
     throw new Error('[auth] Supabase SDK não encontrado.');
   }
-  _client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const config = getRuntimeConfig();
+  _client = window.supabase.createClient(config.url, config.publishableKey);
   return _client;
 }
 
@@ -50,7 +48,9 @@ function buildSession(supabaseSession) {
       id:    supabaseSession.user.id,
       email: supabaseSession.user.email,
     },
-    familyId:   meta.family_id   || supabaseSession.user.id, // fallback seguro
+    // Metadados legados n\u00e3o participam de autoriza\u00e7\u00e3o: storage.js obt\u00e9m
+    // a fam\u00edlia relacional atrav\u00e9s de auth.uid() e family_access.
+    familyId:   null,
     familyName: meta.family_name || '',
     role:       meta.role        || 'admin',   // 'admin' | 'member' (Fase 2)
   };
@@ -96,7 +96,7 @@ export function onAuthStateChange(callback) {
  * Retorna true se há sessão autenticada ativa.
  */
 export function hasSession() {
-  return !!(_session && _session.authenticated && _session.familyId);
+  return !!(_session && _session.authenticated);
 }
 
 /**
@@ -139,13 +139,12 @@ export function getCurrentRole() {
 
 /**
  * Cria uma nova conta + família.
- * Gera um family_id UUID único e grava em user_metadata.
+ * A família relacional é criada no primeiro carregamento autenticado.
  * Retorna { ok: true } ou { ok: false, error: string }.
  */
 export async function signUp(email, password, familyName) {
   try {
     const client  = getClient();
-    const familyId = crypto.randomUUID();          // UUID v4 nativo do browser
     const trimmed  = (familyName || '').trim();
 
     const { data, error } = await client.auth.signUp({
@@ -153,9 +152,7 @@ export async function signUp(email, password, familyName) {
       password,
       options: {
         data: {
-          family_id:   familyId,
           family_name: trimmed,
-          role:        'admin',   // fundador da família sempre é admin
         },
       },
     });
