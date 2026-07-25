@@ -174,7 +174,13 @@ export function closeBonusPenaltyPopup() { hide('qa-bp-overlay'); }
 export function setBonusPenaltyMode(mode) { bonusPenaltyMode = mode; updateBonusPenaltyModeUI(); }
 function updateBonusPenaltyModeUI() {
   const bonus = document.getElementById('qa-bp-btn-bonus'); const penalty = document.getElementById('qa-bp-btn-penalty');
-  bonus?.classList.toggle('active-bonus', bonusPenaltyMode === 'bonus'); penalty?.classList.toggle('active-penalty', bonusPenaltyMode === 'penalty');
+  const confirm = document.getElementById('btn-qa-bp-confirm');
+  const isPenalty = bonusPenaltyMode === 'penalty';
+  bonus?.classList.toggle('active-bonus', !isPenalty);
+  penalty?.classList.toggle('active-penalty', isPenalty);
+  confirm?.classList.toggle('bonus-mode', !isPenalty);
+  confirm?.classList.toggle('penalty-mode', isPenalty);
+  if (confirm) confirm.textContent = isPenalty ? '⚡ APLICAR PENALIDADE' : '✨ CONCEDER BÔNUS';
 }
 export async function confirmBonusPenalty() {
   const memberId = document.getElementById('qa-bp-member')?.value;
