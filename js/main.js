@@ -9,7 +9,7 @@
    - Fazer a ponte PIN entre missions.js e parent-panel.js.
    ════════════════════════════════════════════════════════════ */
 
-import { loadState, loadDateContext, state } from './state.js';
+import { loadState, loadDateContext, shiftDateKey, state } from './state.js';
 import { renderDashboard, renderMissions, updateClock, switchTab, updateFamilyName } from './render.js';
 import {
   handleMissionAction, toggleBonus, confirmBonus, cancelBonus,
@@ -172,6 +172,7 @@ async function startApp() {
   wirePinApprovalBridge();
   wireParentPanelEvents();
   wireQuickActionsPopups();
+  wirePopupDismissals();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -209,6 +210,13 @@ function wireMissionList() {
   const list = document.getElementById('mission-list');
   if (!list) return;
   list.addEventListener('click', (e) => {
+    const weekBtn = e.target.closest('[data-week-shift]');
+    if (weekBtn) {
+      const currentDate = state.selectedDate || state.today;
+      void navigateWeek(Number(weekBtn.dataset.weekShift));
+      return;
+    }
+
     const dateBtn = e.target.closest('[data-date-key]');
     if (dateBtn) { void selectDashboardDate(dateBtn.dataset.dateKey); return; }
 
@@ -270,6 +278,55 @@ function wireShortcutButtons() {
 async function selectDashboardDate(dateKey) {
   await loadDateContext(dateKey);
   renderDashboard();
+}
+
+let weekNavigationInProgress = false;
+
+async function navigateWeek(shift) {
+  if (weekNavigationInProgress) return;
+
+  const list = document.getElementById('mission-list');
+  const currentDate = state.selectedDate || state.today;
+  const targetDate = shiftDateKey(currentDate, shift);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!list || reduceMotion) {
+    await selectDashboardDate(targetDate);
+    return;
+  }
+
+  weekNavigationInProgress = true;
+  list.setAttribute('aria-busy', 'true');
+  list.style.pointerEvents = 'none';
+
+  const direction = shift > 0 ? 1 : -1;
+  const options = {
+    duration: 280,
+    easing: 'cubic-bezier(.4, 0, .2, 1)',
+    fill: 'forwards',
+  };
+
+  try {
+    const exitAnimation = list.animate([
+      { transform: 'translateX(0)', opacity: 1 },
+      { transform: `translateX(${-100 * direction}%)`, opacity: 0.35 },
+    ], options);
+    await exitAnimation.finished;
+
+    await selectDashboardDate(targetDate);
+    exitAnimation.cancel();
+
+    const enterAnimation = list.animate([
+      { transform: `translateX(${100 * direction}%)`, opacity: 0.35 },
+      { transform: 'translateX(0)', opacity: 1 },
+    ], options);
+    await enterAnimation.finished;
+    enterAnimation.cancel();
+  } finally {
+    list.style.pointerEvents = '';
+    list.removeAttribute('aria-busy');
+    weekNavigationInProgress = false;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -376,6 +433,47 @@ function wireQuickActionsPopups() {
   document.getElementById('qa-bp-btn-penalty')    ?.addEventListener('click', () => setBonusPenaltyMode('penalty'));
   document.getElementById('btn-qa-bp-confirm')    ?.addEventListener('click', confirmBonusPenalty);
   document.getElementById('btn-qa-bp-cancel')     ?.addEventListener('click', closeBonusPenaltyPopup);
+}
+
+/* ════════════════════════════════════════════════════════════
+   FECHAMENTO PADRÃO DOS POPUPS
+   ════════════════════════════════════════════════════════════ */
+function wirePopupDismissals() {
+  const hideOverlay = id => {
+    const overlay = document.getElementById(id);
+    if (overlay) overlay.style.display = 'none';
+  };
+  const popupClosers = {
+    'bonus-overlay': cancelBonus,
+    'report-overlay': () => hideOverlay('report-overlay'),
+    'badge-popup-overlay': () => hideOverlay('badge-popup-overlay'),
+    'pin-overlay': closePinOverlay,
+    'parent-panel-overlay': closeParentPanel,
+    'qa-task-overlay': closeNewTaskPopup,
+    'qa-goal-overlay': closeNewGoalPopup,
+    'qa-member-overlay': closeNewMemberPopup,
+    'qa-bp-overlay': closeBonusPenaltyPopup,
+  };
+
+  Object.entries(popupClosers).forEach(([overlayId, closePopup]) => {
+    const overlay = document.getElementById(overlayId);
+    const popup = overlay?.querySelector('.popup');
+    if (!overlay || !popup) return;
+
+    overlay.addEventListener('click', event => {
+      if (event.target === overlay) closePopup();
+    });
+
+    if (!popup.querySelector('.pp-btn-close')) {
+      const closeButton = document.createElement('button');
+      closeButton.type = 'button';
+      closeButton.className = 'popup-close-x';
+      closeButton.setAttribute('aria-label', 'Fechar');
+      closeButton.textContent = '×';
+      closeButton.addEventListener('click', closePopup);
+      popup.prepend(closeButton);
+    }
+  });
 }
 
 /* ════════════════════════════════════════════════════════════
