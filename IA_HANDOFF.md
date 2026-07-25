@@ -1,71 +1,74 @@
 # IA_HANDOFF — estado técnico
 
-Atualizado em 2026-07-24.
+Atualizado em 2026-07-25.
 
 ## Situação atual
 
-A persistência da agenda foi refatorada localmente de family_config JSONB para schema relacional versionado em supabase/migrations. O frontend usa exclusivamente esse novo modelo. Nenhuma migration foi aplicada em um projeto remoto nesta estação: não há project-ref, vínculo local ou credencial registrada. O Supabase CLI pôde ser executado temporariamente, mas o stack local não iniciou porque o socket do Docker não está acessível neste sandbox.
+O branch de desenvolvimento usa o schema relacional versionado em `supabase/migrations`. Um projeto Supabase separado foi criado para desenvolvimento, preservando o banco original. O schema e as políticas foram aplicados nesse ambiente e a auditoria de segurança não apresentou alertas.
 
-O trabalho não deve ser considerado liberado para produção até aplicar o banco correto e executar os testes integrados descritos em SUPABASE_SETUP.md.
+A versão publicada para testes recebeu alterações posteriores ao primeiro commit da refatoração. Essas alterações estão consolidadas neste branch:
+
+- data `DD/MM` nos cards da semana;
+- navegação por semanas com setas;
+- animação direcional de `280 ms` nos cards de dias e tarefas;
+- bloqueio de cliques durante a transição;
+- `prefers-reduced-motion`;
+- fechamento de pop-ups por `×` e toque fora;
+- botão vermelho `APLICAR PENALIDADE`.
+
+O modo temporário de teste baseado em `localStorage` não faz parte da consolidação. O branch mantém autenticação e persistência relacionais.
 
 ## Fonte de verdade e autorização
 
-- family_access é a associação confiável entre usuário e família, por auth.uid().
-- RLS não consulta user_metadata nem raw_user_meta_data.
-- bootstrap_current_family cria a família inicial e o acesso owner para uma sessão autenticada.
-- auth.js não deriva familyId de metadados de usuário; usa o bootstrap RPC.
-- family_config é legado retido apenas para rollback e não possui mais leitura ou escrita no aplicativo.
+- `family_access` associa `auth.uid()` à família.
+- RLS não usa metadados editáveis do usuário.
+- `bootstrap_current_family` cria a família e o acesso inicial.
+- `auth.js` obtém a família pelo fluxo confiável.
+- `family_config` é legado de rollback e não é usada pelo frontend novo.
 
-## Modelo relacional
+## Modelo atual
 
-- Núcleo: families, family_access e family_members.
-- Configuração: family_settings, family_custom_goals e family_badges.
-- Agenda: tasks, task_assignees, task_schedules, task_schedule_overrides e task_occurrence_status.
-- Histórico e resumos: manual_star_events, daily_summaries e weekly_summaries.
+- Núcleo: `families`, `family_access`, `family_members`.
+- Configuração: `family_settings`, `family_custom_goals`, `family_badges`.
+- Agenda: `tasks`, `task_assignees`, `task_schedules`, `task_schedule_overrides`, `task_occurrence_status`.
+- Histórico: `manual_star_events`, `daily_summaries`, `weekly_summaries`.
 
-tasks guarda a definição; task_schedules guarda regras once ou weekly; task_schedule_overrides representa skip ou patch por data; task_occurrence_status é único por schedule_id e occurrence_date. Ocorrências futuras não são pré-geradas.
+`tasks` guarda a definição; `task_schedules` guarda regras `once` ou `weekly`; `task_schedule_overrides` representa `skip` ou `patch` por data; `task_occurrence_status` é único por agenda e data.
 
-## Fluxos do frontend
+## Direção arquitetural aprovada
 
-- storage.js é a camada relacional. Criação, edição, divisão de série, overrides, conclusão, exclusão, totais e restauração chamam RPCs transacionais.
-- state.js chama get_occurrences_for_date e compõe o dia selecionado com datas locais YYYY-MM-DD.
-- quick-actions.js expõe tarefa única ou semanal e os escopos ocorrência, série e esta e próximas.
-- missions.js grava status por ocorrência sem regravar a agenda.
-- parent-panel.js opera membros, settings, metas, bônus e backup lógico.
-- render.js e main.js encaminham exclusão de ocorrência e série como ações distintas.
+Tema deve ser uma camada de apresentação. O núcleo continuará operando com dados canônicos e neutros.
 
-## Migrations
+Invariantes:
 
-1. 202607230001_extensions.sql
-2. 202607230002_relational_core.sql
-3. 202607230003_constraints_and_indices.sql
-4. 202607230004_functions.sql
-5. 202607230005_rls.sql
-6. 202607230006_legacy_family_config_retained.sql
-7. 202607240001_member_family_integrity.sql
+- `theme_id` não participa das chaves ou cálculos de agenda;
+- trocar tema não altera progresso;
+- pontuação histórica não diminui ao comprar itens;
+- saldo gastável terá razão contábil próprio;
+- inventário pertence ao membro e sobrevive à troca de tema;
+- itens incompatíveis ficam apenas ocultos até o tema correspondente retornar.
 
-SUPABASE_SETUP.md contém pré-requisitos, checagem do vínculo, aplicação controlada, testes e rollback. Nunca usar db reset no projeto remoto.
+Consulte [ROADMAP.md](ROADMAP.md) antes de implementar temas, loja ou campanhas.
 
-## Validação realizada
+## Próxima fase
 
-- python -m unittest -v tests\static_contract_test.py: 7 testes estáticos aprovados.
-- git diff --check: aprovado.
-- Smoke visual por python -m http.server e navegador headless: tela de login carregou.
-- Todas as migrations foram aplicadas em PostgreSQL embarcado com schemas/usuários fictícios; referências cruzadas de membro foram rejeitadas para tarefa, meta e evento manual.
+Estabilização da base relacional:
 
-## Pendências bloqueantes
+1. testes integrados de autenticação e sessão;
+2. RLS com dois usuários e famílias;
+3. recorrências e datas limítrofes;
+4. concorrência;
+5. backup/restauração;
+6. regressão das interações consolidadas.
 
-1. Disponibilizar Docker com daemon acessível e iniciar o Supabase local, ou usar PostgreSQL/Supabase de desenvolvimento confirmado.
-2. Identificar o project-ref correto e executar link e aplicação das migrations manualmente, sem reset.
-3. Criar js/supabase-config.js local a partir do exemplo com URL e chave pública do projeto.
-4. Validar schema em banco limpo e as políticas com duas famílias e usuários.
-5. Executar cenários de recorrência, concorrência, importação/exportação e transições de data.
-6. Registrar os resultados antes de promover a mudança.
+Somente depois iniciar a extração do manifesto de tema.
 
 ## Riscos conhecidos
 
-- A agenda legada não será preservada por decisão de escopo.
-- O backup novo não aceita o formato JSONB antigo.
-- A restauração e as RPCs ainda exigem validação em PostgreSQL real; os testes atuais não executam SQL.
-- Os escopos de edição essenciais estão implementados, mas a ergonomia precisa de revisão após uso integrado.
-- A migration 202607240001 protege referências a membros contra cruzamento entre famílias; ainda deve ser exercitada com RLS em banco local ou Supabase de desenvolvimento.
+- dados do JSONB antigo não são migrados automaticamente;
+- backup antigo não é aceito pelo importador relacional;
+- operações remotas ainda precisam de uma suíte E2E repetível;
+- termos, emojis, mensagens, CSS e nomes de componentes continuam acoplados ao automobilismo;
+- `manual_star_events` ainda não separa completamente histórico conquistado de saldo gastável;
+- definir o efeito exato das penalidades sobre o futuro saldo é uma decisão pendente.
+
