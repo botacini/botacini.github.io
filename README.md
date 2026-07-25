@@ -1,57 +1,89 @@
-# BotaCini
+# GP da Família
 
-Aplicação web estática para organizar agenda, pontos, metas e membros de uma família. O frontend permanece em HTML, CSS e JavaScript sem framework. A agenda foi refatorada para persistência relacional no Supabase.
+Aplicação web em HTML, CSS e JavaScript para organizar agenda, tarefas, pontos, metas e membros de uma família. O frontend não usa framework e a persistência principal foi refatorada para um modelo relacional no Supabase.
 
-## Estado de implantação
+## Estado atual
 
-O código e as migrations desta refatoração estão versionados localmente, mas ainda não foram aplicados nem validados em um projeto Supabase remoto. Antes de uso em produção é obrigatório confirmar o projeto, aplicar as migrations, configurar a chave pública do frontend e realizar os testes integrados de schema, RLS, agenda e backup.
+O branch `codex/refactor-supabase-tests-20260724` reúne:
 
-Credenciais, vínculo local e segredos não fazem parte do repositório. O procedimento controlado está em [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
+- agenda baseada em datas concretas;
+- tarefas únicas e recorrentes;
+- edição de ocorrência, série ou ocorrência atual e futuras;
+- múltiplos responsáveis;
+- autenticação e isolamento por família;
+- estrelas, bônus, penalidades, metas, conquistas e resumos;
+- backup lógico relacional;
+- navegação entre semanas com datas, setas e animação direcional;
+- fechamento padronizado dos pop-ups;
+- projeto Supabase separado para desenvolvimento.
 
-## Modelo de persistência
+O ambiente de desenvolvimento foi provisionado separadamente do projeto original. A promoção para produção continua bloqueada até concluir os testes integrados descritos em [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
-A agenda não usa mais um documento JSONB monolítico. As responsabilidades foram separadas:
+## Persistência
 
-- famílias e acessos: families, family_access e family_members;
-- configurações e metas: family_settings, family_custom_goals e family_badges;
-- tarefas e responsáveis: tasks e task_assignees;
-- regras, exceções e estados: task_schedules, task_schedule_overrides e task_occurrence_status;
-- histórico e resumos: manual_star_events, daily_summaries e weekly_summaries.
+A aplicação não usa mais o documento JSONB monolítico de `family_config`.
 
-Uma tarefa contém sua definição. Uma regra de agenda define uma ocorrência única por data ou uma recorrência semanal. Ocorrências futuras não são materializadas: a aplicação resolve as tarefas da data selecionada, aplica exceções e carrega somente os estados concretos já gravados.
+- Famílias e acessos: `families`, `family_access`, `family_members`.
+- Configurações e metas: `family_settings`, `family_custom_goals`, `family_badges`.
+- Tarefas e responsáveis: `tasks`, `task_assignees`.
+- Agenda: `task_schedules`, `task_schedule_overrides`, `task_occurrence_status`.
+- Histórico: `manual_star_events`, `daily_summaries`, `weekly_summaries`.
 
-As edições suportam esta ocorrência, toda a série e esta e as próximas. Datas são tratadas localmente como YYYY-MM-DD, sem toISOString para construir chaves de dia.
+Uma tarefa contém sua definição. A agenda contém regras únicas ou semanais. Ocorrências futuras são resolvidas sob demanda; somente exceções e estados concretos são persistidos.
+
+`family_config` permanece apenas como estrutura legada temporária de rollback. O frontend novo não deve lê-la nem gravá-la.
 
 ## Segurança
 
-O acesso é autorizado por family_access, ligado a auth.uid(). As políticas RLS não usam user_metadata nem raw_user_meta_data como fonte de autorização. Operações com várias alterações usam RPCs transacionais para proteger o isolamento da família e evitar séries parcialmente alteradas. Triggers de integridade também impedem que responsáveis, metas de membro e eventos manuais apontem para membros de outra família.
+- Autorização por `family_access` e `auth.uid()`.
+- RLS sem uso de `user_metadata` ou `raw_user_meta_data`.
+- RPCs transacionais para operações que modificam várias tabelas.
+- Constraints impedem referências entre membros e famílias diferentes.
+- O frontend utiliza somente URL e chave pública do Supabase; `service_role` nunca deve ser exposta.
 
-family_config foi mantida apenas como estrutura legada temporária para rollback; o aplicativo novo não a lê nem grava. A agenda e o histórico antigos não são migrados.
+## Temas e gamificação
+
+A próxima evolução estrutural separará a mecânica do tema visual. O tema de corrida continuará como padrão, mas a mesma agenda poderá ser apresentada por temas como espaço, dinossauros ou reino encantado.
+
+Trocar ou testar um tema não poderá alterar tarefas, conclusões, estrelas, saldo, conquistas, compras ou inventário.
+
+Também está planejada uma economia interna:
+
+- total histórico conquistado;
+- saldo disponível para compras;
+- loja de itens cosméticos;
+- inventário por membro;
+- acessórios de avatar, veículo ou personagem;
+- campanhas e capítulos opcionais inspirados no Family Journey.
+
+O plano e os critérios de aceite estão em [ROADMAP.md](ROADMAP.md).
 
 ## Estrutura relevante
 
-- index.html: interface.
-- js/auth.js: sessão e inicialização segura da família.
-- js/storage.js: API relacional do frontend.
-- js/state.js: composição da agenda por data.
-- js/quick-actions.js e js/missions.js: alterações de agenda e estados.
-- js/parent-panel.js: configurações, membros, metas e backup.
-- supabase/migrations: schema, funções e RLS versionados.
-- tests/static_contract_test.py: verificações estáticas.
-- SUPABASE_SETUP.md: instalação, vínculo, aplicação, testes e rollback.
+- `index.html`: interface.
+- `js/auth.js`: sessão e bootstrap da família.
+- `js/storage.js`: API relacional do frontend.
+- `js/state.js`: composição da agenda por data.
+- `js/quick-actions.js`: criação e edição.
+- `js/missions.js`: conclusão, bônus e penalidades.
+- `js/render.js`: renderização.
+- `js/parent-panel.js`: membros, configurações, metas e backup.
+- `supabase/migrations`: schema, funções e RLS.
+- `tests/static_contract_test.py`: contratos estáticos.
+- `SUPABASE_SETUP.md`: configuração e validação do Supabase.
+- `IA_HANDOFF.md`: estado técnico para continuidade.
+- `ROADMAP.md`: evolução planejada.
 
-## Migrations
+## Validação
 
-As migrations em supabase/migrations são ordenadas por extensões, tabelas, constraints e índices, funções, RLS, retenção reversível do legado e integridade entre família e membro. supabase/config.toml e supabase/seed.sql fazem parte da estrutura local do Supabase CLI.
+Já foram executados testes estáticos, verificação de whitespace, smoke visual e aplicação das migrations em PostgreSQL de teste. A interface publicada também recebeu validação manual incremental.
 
-js/supabase-config.js é ignorado pelo Git. Crie-o a partir de js/supabase-config.example.js somente no ambiente local, com URL e chave pública válidas.
+Antes de produção ainda são obrigatórios:
 
-## Backup
+1. autenticação e recuperação de sessão;
+2. RLS com duas famílias;
+3. recorrências em limites de calendário;
+4. concorrência;
+5. exportação e importação;
+6. regressão automatizada da navegação semanal e dos pop-ups.
 
-O backup exporta um formato lógico versionado com família, membros, configurações, tarefas, responsáveis, regras, exceções, estados e eventos manuais. Não é um dump bruto. A importação aceita somente esse formato novo; backups do modelo JSONB não são compatíveis.
-
-## Validação atual
-
-Foram aprovados sete testes estáticos em tests/static_contract_test.py, verificação de whitespace, um smoke visual estático servido por Python e a aplicação das migrations em PostgreSQL embarcado com dados fictícios para validar a integridade família–membro. Ainda faltam os testes contra um stack Supabase/PostgreSQL completo: banco limpo, RLS entre famílias, recorrência, concorrência, datas locais, sessão e importação/exportação.
-
-Não trate esta refatoração como pronta para produção antes dessas validações. Consulte [SUPABASE_SETUP.md](SUPABASE_SETUP.md) para os comandos e a sequência controlada.
