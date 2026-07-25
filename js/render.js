@@ -53,6 +53,10 @@ function selectedDateLabel() {
   return DAY_FULL[day].toUpperCase();
 }
 
+function dayMonthLabel(date) {
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
 function renderDateNav() {
   const selected = dateFromKey(selectedDateKey());
   const sunday = new Date(selected);
@@ -60,13 +64,18 @@ function renderDateNav() {
 
   return `
     <div class="day-nav" aria-label="Navegação por data">
-      ${DAY_NAMES.map((label, index) => {
-        const day = new Date(sunday);
-        day.setDate(sunday.getDate() + index);
-        const key = todayKey(day);
-        const active = key === selectedDateKey();
-        return `<button class="day-nav-btn${active ? ' active' : ''}" data-date-key="${key}" aria-pressed="${active ? 'true' : 'false'}">${label}</button>`;
-      }).join('')}
+        <button class="week-nav-btn" data-week-shift="-7" aria-label="Semana anterior">‹</button>
+        ${DAY_NAMES.map((label, index) => {
+          const day = new Date(sunday);
+          day.setDate(sunday.getDate() + index);
+          const key = todayKey(day);
+          const active = key === selectedDateKey();
+          return `<button class="day-nav-btn${active ? ' active' : ''}" data-date-key="${key}" aria-pressed="${active ? 'true' : 'false'}">
+            <span class="day-nav-date">${dayMonthLabel(day)}</span>
+            <span class="day-nav-name">${label}</span>
+          </button>`;
+        }).join('')}
+        <button class="week-nav-btn" data-week-shift="7" aria-label="Próxima semana">›</button>
     </div>`;
 }
 
