@@ -1,119 +1,93 @@
-# Supabase — configuração e aplicação controlada
+# Supabase — ambientes, migrations e validação
 
-## Estado de release
+## Ambientes
 
-As migrations e a adaptação do frontend estão prontas no repositório, porém ainda não foram aplicadas nem validadas em um banco Supabase real. A validação local cobriu apenas contrato estático e smoke visual. Aplicar as migrations e executar os testes integrados e de RLS deste documento é obrigatório antes de produção.
+- Produção original: preservada; não aplicar alterações durante o desenvolvimento.
+- Desenvolvimento: projeto separado `GP da Família - Desenvolvimento`, região `sa-east-1`.
 
-Nenhum comando remoto foi executado neste ambiente. O Supabase CLI pôde ser executado temporariamente, mas o stack local não iniciou porque o daemon Docker não está acessível. Também não havia project-ref, vínculo local ou credenciais de banco configurados.
+O branch `codex/refactor-supabase-tests-20260724` deve usar somente o ambiente de desenvolvimento até a promoção planejada.
 
-## O que obter no painel
+## Configuração do frontend
 
-Obtenha no painel Supabase, sem registrar segredos no Git ou no chat:
+Crie `js/supabase-config.js` a partir de `js/supabase-config.example.js` e informe apenas:
 
-1. Project ref em Project Settings > General.
-2. Project URL e chave publishable ou anon em Project Settings > API.
-3. Senha do banco somente quando o CLI pedir uma conexão administrativa.
-4. Confirmação do ambiente correto e permissão para aplicar migrations.
+- URL do projeto de desenvolvimento;
+- chave pública `publishable` ou `anon`.
 
-Não é necessário criar GitHub Actions nem secrets de GitHub. O padrão deste repositório é Git para versionar migrations e aplicação remota por comando manual controlado.
+Nunca use `service_role` no navegador. O arquivo real de configuração não deve ser versionado.
 
-## Configuração local do frontend
+## Migrations
 
-Crie um arquivo não versionado a partir do exemplo:
+Migrations atuais:
 
-~~~powershell
-Copy-Item js\supabase-config.example.js js\supabase-config.js
-~~~
+1. `202607230001_extensions.sql`
+2. `202607230002_relational_core.sql`
+3. `202607230003_constraints_and_indices.sql`
+4. `202607230004_functions.sql`
+5. `202607230005_rls.sql`
+6. `202607230006_legacy_family_config_retained.sql`
+7. `202607240001_member_family_integrity.sql`
 
-Preencha somente a URL do projeto e a chave pública. Não use service_role no navegador.
+Elas foram aplicadas no projeto de desenvolvimento. Novas mudanças de schema devem ser adicionadas como migrations versionadas; nunca editar retroativamente uma migration já aplicada.
 
-## Instalar e autenticar o Supabase CLI
+## Fluxo controlado
 
-Instale o CLI e Docker Desktop pelo método oficial adequado ao sistema operacional. Confirme que o daemon Docker está acessível antes de autenticar no navegador:
+No repositório:
 
 ~~~powershell
 supabase --version
-docker info
 supabase login
-~~~
-
-O login armazena a sessão localmente. Não copie o token para arquivos do projeto.
-
-## Verificar e vincular o projeto correto
-
-Na raiz do repositório, confirme primeiro que não existe um vínculo inesperado e que o project-ref corresponde ao painel:
-
-~~~powershell
-Get-ChildItem -Force supabase
-supabase link --project-ref SEU_PROJECT_REF
-supabase status
-~~~
-
-Se o CLI solicitar a senha do banco, informe-a somente no prompt. Interrompa se o nome, referência ou ambiente exibido não for o projeto esperado.
-
-## Revisar o schema remoto antes de aplicar
-
-As migrations locais foram criadas para esta refatoração. Para auditar o estado remoto sem misturar um pull no histórico destas migrations, use uma cópia limpa de trabalho ou um branch de auditoria:
-
-~~~powershell
-supabase db pull
-git diff -- supabase/migrations
-~~~
-
-Não execute db reset no projeto remoto. Não remova family_config nem dados legados sem uma migration reversível aprovada.
-
-## Aplicar as migrations
-
-Após confirmar projeto, backup e permissões, aplique as migrations versionadas:
-
-~~~powershell
-git status --short
+supabase link --project-ref PROJECT_REF_DE_DESENVOLVIMENTO
 supabase migration list
 supabase db push
 supabase migration list
 ~~~
 
-Verifique no painel ou com o CLI que todas as migrations de 202607230001 até 202607240001 foram aplicadas. A agenda antiga não será migrada; o aplicativo passará a usar as tabelas novas.
+Confirme o nome e o `project-ref` antes de qualquer `db push`. Nunca use `db reset` em projeto remoto.
 
-## Validar após a aplicação
+## Validação obrigatória
 
-Execute primeiro as verificações disponíveis no repositório:
+1. Criar conta, confirmar sessão, sair e entrar novamente.
+2. Criar duas famílias com usuários distintos.
+3. Tentar ler e escrever dados da outra família.
+4. Criar tarefa única e recorrente com vários responsáveis.
+5. Editar ocorrência, série e ocorrência atual e futuras.
+6. Excluir ocorrência e série.
+7. Concluir tarefas em datas distintas e limites de semana, mês e ano.
+8. Confirmar ausência de deslocamento UTC nas chaves locais.
+9. Recarregar sem duplicar tarefas.
+10. Alterar registros distintos em duas abas.
+11. Exportar e importar backup lógico.
+12. Executar `tests/static_contract_test.py` e `git diff --check`.
+13. Regressão da navegação semanal, animações e fechamento dos pop-ups.
 
-~~~powershell
-python -m unittest -v tests\static_contract_test.py
-git diff --check
-python -m http.server 4173
-~~~
+## Segurança
 
-Depois, em um ambiente Supabase real ou banco local limpo, valide obrigatoriamente:
+Confirmar:
 
-1. família sem tarefas;
-2. tarefa única, recorrência semanal e vários responsáveis;
-3. edição de ocorrência, série e esta e as próximas;
-4. exclusão de ocorrência e de série;
-5. conclusão em datas distintas, mudança de domingo, mês e ano e ausência de deslocamento UTC;
-6. recarga sem duplicação e repetidas gravações de série sem criar tarefas extras;
-7. duas famílias isoladas por RLS, inclusive tentativa de forjar family_id e de atribuir um membro da outra família a tarefa, meta ou evento manual;
-8. duas abas alterando registros distintos;
-9. exportação e importação do novo backup;
-10. aplicação em banco limpo.
+- políticas baseadas em `family_access` e `auth.uid()`;
+- ausência de autorização por `user_metadata`;
+- rejeição de membros, metas e eventos de outra família;
+- operações compostas executadas por RPC transacional;
+- nenhuma referência a `service_role` no frontend.
 
-Também confirme no SQL que family_config não é consultada pelo frontend e que as políticas usam family_access associado a auth.uid().
+## Promoção para produção
 
-## Geração de tipos
+Quando o ambiente de desenvolvimento estiver maduro:
 
-O projeto não usa tipos gerados hoje. Se TypeScript for introduzido futuramente, gere-os somente após aplicar o schema:
+1. congelar o schema aprovado;
+2. gerar backup do ambiente escolhido para produção;
+3. aplicar as mesmas migrations em ordem;
+4. configurar URL e chave pública no deploy de produção;
+5. executar o checklist integrado;
+6. manter o frontend anterior disponível para rollback.
 
-~~~powershell
-supabase gen types typescript --linked > database.types.ts
-~~~
-
-Não adicione essa etapa nem uma automação de deploy sem necessidade explícita.
+Não copiar segredos, usuários de teste ou dados fictícios para produção.
 
 ## Rollback
 
-Não há rollback automático de dados de agenda porque a agenda antiga não é migrada. Antes de db push, gere o backup operacional habitual do projeto remoto.
+- Código: republicar a versão anterior.
+- Banco: criar migration reversível após avaliar os dados produzidos.
+- Não remover tabelas nem usar `db reset`.
+- `family_config` permanece temporariamente disponível apenas para rollback da versão antiga.
 
-Para reverter código, volte ao commit anterior e publique a versão anterior do frontend. A migration 202607230006 apenas retém family_config e não o remove. Para reverter tabelas ou funções novas, crie uma nova migration reversível após avaliar dependências e dados produzidos; não use db reset em ambiente remoto.
-
-Se a aplicação das migrations falhar, pare, preserve a saída do CLI, execute supabase migration list e compare o schema antes de tentar uma correção. Não force a execução em um projeto cuja identidade não tenha sido confirmada.
