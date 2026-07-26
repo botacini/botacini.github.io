@@ -17,7 +17,7 @@
 
 - Criado projeto Supabase separado para desenvolvimento.
 - Aplicados schema relacional e políticas RLS nesse ambiente.
-- Auditoria de segurança executada sem alertas.
+- Bloqueado o acesso de navegador à tabela legada `family_config`, removendo suas políticas inseguras e privilégios de `anon`/`authenticated`.
 - O projeto Supabase original permaneceu inalterado.
 - O modo temporário em `localStorage` usado durante a primeira prévia não foi incorporado ao branch.
 
@@ -63,4 +63,3 @@
 ## v1.0 — base
 
 - Agenda semanal, bônus, relatórios, conquistas e painel dos pais.
-

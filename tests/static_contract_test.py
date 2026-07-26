@@ -19,6 +19,7 @@ class RelationalPersistenceContract(unittest.TestCase):
             "202607230005_rls.sql",
             "202607230006_legacy_family_config_retained.sql",
             "202607240001_member_family_integrity.sql",
+            "202607260001_secure_legacy_family_config.sql",
         ])
         core = self.read("supabase/migrations/202607230002_relational_core.sql")
         for table in ("families", "family_access", "family_members", "family_settings", "tasks", "task_assignees", "task_schedules", "task_schedule_overrides", "task_occurrence_status"):
@@ -79,6 +80,14 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("publishableKey", config)
         self.assertNotIn("service_role", config.lower())
         self.assertNotIn("postgres://", config.lower())
+
+    def test_legacy_jsonb_store_is_not_exposed_to_browser_roles(self):
+        migration = self.read("supabase/migrations/202607260001_secure_legacy_family_config.sql").lower()
+        self.assertIn("enable row level security", migration)
+        self.assertIn("force row level security", migration)
+        self.assertIn("drop policy if exists family_owner", migration)
+        self.assertIn("drop policy if exists acesso_publico", migration)
+        self.assertIn("revoke all privileges", migration)
 
     def test_user_content_is_escaped_before_html_rendering(self):
         renderer = self.read("js/render.js")

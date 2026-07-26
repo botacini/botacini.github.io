@@ -1,10 +1,10 @@
 # IA_HANDOFF — estado técnico
 
-Atualizado em 2026-07-25.
+Atualizado em 2026-07-26.
 
 ## Situação atual
 
-O branch de desenvolvimento usa o schema relacional versionado em `supabase/migrations`. Um projeto Supabase separado foi criado para desenvolvimento, preservando o banco original. O schema e as políticas foram aplicados nesse ambiente e a auditoria de segurança não apresentou alertas.
+O branch de desenvolvimento usa o schema relacional versionado em `supabase/migrations`. Um projeto Supabase separado foi criado para desenvolvimento, preservando o banco original. O schema e as políticas foram aplicados nesse ambiente. A tabela legada `family_config` foi bloqueada para papéis de navegador após a auditoria identificar políticas inseguras nela.
 
 A versão publicada para testes recebeu alterações posteriores ao primeiro commit da refatoração. Essas alterações estão consolidadas neste branch:
 
@@ -24,7 +24,7 @@ O modo temporário de teste baseado em `localStorage` não faz parte da consolid
 - RLS não usa metadados editáveis do usuário.
 - `bootstrap_current_family` cria a família e o acesso inicial.
 - `auth.js` obtém a família pelo fluxo confiável.
-- `family_config` é legado de rollback e não é usada pelo frontend novo.
+- `family_config` é legado de rollback, não é usada pelo frontend novo e não possui acesso direto por `anon` ou `authenticated`.
 
 ## Modelo atual
 
@@ -68,7 +68,7 @@ Somente depois iniciar a extração do manifesto de tema.
 - dados do JSONB antigo não são migrados automaticamente;
 - backup antigo não é aceito pelo importador relacional;
 - operações remotas ainda precisam de uma suíte E2E repetível;
+- o cadastro de conta de teste está bloqueado: o Auth ainda tenta enviar confirmação de e-mail e o SMTP responde `535 5.7.8 Authentication failed`;
 - termos, emojis, mensagens, CSS e nomes de componentes continuam acoplados ao automobilismo;
 - `manual_star_events` ainda não separa completamente histórico conquistado de saldo gastável;
 - definir o efeito exato das penalidades sobre o futuro saldo é uma decisão pendente.
-

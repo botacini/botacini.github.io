@@ -27,6 +27,7 @@ Migrations atuais:
 5. `202607230005_rls.sql`
 6. `202607230006_legacy_family_config_retained.sql`
 7. `202607240001_member_family_integrity.sql`
+8. `202607260001_secure_legacy_family_config.sql`
 
 Elas foram aplicadas no projeto de desenvolvimento. Novas mudanças de schema devem ser adicionadas como migrations versionadas; nunca editar retroativamente uma migration já aplicada.
 
@@ -70,6 +71,11 @@ Confirmar:
 - rejeição de membros, metas e eventos de outra família;
 - operações compostas executadas por RPC transacional;
 - nenhuma referência a `service_role` no frontend.
+- `family_config` legado sem privilégios para `anon`/`authenticated` e sem políticas RLS, pois a versão relacional não o utiliza.
+
+## Bloqueio atual de validação integrada
+
+O cadastro no projeto de desenvolvimento permanece bloqueado enquanto o Auth tentar enviar confirmação de e-mail: o log atual registra erro SMTP `535 5.7.8 Authentication failed`. Para os testes fechados, desative efetivamente a confirmação de e-mail no provedor Email; para beta público, configure um SMTP válido e as URLs de redirecionamento do Pages.
 
 ## Promoção para produção
 
