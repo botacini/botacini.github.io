@@ -167,7 +167,12 @@ export async function confirmNewMember() {
 
 export function openBonusPenaltyPopup() {
   const select = document.getElementById('qa-bp-member');
-  if (select) select.innerHTML = '<option value="">— Escolha um membro —</option>' + state.config.members.map(member => `<option value="${member.id}">${member.avatar} ${member.name}</option>`).join('');
+  if (select) {
+    select.replaceChildren(new Option('— Escolha um membro —', ''));
+    state.config.members.forEach(member => {
+      select.appendChild(new Option(`${member.avatar || ''} ${member.name || ''}`.trim(), member.id));
+    });
+  }
   setValue('qa-bp-stars', 1); setValue('qa-bp-reason', ''); bonusPenaltyMode = 'bonus'; updateBonusPenaltyModeUI(); show('qa-bp-overlay');
 }
 export function closeBonusPenaltyPopup() { hide('qa-bp-overlay'); }

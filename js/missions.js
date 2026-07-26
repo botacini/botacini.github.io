@@ -232,9 +232,11 @@ function renderReportPopup({ done, total, fails, pct, starsToday }) {
 
   const memberBox = document.getElementById('rep-member-box');
   if (memberBox) {
-    memberBox.innerHTML = state.config.members
-      .map(mem => `<div>${mem.avatar} ${mem.name}: ⭐ ${state.memberStars[mem.id] || 0}</div>`)
-      .join('');
+    memberBox.replaceChildren(...state.config.members.map(mem => {
+      const entry = document.createElement('div');
+      entry.textContent = `${mem.avatar || ''} ${mem.name || ''}: ⭐ ${state.memberStars[mem.id] || 0}`;
+      return entry;
+    }));
   }
   setText('rep-details', `${done} de ${total} tarefas concluídas`);
 }

@@ -73,6 +73,23 @@ class RelationalPersistenceContract(unittest.TestCase):
         for table in ("task_assignees", "family_custom_goals", "manual_star_events"):
             self.assertIn(f"on public.{table}", integrity)
 
+    def test_pages_runtime_config_is_present_and_has_no_server_secret(self):
+        config = self.read("js/supabase-config.js")
+        self.assertIn("window.GP_SUPABASE_CONFIG", config)
+        self.assertIn("publishableKey", config)
+        self.assertNotIn("service_role", config.lower())
+        self.assertNotIn("postgres://", config.lower())
+
+    def test_user_content_is_escaped_before_html_rendering(self):
+        renderer = self.read("js/render.js")
+        self.assertIn("escapeHtml(ms.title)", renderer)
+        self.assertIn("escapeHtml(mem.name)", renderer)
+        self.assertIn("safeCssColor", renderer)
+        actions = self.read("js/quick-actions.js")
+        self.assertIn("select.replaceChildren", actions)
+        reports = self.read("js/missions.js")
+        self.assertIn("memberBox.replaceChildren", reports)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

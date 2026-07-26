@@ -13,6 +13,7 @@ import {
   state, DAY_FULL, DAY_NAMES, ALL_BADGES,
   timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
 } from './state.js';
+import { escapeHtml, safeCssColor, safeNumber } from './html.js';
 
 /* ════════════════ NOME DA FAMÍLIA ════════════════ */
 export function updateFamilyName() {
@@ -88,10 +89,10 @@ export function renderMembersBar() {
   const bar = document.getElementById('members-bar');
   if (!bar) return;
   bar.innerHTML = state.config.members.map(mem => `
-    <div class="member-pill" style="border-color:${mem.color};background:${mem.color}22">
-      <span class="pill-avatar">${mem.avatar}</span>
-      <span class="pill-name">${mem.name}</span>
-      <span class="pill-stars">⭐${state.memberStars[mem.id] || 0}</span>
+    <div class="member-pill" style="border-color:${safeCssColor(mem.color)};background:${safeCssColor(mem.color)}22">
+      <span class="pill-avatar">${escapeHtml(mem.avatar)}</span>
+      <span class="pill-name">${escapeHtml(mem.name)}</span>
+      <span class="pill-stars">⭐${safeNumber(state.memberStars[mem.id])}</span>
     </div>`).join('');
 }
 
@@ -140,42 +141,44 @@ function renderMemberColumn(member) {
     const sharedMemberIds = assigneeIds(ms);
     const isShared = sharedMemberIds.length > 1;
 
-    const menuId = `task-menu-${ms.id}`;
+    const missionId = escapeHtml(ms.id);
+    const menuId = `task-menu-${missionId}`;
     return `
-      <div class="task-cell${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}" data-mission-id="${ms.id}">
+      <div class="task-cell${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}" data-mission-id="${missionId}">
         <div class="task-time">
-          <span class="task-start">${ms.start}</span>
+          <span class="task-start">${escapeHtml(ms.start)}</span>
           <span class="task-sep"> - </span>
-          <span class="task-end">${ms.end}</span>
+          <span class="task-end">${escapeHtml(ms.end)}</span>
         </div>
         ${!isShared ? `<div class="task-menu-wrapper">
-          <button class="task-menu-btn" data-open-task-menu="${ms.id}" title="Opções">⋯</button>
+          <button class="task-menu-btn" data-open-task-menu="${missionId}" title="Opções">⋯</button>
           <div class="task-dropdown" id="${menuId}">
-            <button class="task-dropdown-item" data-edit-mission="${ms.id}">✏️ Editar</button>
-            <button class="task-dropdown-item danger" data-delete-mission="${ms.id}" data-delete-scope="occurrence">✕ Excluir esta ocorrência</button>
-            <button class="task-dropdown-item danger" data-delete-mission="${ms.id}" data-delete-scope="series">✕ Excluir série</button>
+            <button class="task-dropdown-item" data-edit-mission="${missionId}">✏️ Editar</button>
+            <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="occurrence">✕ Excluir esta ocorrência</button>
+            <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="series">✕ Excluir série</button>
           </div>
         </div>` : ''}
-        <div class="task-emoji">${ms.emoji}</div>
+        <div class="task-emoji">${escapeHtml(ms.emoji)}</div>
         <div class="task-body">
-          <div class="task-title">${ms.title}</div>
-          <div class="task-desc">${ms.desc}</div>
+          <div class="task-title">${escapeHtml(ms.title)}</div>
+          <div class="task-desc">${escapeHtml(ms.desc)}</div>
         </div>
         <div class="task-actions">
-          <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
-          <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${ms.id}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
+          <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
+          <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
         </div>
       </div>`;
   }).join('');
 
-  const addBtn = `<button class="task-add-btn" data-add-task-member="${member.id}" data-add-task-date="${selectedDateKey()}">➕ Adicionar tarefa</button>`;
+  const memberId = escapeHtml(member.id);
+  const addBtn = `<button class="task-add-btn" data-add-task-member="${memberId}" data-add-task-date="${escapeHtml(selectedDateKey())}">➕ Adicionar tarefa</button>`;
 
   return `
-    <div class="board-column" style="--member-color:${member.color || '#ccc'}">
+    <div class="board-column" style="--member-color:${safeCssColor(member.color)}">
       <div class="column-header">
-        <span class="column-avatar">${member.avatar}</span>
-        <span class="column-name">${member.name}</span>
-        <span class="column-stars">⭐${state.memberStars[member.id] || 0}</span>
+        <span class="column-avatar">${escapeHtml(member.avatar)}</span>
+        <span class="column-name">${escapeHtml(member.name)}</span>
+        <span class="column-stars">⭐${safeNumber(state.memberStars[member.id])}</span>
       </div>
       <div class="column-tasks">
         ${rows || '<div class="column-empty">— sem tarefas hoje</div>'}
@@ -231,9 +234,9 @@ export function renderStarsTab() {
 
   grid.innerHTML = state.config.members.map(mem => `
       <div class="member-star-card">
-      <div class="member-star-avatar">${mem.avatar}</div>
-      <div class="member-star-name">${mem.name}</div>
-      <div class="member-star-count">⭐ ${state.memberStars[mem.id] || 0}</div>
+      <div class="member-star-avatar">${escapeHtml(mem.avatar)}</div>
+      <div class="member-star-name">${escapeHtml(mem.name)}</div>
+      <div class="member-star-count">⭐ ${safeNumber(state.memberStars[mem.id])}</div>
       <div class="member-star-sub">${isSelectedDateToday() ? 'HOJE' : selectedDateLabel()}</div>
     </div>`).join('');
 
@@ -265,14 +268,14 @@ export function renderTeamTab() {
       state.missionStatus[ms.id]?.status === 'done'
     ).length;
     return `
-      <div class="team-member-card" style="border-left:4px solid ${mem.color}">
-        <span class="team-member-avatar">${mem.avatar}</span>
+      <div class="team-member-card" style="border-left:4px solid ${safeCssColor(mem.color)}">
+        <span class="team-member-avatar">${escapeHtml(mem.avatar)}</span>
         <div class="team-member-info">
-          <div class="team-member-name">${mem.name}</div>
-          <span class="role-badge role-${mem.role}">${ROLE_LABEL[mem.role] || mem.role.toUpperCase()}</span>
+          <div class="team-member-name">${escapeHtml(mem.name)}</div>
+          <span class="role-badge role-${ROLE_LABEL[mem.role] ? mem.role : 'crianca'}">${ROLE_LABEL[mem.role] || 'MEMBRO'}</span>
         </div>
         <div class="team-member-stats">
-          <div class="team-member-stars">⭐ ${state.memberStars[mem.id] || 0}</div>
+          <div class="team-member-stars">⭐ ${safeNumber(state.memberStars[mem.id])}</div>
           <div class="team-member-done">${doneCount} TAREFAS ${isSelectedDateToday() ? 'HOJE' : 'NO DIA'}</div>
         </div>
       </div>`;
@@ -306,12 +309,12 @@ export function renderBadges() {
 
     return `
       <div class="badge-card custom-goal ${redeemed ? 'claimed' : 'pending'}">
-        <button class="badge-delete-btn" data-delete-goal="${goal.id}" title="Remover conquista">✕</button>
-        <div class="badge-icon">${goal.icon}</div>
-        <div class="badge-name">${goal.name}</div>
-        <div class="badge-desc">${goal.desc || 'Meta personalizada'}</div>
+        <button class="badge-delete-btn" data-delete-goal="${escapeHtml(goal.id)}" title="Remover conquista">✕</button>
+        <div class="badge-icon">${escapeHtml(goal.icon)}</div>
+        <div class="badge-name">${escapeHtml(goal.name)}</div>
+        <div class="badge-desc">${escapeHtml(goal.desc || 'Meta personalizada')}</div>
         <div class="badge-state">${redeemed ? 'RESGATADA' : 'NÃO RESGATADA'}</div>
-        <button class="badge-action" data-goal-action="toggle" data-goal-id="${goal.id}">${label}</button>
+        <button class="badge-action" data-goal-action="toggle" data-goal-id="${escapeHtml(goal.id)}">${label}</button>
       </div>`;
   }).join('');
 
@@ -352,7 +355,7 @@ export function renderWeek() {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const dow = d.getDay();
     const info = days[key];
-    const pct = info ? info.pct : null;
+    const pct = info ? safeNumber(info.pct, null) : null;
     if (pct !== null && pct !== undefined) { pctSum += pct; pctCount++; }
 
     rows += `

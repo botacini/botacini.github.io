@@ -9,12 +9,12 @@ O branch `codex/refactor-supabase-tests-20260724` deve usar somente o ambiente d
 
 ## Configuração do frontend
 
-Crie `js/supabase-config.js` a partir de `js/supabase-config.example.js` e informe apenas:
+`js/supabase-config.js` é versionado porque o GitHub Pages precisa receber a configuração no navegador. Ele contém apenas:
 
 - URL do projeto de desenvolvimento;
 - chave pública `publishable` ou `anon`.
 
-Nunca use `service_role` no navegador. O arquivo real de configuração não deve ser versionado.
+Nunca use `service_role` no navegador. A chave `publishable`/`anon` é pública por definição; a proteção de dados depende exclusivamente de RLS.
 
 ## Migrations
 
@@ -90,4 +90,3 @@ Não copiar segredos, usuários de teste ou dados fictícios para produção.
 - Banco: criar migration reversível após avaliar os dados produzidos.
 - Não remover tabelas nem usar `db reset`.
 - `family_config` permanece temporariamente disponível apenas para rollback da versão antiga.
-
