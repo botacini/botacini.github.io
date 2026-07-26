@@ -4,7 +4,7 @@ Atualizado em 2026-07-26.
 
 ## Situação atual
 
-O branch de desenvolvimento usa o schema relacional versionado em `supabase/migrations`. Um projeto Supabase separado foi criado para desenvolvimento, preservando o banco original. O schema e as políticas foram aplicados nesse ambiente. A tabela legada `family_config` foi bloqueada para papéis de navegador após a auditoria identificar políticas inseguras nela.
+O branch de desenvolvimento usa o schema relacional versionado em `supabase/migrations`. Um projeto Supabase separado foi criado para desenvolvimento, preservando o banco original. O schema e as políticas foram recriados e aplicados nesse ambiente. A tabela legada `family_config` permanece fora do acesso de navegador.
 
 A versão publicada para testes recebeu alterações posteriores ao primeiro commit da refatoração. Essas alterações estão consolidadas neste branch:
 
@@ -25,6 +25,7 @@ O modo temporário de teste baseado em `localStorage` não faz parte da consolid
 - `bootstrap_current_family` cria a família e o acesso inicial.
 - `auth.js` obtém a família pelo fluxo confiável.
 - `family_config` é legado de rollback, não é usada pelo frontend novo e não possui acesso direto por `anon` ou `authenticated`.
+- Funções `SECURITY DEFINER` não são executáveis por `anon`; apenas RPCs e predicados RLS necessários são concedidos explicitamente a `authenticated`.
 
 ## Modelo atual
 
@@ -54,12 +55,9 @@ Consulte [ROADMAP.md](ROADMAP.md) antes de implementar temas, loja ou campanhas.
 
 Estabilização da base relacional:
 
-1. testes integrados de autenticação e sessão;
-2. RLS com dois usuários e famílias;
-3. recorrências e datas limítrofes;
-4. concorrência;
-5. backup/restauração;
-6. regressão das interações consolidadas.
+Concluídos no projeto de desenvolvimento: cadastro/login, isolamento RLS entre duas famílias, recorrência semanal, edição de série, estado/estrelas, exceções, backup/restauração e persistência após nova sessão.
+
+Pendentes: datas limítrofes, concorrência e regressão visual das interações consolidadas.
 
 Somente depois iniciar a extração do manifesto de tema.
 
@@ -67,8 +65,8 @@ Somente depois iniciar a extração do manifesto de tema.
 
 - dados do JSONB antigo não são migrados automaticamente;
 - backup antigo não é aceito pelo importador relacional;
-- operações remotas ainda precisam de uma suíte E2E repetível;
-- o cadastro de conta de teste está bloqueado: o Auth ainda tenta enviar confirmação de e-mail e o SMTP responde `535 5.7.8 Authentication failed`;
+- a suíte E2E foi executada manualmente pelo Auth e Data API; ainda não está automatizada no repositório;
+- a proteção contra senhas vazadas do Supabase Auth permanece desativada e deve ser habilitada antes de beta público;
 - termos, emojis, mensagens, CSS e nomes de componentes continuam acoplados ao automobilismo;
 - `manual_star_events` ainda não separa completamente histórico conquistado de saldo gastável;
 - definir o efeito exato das penalidades sobre o futuro saldo é uma decisão pendente.

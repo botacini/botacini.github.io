@@ -17,7 +17,7 @@ O branch `codex/refactor-supabase-tests-20260724` reúne:
 - fechamento padronizado dos pop-ups;
 - projeto Supabase separado para desenvolvimento.
 
-O ambiente de desenvolvimento foi provisionado separadamente do projeto original. A promoção para produção continua bloqueada até concluir os testes integrados descritos em [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
+O ambiente de desenvolvimento foi provisionado separadamente do projeto original. O núcleo dos testes integrados foi concluído; os cenários restantes estão descritos em [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
 ## Persistência
 
@@ -37,7 +37,7 @@ Uma tarefa contém sua definição. A agenda contém regras únicas ou semanais.
 
 - Autorização por `family_access` e `auth.uid()`.
 - RLS sem uso de `user_metadata` ou `raw_user_meta_data`.
-- RPCs transacionais para operações que modificam várias tabelas.
+- RPCs transacionais para operações que modificam várias tabelas, indisponíveis para `anon`.
 - Constraints impedem referências entre membros e famílias diferentes.
 - O frontend utiliza somente URL e chave pública do Supabase; `service_role` nunca deve ser exposta.
 
@@ -76,14 +76,10 @@ O plano e os critérios de aceite estão em [ROADMAP.md](ROADMAP.md).
 
 ## Validação
 
-Já foram executados testes estáticos, verificação de whitespace, smoke visual e aplicação das migrations em PostgreSQL de teste. A interface publicada também recebeu validação manual incremental.
+Já foram executados testes estáticos, verificação de whitespace, migrations no projeto de Desenvolvimento e validação integrada via Auth/Data API: login, RLS entre famílias, recorrência, edição, exceções, backup/restauração e persistência após nova sessão.
 
 Antes de produção ainda são obrigatórios:
 
-1. autenticação e recuperação de sessão;
-2. RLS com duas famílias;
-3. recorrências em limites de calendário;
-4. concorrência;
-5. exportação e importação;
-6. regressão automatizada da navegação semanal e dos pop-ups.
-
+1. recorrências em limites de calendário;
+2. concorrência;
+3. regressão automatizada da navegação semanal e dos pop-ups.

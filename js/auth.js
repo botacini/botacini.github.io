@@ -159,12 +159,17 @@ export async function signUp(email, password, familyName) {
 
     if (error) return { ok: false, error: _translateError(error) };
 
-    // Se o Supabase não exigir confirmação de email, a sessão já vem pronta
-    if (data.session) {
-      _session = buildSession(data.session);
+    // Alguns fluxos do Auth confirmam o endereço, mas não retornam a sessão
+    // no próprio signup. Tenta o login uma vez; se a confirmação estiver
+    // realmente ativa, esse login falhará e a tela mantém o fluxo de e-mail.
+    let session = data.session;
+    if (!session) {
+      const login = await client.auth.signInWithPassword({ email, password });
+      if (!login.error) session = login.data.session;
     }
 
-    return { ok: true, needsConfirmation: !data.session };
+    if (session) _session = buildSession(session);
+    return { ok: true, needsConfirmation: !session };
   } catch (e) {
     console.error('[auth] signUp:', e);
     return { ok: false, error: 'Erro inesperado. Tente novamente.' };

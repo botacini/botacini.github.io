@@ -28,6 +28,9 @@ Migrations atuais:
 6. `202607230006_legacy_family_config_retained.sql`
 7. `202607240001_member_family_integrity.sql`
 8. `202607260001_secure_legacy_family_config.sql`
+9. `202607260002_restrict_public_function_execution.sql`
+10. `202607260003_grant_authenticated_data_api_access.sql`
+11. `202607260004_grant_rls_helper_execution.sql`
 
 Elas foram aplicadas no projeto de desenvolvimento. Novas mudanças de schema devem ser adicionadas como migrations versionadas; nunca editar retroativamente uma migration já aplicada.
 
@@ -72,10 +75,21 @@ Confirmar:
 - operações compostas executadas por RPC transacional;
 - nenhuma referência a `service_role` no frontend.
 - `family_config` legado sem privilégios para `anon`/`authenticated` e sem políticas RLS, pois a versão relacional não o utiliza.
+- `anon` sem execução das funções `SECURITY DEFINER`.
+- privilégios da Data API concedidos apenas às 14 tabelas relacionais e somente a `authenticated`.
+- proteção contra senhas vazadas habilitada no Supabase Auth antes de convidar beta testers.
 
-## Bloqueio atual de validação integrada
+## Validação integrada executada em 2026-07-26
 
-O cadastro no projeto de desenvolvimento permanece bloqueado enquanto o Auth tentar enviar confirmação de e-mail: o log atual registra erro SMTP `535 5.7.8 Authentication failed`. Para os testes fechados, desative efetivamente a confirmação de e-mail no provedor Email; para beta público, configure um SMTP válido e as URLs de redirecionamento do Pages.
+No projeto de desenvolvimento, com duas contas e famílias descartáveis:
+
+- cadastro e login por senha;
+- isolamento de leitura e escrita entre famílias por RLS;
+- tarefa semanal, edição de série, estado, estrelas e exceção por data;
+- exportação/importação pelo formato lógico relacional;
+- persistência após nova sessão.
+
+O Auth confirma os endereços sem depender de SMTP, mas pode não devolver sessão no retorno do cadastro. `js/auth.js` faz um login por senha uma única vez nesse caso; se a confirmação estiver ativa, o fluxo de confirmação continua sendo exibido.
 
 ## Promoção para produção
 

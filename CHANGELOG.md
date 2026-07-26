@@ -20,6 +20,12 @@
 - Bloqueado o acesso de navegador à tabela legada `family_config`, removendo suas políticas inseguras e privilégios de `anon`/`authenticated`.
 - O projeto Supabase original permaneceu inalterado.
 - O modo temporário em `localStorage` usado durante a primeira prévia não foi incorporado ao branch.
+- Corrigido o endpoint público para apontar ao projeto Supabase de Desenvolvimento.
+- Recriado o schema vazio de Desenvolvimento a partir das migrations versionadas.
+- Restringida a execução de funções para impedir RPCs `SECURITY DEFINER` por `anon`.
+- Concedido acesso da Data API somente às tabelas relacionais e ao papel `authenticated`.
+- Corrigido o cadastro quando o Auth confirma o e-mail, mas não devolve sessão no retorno inicial.
+- Validados cadastro/login, RLS entre duas famílias, recorrência, edição, exceções, estrelas, backup/restauração e persistência após nova sessão.
 
 ### Documentação
 

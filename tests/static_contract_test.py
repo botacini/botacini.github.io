@@ -20,6 +20,9 @@ class RelationalPersistenceContract(unittest.TestCase):
             "202607230006_legacy_family_config_retained.sql",
             "202607240001_member_family_integrity.sql",
             "202607260001_secure_legacy_family_config.sql",
+            "202607260002_restrict_public_function_execution.sql",
+            "202607260003_grant_authenticated_data_api_access.sql",
+            "202607260004_grant_rls_helper_execution.sql",
         ])
         core = self.read("supabase/migrations/202607230002_relational_core.sql")
         for table in ("families", "family_access", "family_members", "family_settings", "tasks", "task_assignees", "task_schedules", "task_schedule_overrides", "task_occurrence_status"):
@@ -88,6 +91,25 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("drop policy if exists family_owner", migration)
         self.assertIn("drop policy if exists acesso_publico", migration)
         self.assertIn("revoke all privileges", migration)
+
+    def test_security_definer_helpers_are_not_callable_by_anonymous_users(self):
+        migration = self.read("supabase/migrations/202607260002_restrict_public_function_execution.sql")
+        self.assertIn("revoke execute on all functions in schema public from public", migration.lower())
+        self.assertIn("alter function public.weekdays_are_valid(smallint[]) set search_path = public", migration.lower())
+        self.assertIn("grant execute on function public.bootstrap_current_family(text) to authenticated", migration.lower())
+
+    def test_data_api_table_access_is_limited_to_authenticated_users(self):
+        migration = self.read("supabase/migrations/202607260003_grant_authenticated_data_api_access.sql").lower()
+        self.assertIn("grant select, insert, update, delete on table", migration)
+        self.assertIn("public.family_members", migration)
+        self.assertIn("public.weekly_summaries", migration)
+        self.assertNotIn(" to anon", migration)
+
+    def test_rls_predicates_are_granted_only_to_authenticated_users(self):
+        migration = self.read("supabase/migrations/202607260004_grant_rls_helper_execution.sql").lower()
+        self.assertIn("can_access_family(uuid) to authenticated", migration)
+        self.assertIn("can_manage_family(uuid) to authenticated", migration)
+        self.assertNotIn(" to anon", migration)
 
     def test_user_content_is_escaped_before_html_rendering(self):
         renderer = self.read("js/render.js")
