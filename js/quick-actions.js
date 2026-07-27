@@ -4,7 +4,7 @@ import {
 import {
   createTaskWithSchedule, updateTaskSeries, splitTaskScheduleForFuture,
   setOccurrenceOverride, deleteTaskSchedule, createFamilyMember,
-  createCustomGoal, deleteCustomGoal, addManualStarEvent
+  createCustomGoal, deleteCustomGoal, addManualStarEvent, findTaskScheduleConflict
 } from './storage.js';
 import { renderDashboard, renderTeamTab, renderBadges } from './render.js';
 import { showToast } from './effects.js';
@@ -79,6 +79,18 @@ export async function confirmNewTask() {
   if (task.end <= task.start) { alert('O horário final deve ser após o inicial.'); return; }
   const schedule = schedulePayload();
   try {
+    const assigneeIds = editingMission?.assignee || (newTaskMemberId ? [newTaskMemberId] : []);
+    const validationSchedule = editingMission
+      && document.getElementById('qa-task-edit-scope')?.value === 'occurrence'
+      ? { type: 'once', date: editingMission.date }
+      : schedule;
+    const conflictTitle = await findTaskScheduleConflict(
+      task, validationSchedule, assigneeIds, editingMission?.scheduleId || null
+    );
+    if (conflictTitle) {
+      alert(`Conflito de horário: a tarefa "${conflictTitle}" já ocupa este horário.`);
+      return;
+    }
     if (!editingMission) {
       await createTaskWithSchedule(task, schedule, newTaskMemberId ? [newTaskMemberId] : []);
       showToast('✓ Tarefa criada.');

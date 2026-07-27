@@ -23,6 +23,7 @@ class RelationalPersistenceContract(unittest.TestCase):
             "202607260002_restrict_public_function_execution.sql",
             "202607260003_grant_authenticated_data_api_access.sql",
             "202607260004_grant_rls_helper_execution.sql",
+            "202607270001_prevent_task_schedule_conflicts.sql",
         ])
         core = self.read("supabase/migrations/202607230002_relational_core.sql")
         for table in ("families", "family_access", "family_members", "family_settings", "tasks", "task_assignees", "task_schedules", "task_schedule_overrides", "task_occurrence_status"):
@@ -129,6 +130,19 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertNotIn("missionStatus =", finalize_body)
         self.assertIn("ENCERRAR DIA E AVANÇAR", page)
         self.assertIn('aria-label="Encerrar o dia e avançar para a próxima data"', page)
+
+    def test_task_schedule_conflicts_are_checked_in_ui_and_persistence(self):
+        migration = self.read("supabase/migrations/202607270001_prevent_task_schedule_conflicts.sql")
+        storage = self.read("js/storage.js")
+        actions = self.read("js/quick-actions.js")
+        self.assertIn("find_task_schedule_conflict", migration)
+        self.assertIn("pg_advisory_xact_lock", migration)
+        self.assertIn("assert_no_task_schedule_conflict", migration)
+        self.assertIn("create or replace function public.create_task_with_schedule", migration)
+        self.assertIn("create or replace function public.update_task_series", migration)
+        self.assertIn("create or replace function public.set_task_occurrence_override", migration)
+        self.assertIn("findTaskScheduleConflict", storage)
+        self.assertIn("Conflito de horário", actions)
 
 
 if __name__ == "__main__":

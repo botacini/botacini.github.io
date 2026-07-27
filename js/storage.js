@@ -186,6 +186,19 @@ export async function createTaskWithSchedule(task, schedule, assigneeIds) {
   return data?.[0] || null;
 }
 
+export async function findTaskScheduleConflict(task, schedule, assigneeIds, excludeScheduleId = null) {
+  const familyId = await ensureFamily();
+  const { data, error } = await getClient().rpc('find_task_schedule_conflict', {
+    p_family_id: familyId,
+    p_start_time: task.start,
+    p_schedule: schedule,
+    p_assignee_ids: assigneeIds || [],
+    p_exclude_schedule_id: excludeScheduleId
+  });
+  if (error) fail('validar horário da tarefa', error);
+  return data || null;
+}
+
 export async function updateTaskSeries(taskId, scheduleId, task, schedule, assigneeIds) {
   const { error } = await getClient().rpc('update_task_series', {
     p_task_id: taskId,
