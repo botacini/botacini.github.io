@@ -1,5 +1,21 @@
 # Changelog — GP da Família
 
+## Em desenvolvimento (2026-07-27) — estabilidade da agenda
+
+### Corrigido
+
+- Bloqueados conflitos de mesma data/horário por responsável na criação e em todas as modalidades de edição.
+- Adicionada serialização transacional por família para impedir conflitos concorrentes.
+- Alterado “Finalizar dia” para preservar status e avançar somente a data exibida.
+- Mantidas ações de ocorrência/série em tarefas compartilhadas após exceção `skip`.
+- Restaurado reset remoto transacional, restrito à família autenticada.
+
+### Validação
+
+- Aplicadas migrations `202607270001` e `202607270002` somente no projeto de desenvolvimento.
+- Executados 16 contratos estáticos, smoke Playwright em desktop/mobile e regressão integrada Playwright em desktop.
+- Validada regressão de autenticação, tarefas, recorrências, pontuação, navegação, backup/restauração, reset e isolamento RLS.
+
 ## Em desenvolvimento (2026-07-25) — consolidação da versão de testes
 
 ### Interface

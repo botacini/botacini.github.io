@@ -83,3 +83,10 @@ Antes de produção ainda são obrigatórios:
 1. recorrências em limites de calendário;
 2. concorrência;
 3. regressão automatizada da navegação semanal e dos pop-ups.
+
+## Invariantes de agenda
+
+- Um membro não pode ter duas tarefas na mesma data e horário inicial.
+- Criação e todas as modalidades de edição validam conflitos no frontend e em RPC transacional.
+- Excluir uma ocorrência cria uma exceção `skip` e preserva a identidade da série.
+- Encerrar o dia apenas avança a data exibida; estados das tarefas não são alterados.

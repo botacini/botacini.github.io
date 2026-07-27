@@ -31,6 +31,8 @@ Migrations atuais:
 9. `202607260002_restrict_public_function_execution.sql`
 10. `202607260003_grant_authenticated_data_api_access.sql`
 11. `202607260004_grant_rls_helper_execution.sql`
+12. `202607270001_prevent_task_schedule_conflicts.sql`
+13. `202607270002_restore_remote_family_reset.sql`
 
 Elas foram aplicadas no projeto de desenvolvimento. Novas mudanças de schema devem ser adicionadas como migrations versionadas; nunca editar retroativamente uma migration já aplicada.
 

@@ -1,6 +1,6 @@
 # IA_HANDOFF — estado técnico
 
-Atualizado em 2026-07-26.
+Atualizado em 2026-07-27.
 
 ## Situação atual
 
@@ -15,6 +15,10 @@ A versão publicada para testes recebeu alterações posteriores ao primeiro com
 - `prefers-reduced-motion`;
 - fechamento de pop-ups por `×` e toque fora;
 - botão vermelho `APLICAR PENALIDADE`.
+- conflito de data/horário por responsável bloqueado no frontend e nas RPCs;
+- encerramento do dia sem alteração de status, avançando uma data;
+- ações de série disponíveis após exclusão isolada, inclusive para tarefas compartilhadas;
+- reset relacional remoto restaurado e limitado à família autenticada.
 
 O modo temporário de teste baseado em `localStorage` não faz parte da consolidação. O branch mantém autenticação e persistência relacionais.
 
@@ -55,7 +59,7 @@ Consulte [ROADMAP.md](ROADMAP.md) antes de implementar temas, loja ou campanhas.
 
 Estabilização da base relacional:
 
-Concluídos no projeto de desenvolvimento: cadastro/login, isolamento RLS entre duas famílias, recorrência semanal, edição de série, estado/estrelas, exceções, backup/restauração e persistência após nova sessão.
+Concluídos no projeto de desenvolvimento: cadastro/login/logout, recuperação de sessão, isolamento RLS entre duas famílias, recorrência semanal, edições de série/ocorrência/futuro, exclusões de ocorrência/série, conflitos, estados/estrelas, bônus/penalidades, navegação semanal, encerramento do dia, backup/restauração, reset e persistência após nova sessão.
 
 Pendentes: datas limítrofes, concorrência e regressão visual das interações consolidadas.
 
@@ -65,7 +69,7 @@ Somente depois iniciar a extração do manifesto de tema.
 
 - dados do JSONB antigo não são migrados automaticamente;
 - backup antigo não é aceito pelo importador relacional;
-- a suíte E2E foi executada manualmente pelo Auth e Data API; ainda não está automatizada no repositório;
+- a regressão E2E abrangente foi executada com Playwright em desktop, mas a infraestrutura Playwright permanece não versionada no diretório de trabalho;
 - a proteção contra senhas vazadas do Supabase Auth permanece desativada e deve ser habilitada antes de beta público;
 - termos, emojis, mensagens, CSS e nomes de componentes continuam acoplados ao automobilismo;
 - `manual_star_events` ainda não separa completamente histórico conquistado de saldo gastável;
