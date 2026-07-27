@@ -1,3 +1,4 @@
+-- Reset relational family data while preserving authentication and access.
 create or replace function public.reset_current_family_data()
 returns void
 language plpgsql

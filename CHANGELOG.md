@@ -12,7 +12,7 @@
 
 ### Validação
 
-- Aplicadas migrations `202607270001` e `202607270002` somente no projeto de desenvolvimento.
+- Aplicadas migrations `20260727195339` e `20260727195347` somente no projeto de desenvolvimento.
 - Executados 16 contratos estáticos, smoke Playwright em desktop/mobile e regressão integrada Playwright em desktop.
 - Validada regressão de autenticação, tarefas, recorrências, pontuação, navegação, backup/restauração, reset e isolamento RLS.
 

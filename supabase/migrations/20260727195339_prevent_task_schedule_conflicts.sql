@@ -1,3 +1,4 @@
+-- Prevent duplicate date/time assignments for the same family member.
 create or replace function public.find_task_schedule_conflict(
   p_family_id uuid,
   p_start_time time,

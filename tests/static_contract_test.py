@@ -23,8 +23,8 @@ class RelationalPersistenceContract(unittest.TestCase):
             "202607260002_restrict_public_function_execution.sql",
             "202607260003_grant_authenticated_data_api_access.sql",
             "202607260004_grant_rls_helper_execution.sql",
-            "202607270001_prevent_task_schedule_conflicts.sql",
-            "202607270002_restore_remote_family_reset.sql",
+            "20260727195339_prevent_task_schedule_conflicts.sql",
+            "20260727195347_restore_remote_family_reset.sql",
         ])
         core = self.read("supabase/migrations/202607230002_relational_core.sql")
         for table in ("families", "family_access", "family_members", "family_settings", "tasks", "task_assignees", "task_schedules", "task_schedule_overrides", "task_occurrence_status"):
@@ -138,7 +138,7 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn('aria-label="Encerrar o dia e avançar para a próxima data"', page)
 
     def test_task_schedule_conflicts_are_checked_in_ui_and_persistence(self):
-        migration = self.read("supabase/migrations/202607270001_prevent_task_schedule_conflicts.sql")
+        migration = self.read("supabase/migrations/20260727195339_prevent_task_schedule_conflicts.sql")
         storage = self.read("js/storage.js")
         actions = self.read("js/quick-actions.js")
         self.assertIn("find_task_schedule_conflict", migration)
@@ -151,7 +151,7 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("Conflito de horário", actions)
 
     def test_remote_reset_is_transactional_and_family_scoped(self):
-        migration = self.read("supabase/migrations/202607270002_restore_remote_family_reset.sql")
+        migration = self.read("supabase/migrations/20260727195347_restore_remote_family_reset.sql")
         storage = self.read("js/storage.js")
         panel = self.read("js/parent-panel.js")
         self.assertIn("reset_current_family_data", migration)
