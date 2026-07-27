@@ -64,6 +64,11 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertNotIn("missionsByDay", actions)
         self.assertIn('data-delete-scope="occurrence"', renderer)
         self.assertIn('data-delete-scope="series"', renderer)
+        menu_section = renderer.split('class="task-menu-wrapper"', 1)[0]
+        self.assertNotIn("!isShared", menu_section[-100:])
+        occurrence_delete = actions.split("export async function deleteTask", 1)[1].split("export function openNewGoalPopup", 1)[0]
+        self.assertIn("setOccurrenceOverride(mission.scheduleId, mission.date, 'skip')", occurrence_delete)
+        self.assertNotIn("deleteTaskSchedule(mission.scheduleId)", occurrence_delete.split("else", 1)[0])
 
     def test_date_helpers_remain_local_calendar_based(self):
         state = self.read("js/state.js")

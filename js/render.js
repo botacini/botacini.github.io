@@ -150,14 +150,14 @@ function renderMemberColumn(member) {
           <span class="task-sep"> - </span>
           <span class="task-end">${escapeHtml(ms.end)}</span>
         </div>
-        ${!isShared ? `<div class="task-menu-wrapper">
+        <div class="task-menu-wrapper">
           <button class="task-menu-btn" data-open-task-menu="${missionId}" title="Opções">⋯</button>
           <div class="task-dropdown" id="${menuId}">
             <button class="task-dropdown-item" data-edit-mission="${missionId}">✏️ Editar</button>
             <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="occurrence">✕ Excluir esta ocorrência</button>
             <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="series">✕ Excluir série</button>
           </div>
-        </div>` : ''}
+        </div>
         <div class="task-emoji">${escapeHtml(ms.emoji)}</div>
         <div class="task-body">
           <div class="task-title">${escapeHtml(ms.title)}</div>

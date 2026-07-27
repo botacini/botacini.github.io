@@ -123,8 +123,8 @@ export function openEditTaskPopup(missionId, dateKey) {
   openNewTaskPopup(mission.assignee[0] || null, mission, dateKey || mission.date);
 }
 
-// The visible menu keeps the previous safe behavior: it removes the complete
-// series. A single occurrence is removed by the explicit skip override API.
+// A remoção individual cria apenas uma exceção skip. O scheduleId permanece
+// estável, mantendo edição e exclusão disponíveis nas demais ocorrências.
 export async function deleteTask(missionId, scope = 'series') {
   const mission = state.missions.find(item => item.id === missionId);
   if (!mission) return;
