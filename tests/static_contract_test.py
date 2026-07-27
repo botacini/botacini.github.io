@@ -118,8 +118,17 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("safeCssColor", renderer)
         actions = self.read("js/quick-actions.js")
         self.assertIn("select.replaceChildren", actions)
-        reports = self.read("js/missions.js")
-        self.assertIn("memberBox.replaceChildren", reports)
+
+    def test_finalize_day_only_advances_the_selected_date(self):
+        missions = self.read("js/missions.js")
+        page = self.read("index.html")
+        finalize_body = missions.split("export async function finalizeDay()", 1)[1].split("/* ════════════════ FINALIZAR A SEMANA", 1)[0]
+        self.assertIn("shiftDateKey", finalize_body)
+        self.assertIn("loadDateContext(nextDate)", finalize_body)
+        self.assertNotIn("clearOccurrenceStatus", finalize_body)
+        self.assertNotIn("missionStatus =", finalize_body)
+        self.assertIn("ENCERRAR DIA E AVANÇAR", page)
+        self.assertIn('aria-label="Encerrar o dia e avançar para a próxima data"', page)
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ import { loadState, loadDateContext, shiftDateKey, state } from './state.js';
 import { renderDashboard, renderMissions, updateClock, switchTab, updateFamilyName } from './render.js';
 import {
   handleMissionAction, toggleBonus, confirmBonus, cancelBonus,
-  tryFinalizeDay, finalizeDay, restartDay, tryFinalizeWeek,
+  tryFinalizeDay, finalizeDay, tryFinalizeWeek,
 } from './missions.js';
 import {
   openPinOverlay, closePinOverlay, pressPinDigit, pressPinBackspace,
@@ -164,7 +164,6 @@ async function startApp() {
   wireFinalizeButton();
   wireShortcutButtons();
   wireBonusPopup();
-  wireReportPopup();
   wireWeekPanel();
   wireBadgePopup();
   wireBadgeActions();
@@ -357,13 +356,6 @@ function wireBonusPopup() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   RELATÓRIO DE FIM DE DIA
-   ════════════════════════════════════════════════════════════ */
-function wireReportPopup() {
-  document.getElementById('btn-restart-day')?.addEventListener('click', restartDay);
-}
-
-/* ════════════════════════════════════════════════════════════
    FINALIZAR A SEMANA
    ════════════════════════════════════════════════════════════ */
 function wireWeekPanel() {
@@ -445,7 +437,6 @@ function wirePopupDismissals() {
   };
   const popupClosers = {
     'bonus-overlay': cancelBonus,
-    'report-overlay': () => hideOverlay('report-overlay'),
     'badge-popup-overlay': () => hideOverlay('badge-popup-overlay'),
     'pin-overlay': closePinOverlay,
     'parent-panel-overlay': closeParentPanel,

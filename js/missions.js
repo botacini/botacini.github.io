@@ -14,10 +14,10 @@
 import {
   state, ALL_BADGES, assigneeIds,
   persistWeekState, persistBadges,
-  isSelectedDateToday,
+  isSelectedDateToday, loadDateContext, shiftDateKey,
 } from './state.js';
 import { setOccurrenceStatus, clearOccurrenceStatus } from './storage.js';
-import { renderMembersBar, renderMissions, renderWeek } from './render.js';
+import { renderMembersBar, renderMissions, renderWeek, renderDashboard } from './render.js';
 import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti } from './effects.js';
 
 /* ════════════════ ESTRELAS: CONCEDER / REVOGAR ════════════════ */
@@ -181,10 +181,6 @@ export function confirmBonus() {
 /* ════════════════ FINALIZAR O DIA ════════════════ */
 export function tryFinalizeDay() {
   if (!isSelectedDateToday()) return;
-  if (state.missions.length === 0) {
-    showToast('NENHUMA TAREFA CADASTRADA PARA HOJE');
-    return;
-  }
   const pending = state.missions.filter(ms => !state.missionStatus[ms.id]);
   if (pending.length > 0) {
     const ok = confirm(`Ainda tem ${pending.length} tarefa(s) sem marcar. Finalizar o dia mesmo assim?`);
@@ -197,71 +193,17 @@ export function tryFinalizeDay() {
   }
 }
 
-export function finalizeDay() {
+export async function finalizeDay() {
   if (!isSelectedDateToday()) return;
-  const total = state.missions.length;
-  const done = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'done').length;
-  const fails = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'fail').length;
-  const pct = total ? Math.round((done / total) * 100) : 0;
-  const starsToday = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
-
-  state.weekState.days[state.selectedDate || state.today] = { done, total, pct, stars: starsToday };
-  persistWeekState();
-
-  renderReportPopup({ done, total, fails, pct, starsToday });
-  checkAndUnlockBadges();
-
-  if (pct === 100) { startConfetti(); playSound('done'); }
-  else { playSound('badge'); }
-  vibrate([30, 30]);
-
-  const overlay = document.getElementById('report-overlay');
-  if (overlay) overlay.style.display = 'flex';
-}
-
-function renderReportPopup({ done, total, fails, pct, starsToday }) {
-  const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🏁' : pct >= 40 ? '🔧' : '🚧';
-  const title = pct === 100 ? 'DIA PERFEITO!' : pct >= 70 ? 'BOA CORRIDA!' : pct >= 40 ? 'PODE MELHORAR' : 'DIA DIFÍCIL';
-  const msg = fails > 0 ? `${fails} tarefa(s) não concluída(s).` : 'Nenhuma falha hoje!';
-
-  setText('rep-emoji', emoji);
-  setText('rep-title', title);
-  setText('rep-score', pct);
-  setText('rep-msg', msg);
-  setText('rep-stars-val', '+' + starsToday);
-
-  const memberBox = document.getElementById('rep-member-box');
-  if (memberBox) {
-    memberBox.replaceChildren(...state.config.members.map(mem => {
-      const entry = document.createElement('div');
-      entry.textContent = `${mem.avatar || ''} ${mem.name || ''}: ⭐ ${state.memberStars[mem.id] || 0}`;
-      return entry;
-    }));
+  const nextDate = shiftDateKey(state.selectedDate || state.today, 1);
+  try {
+    await loadDateContext(nextDate);
+    renderDashboard();
+    showToast('🏁 DIA ENCERRADO. AGENDA AVANÇADA.');
+  } catch (error) {
+    console.error('[missions] falha ao avançar dia:', error);
+    showToast('Não foi possível abrir o próximo dia.');
   }
-  setText('rep-details', `${done} de ${total} tarefas concluídas`);
-}
-
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
-
-export function restartDay() {
-  if (!isSelectedDateToday()) return;
-  const previousMissions = state.missions.filter(ms => state.missionStatus[ms.id]);
-  state.missionStatus = {};
-  state.memberStars = {};
-  state.config.members.forEach(mem => { state.memberStars[mem.id] = 0; });
-  void Promise.all(previousMissions.map(clearOccurrenceStatus)).catch(error => {
-    console.error('[missions] falha ao reiniciar dia:', error);
-    showToast('Falha ao salvar. Recarregue a página.');
-  });
-
-  const overlay = document.getElementById('report-overlay');
-  if (overlay) overlay.style.display = 'none';
-
-  renderMembersBar();
-  renderMissions();
 }
 
 /* ════════════════ FINALIZAR A SEMANA ════════════════ */
