@@ -452,5 +452,6 @@ export async function importAllData(data) {
 }
 
 export async function resetAllData() {
-  throw new Error('Reset remoto nao esta disponivel nesta versao para evitar exclusao acidental de dados relacionais.');
+  const { error } = await getClient().rpc('reset_current_family_data');
+  if (error) fail('apagar dados da família', error);
 }

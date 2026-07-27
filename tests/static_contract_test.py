@@ -24,6 +24,7 @@ class RelationalPersistenceContract(unittest.TestCase):
             "202607260003_grant_authenticated_data_api_access.sql",
             "202607260004_grant_rls_helper_execution.sql",
             "202607270001_prevent_task_schedule_conflicts.sql",
+            "202607270002_restore_remote_family_reset.sql",
         ])
         core = self.read("supabase/migrations/202607230002_relational_core.sql")
         for table in ("families", "family_access", "family_members", "family_settings", "tasks", "task_assignees", "task_schedules", "task_schedule_overrides", "task_occurrence_status"):
@@ -143,6 +144,18 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("create or replace function public.set_task_occurrence_override", migration)
         self.assertIn("findTaskScheduleConflict", storage)
         self.assertIn("Conflito de horário", actions)
+
+    def test_remote_reset_is_transactional_and_family_scoped(self):
+        migration = self.read("supabase/migrations/202607270002_restore_remote_family_reset.sql")
+        storage = self.read("js/storage.js")
+        panel = self.read("js/parent-panel.js")
+        self.assertIn("reset_current_family_data", migration)
+        self.assertIn("where family_id = v_family_id", migration)
+        self.assertIn("auth.uid()", migration)
+        self.assertIn("to authenticated", migration)
+        self.assertIn("rpc('reset_current_family_data')", storage)
+        self.assertNotIn("Reset remoto não está disponível", storage)
+        self.assertIn("Todos os dados da família foram apagados", panel)
 
 
 if __name__ == "__main__":

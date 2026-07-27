@@ -221,8 +221,10 @@ export function wireParentPanelEvents() {
       } else if (event.target.id === 'pp-logout') {
         window.dispatchEvent(new CustomEvent('gp:logout'));
       } else if (event.target.id === 'pp-reset-data') {
-        if (!confirm('O reset remoto está bloqueado nesta versão. Consulte SUPABASE_SETUP.md.')) return;
+        if (!confirm('Apagar definitivamente tarefas, membros, pontos, metas e histórico desta família? Esta ação não pode ser desfeita.')) return;
         await resetAllData();
+        alert('Todos os dados da família foram apagados.');
+        window.location.reload();
       }
     } catch (error) { alert(error.message || 'Não foi possível concluir a operação.'); }
   });
