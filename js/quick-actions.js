@@ -1,5 +1,6 @@
 import {
-  state, saveConfig, loadDateContext, nextMemberColor, dateFromKey, todayKey
+  state, saveConfig, loadDateContext, nextMemberColor, dateFromKey, todayKey,
+  TASK_CATEGORIES, taskCategoryFromDescription, taskDescriptionWithCategory
 } from './state.js';
 import {
   createTaskWithSchedule, updateTaskSeries, splitTaskScheduleForFuture,
@@ -22,12 +23,13 @@ function selectedDays() {
   return Array.from(document.querySelectorAll('.qa-day-checkbox:checked')).map(input => Number(input.value));
 }
 function taskPayload() {
+  const category = document.getElementById('qa-task-category')?.value || 'outros';
   return {
     title: document.getElementById('qa-task-name')?.value.trim() || '',
     start: document.getElementById('qa-task-start')?.value || '08:00',
     end: document.getElementById('qa-task-end')?.value || '08:30',
     emoji: document.getElementById('qa-task-emoji')?.value || '⭐',
-    description: ''
+    description: taskDescriptionWithCategory(category)
   };
 }
 function schedulePayload() {
@@ -55,11 +57,29 @@ function renderAssigneeOptions(selectedIds, primaryId) {
     input.value = member.id;
     input.checked = selected.has(member.id);
     input.disabled = member.id === primaryId;
-    const text = document.createElement('span');
-    text.textContent = `${member.avatar || '👤'} ${member.name}${member.id === primaryId ? ' · RESPONSÁVEL' : ''}`;
-    label.append(input, text);
+    const avatar = document.createElement('span');
+    avatar.className = 'qa-assignee-avatar';
+    avatar.textContent = member.avatar || '👤';
+    const name = document.createElement('span');
+    name.className = 'qa-assignee-name';
+    name.textContent = member.name;
+    const role = document.createElement('span');
+    role.className = 'qa-assignee-role';
+    role.textContent = member.id === primaryId ? 'RESPONSÁVEL' : 'PARTICIPANTE';
+    label.append(input, avatar, name, role);
     return label;
   }));
+}
+
+function renderCategoryOptions(selectedId = 'outros') {
+  const select = document.getElementById('qa-task-category');
+  if (!select) return;
+  select.replaceChildren(...TASK_CATEGORIES.map(category => {
+    const option = new Option(category.name, category.id);
+    option.dataset.color = category.color;
+    return option;
+  }));
+  select.value = selectedId;
 }
 
 function selectedAssigneeIds() {
@@ -89,6 +109,7 @@ export function openNewTaskPopup(memberId, missionToEdit = null, targetDateKey =
   setValue('qa-task-start', missionToEdit?.start || '08:00');
   setValue('qa-task-end', missionToEdit?.end || '08:30');
   setValue('qa-task-emoji', missionToEdit?.emoji || '⭐');
+  renderCategoryOptions(taskCategoryFromDescription(missionToEdit?.desc));
   setValue('qa-task-date', date);
   setValue('qa-task-schedule-type', missionToEdit?.schedule?.type || 'weekly');
   setValue('qa-task-edit-scope', 'series');
@@ -110,10 +131,6 @@ export async function confirmNewTask() {
   if (!task.title) { alert('Digite o nome da tarefa.'); return; }
   if (!isFiveMinuteTime(task.start) || !isFiveMinuteTime(task.end)) {
     alert('Use horários em intervalos de 5 minutos.');
-    return;
-  }
-  if (task.start < '06:00') {
-    alert('A agenda começa às 06:00.');
     return;
   }
   if (task.end <= task.start) { alert('O horário final deve ser após o inicial.'); return; }

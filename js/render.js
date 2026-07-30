@@ -12,6 +12,7 @@
 import {
   state, DAY_FULL, DAY_NAMES, ALL_BADGES,
   timeToMin, assigneeIds, dateFromKey, todayKey, isSelectedDateToday,
+  TASK_CATEGORIES, taskCategoryFromDescription,
 } from './state.js';
 import { escapeHtml, safeCssColor, safeNumber } from './html.js';
 
@@ -97,7 +98,7 @@ export function renderMembersBar() {
     </div>`).join('');
 }
 
-const TIMELINE_START = 6 * 60;
+const TIMELINE_DEFAULT_START = 6 * 60;
 const TIMELINE_DEFAULT_END = 22 * 60;
 const TIMELINE_STEP = 5;
 
@@ -155,9 +156,11 @@ export function renderMissions() {
 
 function renderTimelineBoard(members, readonly) {
   const currentId = getCurrentMissionId();
-  const latestEnd = state.missions.reduce((latest, mission) => Math.max(latest, timeToMin(mission.end)), TIMELINE_DEFAULT_END);
-  const timelineEnd = Math.ceil(latestEnd / 60) * 60;
-  const slotCount = Math.max(1, Math.ceil((timelineEnd - TIMELINE_START) / TIMELINE_STEP));
+  const starts = state.missions.map(mission => timeToMin(mission.start));
+  const ends = state.missions.map(mission => timeToMin(mission.end));
+  const timelineStart = starts.length ? Math.floor(Math.min(...starts) / TIMELINE_STEP) * TIMELINE_STEP : TIMELINE_DEFAULT_START;
+  const timelineEnd = ends.length ? Math.ceil(Math.max(...ends) / TIMELINE_STEP) * TIMELINE_STEP : TIMELINE_DEFAULT_END;
+  const slotCount = Math.max(1, Math.ceil((timelineEnd - timelineStart) / TIMELINE_STEP));
   const headers = members.map(member => `
     <div class="timeline-member-header" style="--member-color:${safeCssColor(member.color)}">
       <span>${escapeHtml(member.avatar)}</span>
@@ -165,56 +168,55 @@ function renderTimelineBoard(members, readonly) {
       <button class="timeline-add-btn" data-add-task-member="${escapeHtml(member.id)}" data-add-task-date="${escapeHtml(selectedDateKey())}" aria-label="Adicionar tarefa para ${escapeHtml(member.name)}">＋</button>
     </div>`).join('');
   const timeLabels = Array.from({ length: slotCount + 1 }, (_, slot) => {
-    const minute = TIMELINE_START + slot * TIMELINE_STEP;
-    if (minute % 30 !== 0) return '';
+    const minute = timelineStart + slot * TIMELINE_STEP;
     return `<div class="timeline-time-label" style="grid-row:${slot + 2}">${formatMinutes(minute)}</div>`;
   }).join('');
-  const cards = state.missions.map(ms => {
+  const cards = state.missions.flatMap(ms => {
     const participantIds = assigneeIds(ms);
     const participantIndexes = participantIds
       .map(id => members.findIndex(member => member.id === id))
       .filter(index => index >= 0)
       .sort((a, b) => a - b);
-    if (!participantIndexes.length) return '';
-    const startSlot = Math.max(0, Math.floor((timeToMin(ms.start) - TIMELINE_START) / TIMELINE_STEP));
+    if (!participantIndexes.length) return [];
+    const startSlot = Math.max(0, Math.floor((timeToMin(ms.start) - timelineStart) / TIMELINE_STEP));
     const durationSlots = Math.max(1, Math.ceil((timeToMin(ms.end) - timeToMin(ms.start)) / TIMELINE_STEP));
-    const firstColumn = participantIndexes[0] + 2;
-    const lastColumn = participantIndexes[participantIndexes.length - 1] + 2;
     const st = state.missionStatus[ms.id];
     const doneClass = st?.status === 'done' ? ' done' : '';
     const failClass = st?.status === 'fail' ? ' fail' : '';
     const currentClass = currentId === ms.id && !st ? ' current' : '';
     const isShared = participantIds.length > 1;
+    const category = TASK_CATEGORIES.find(item => item.id === taskCategoryFromDescription(ms.desc))
+      || TASK_CATEGORIES[TASK_CATEGORIES.length - 1];
 
     const missionId = escapeHtml(ms.id);
     const menuId = `task-menu-${missionId}`;
-    return `
+    return participantIndexes.map((participantIndex, cardIndex) => `
       <div class="task-cell timeline-task${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}"
-        style="grid-column:${firstColumn}/${lastColumn + 1};grid-row:${startSlot + 2}/span ${durationSlots}"
+        style="--category-color:${safeCssColor(category.color)};grid-column:${participantIndex + 2};grid-row:${startSlot + 2}/span ${durationSlots}"
         data-mission-id="${missionId}" data-duration-slots="${durationSlots}">
-        <div class="task-time">
-          <span class="task-start">${escapeHtml(ms.start)}</span>
-          <span class="task-sep"> - </span>
-          <span class="task-end">${escapeHtml(ms.end)}</span>
-        </div>
-        <div class="task-menu-wrapper">
+        <button class="task-edit-direct" data-edit-mission="${missionId}" aria-label="Editar ${escapeHtml(ms.title)}" title="Editar">✎</button>
+        ${cardIndex === 0 ? `<div class="task-menu-wrapper">
           <button class="task-menu-btn" data-open-task-menu="${missionId}" title="Opções">⋯</button>
           <div class="task-dropdown" id="${menuId}">
             <button class="task-dropdown-item" data-edit-mission="${missionId}">✏️ Editar</button>
             <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="occurrence">✕ Excluir esta ocorrência</button>
             <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="series">✕ Excluir série</button>
           </div>
-        </div>
+        </div>` : ''}
         <div class="task-emoji">${escapeHtml(ms.emoji)}</div>
         <div class="task-body">
           <div class="task-title">${escapeHtml(ms.title)}</div>
-          ${isShared ? `<div class="task-shared-label">COMPARTILHADA · ${participantIds.length} MEMBROS</div>` : ''}
+          <div class="task-meta">
+            <span class="task-time">${escapeHtml(ms.start)}–${escapeHtml(ms.end)}</span>
+            <span class="task-category">${escapeHtml(category.name)}</span>
+            ${isShared ? `<span class="task-shared-label">◉ ${participantIds.length}</span>` : ''}
+          </div>
         </div>
         <div class="task-actions">
           <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
           <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
         </div>
-      </div>`;
+      </div>`);
   }).join('');
   return `
     <div class="timeline-scroll">

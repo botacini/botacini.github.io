@@ -19,7 +19,11 @@ O branch `codex/refactor-supabase-tests-20260724` reúne:
 - fechamento padronizado dos pop-ups;
 - projeto Supabase separado para desenvolvimento.
 - tarefas compartilhadas criadas e editadas com múltiplos participantes;
-- agenda temporal comum, de `06:00` em diante, com passos de 5 minutos e altura proporcional à duração;
+- agenda temporal comum com faixa dinâmica, passos reais de 5 minutos e altura proporcional à duração;
+- tarefas compartilhadas exibidas como cards independentes por participante, sem atravessar colunas;
+- edição permanentemente visível em todos os cards;
+- seletor de participantes em grid responsivo com avatar, nome e indicação do responsável;
+- categorias extensíveis por cor, compatíveis com tarefas e backups existentes;
 - progresso individual por percentual e progresso familiar pela média dos membros com tarefas;
 - pista com carrinho e linha de chegada como indicador principal;
 - estrelas concedidas somente por pontualidade, capricho e realização sem reclamar;
@@ -88,7 +92,7 @@ O plano e os critérios de aceite estão em [ROADMAP.md](ROADMAP.md).
 
 Já foram executados testes estáticos, verificação de whitespace, migrations no projeto de Desenvolvimento e validação integrada via Auth/Data API: login, RLS entre famílias, recorrência, edição, exceções, backup/restauração e persistência após nova sessão.
 
-Execute `npm install` e `npm test` para rodar contratos estáticos e Playwright.
+Execute `npm install` e `npm test` para rodar contratos estáticos e Playwright. O teste autenticado é opcional e exige `GP_TEST_EMAIL` e `GP_TEST_PASSWORD`.
 
 Antes de produção ainda são obrigatórios:
 
@@ -102,3 +106,5 @@ Antes de produção ainda são obrigatórios:
 - Criação e todas as modalidades de edição validam conflitos no frontend e em RPC transacional.
 - Excluir uma ocorrência cria uma exceção `skip` e preserva a identidade da série.
 - Encerrar o dia apenas avança a data exibida; estados das tarefas não são alterados.
+- A agenda aceita qualquer horário múltiplo de 5 minutos e expande sua faixa pelo menor início e maior término do dia.
+- Categorias são serializadas no campo de descrição existente; tarefas antigas sem marcador usam `Outros`.

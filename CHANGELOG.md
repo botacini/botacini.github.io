@@ -1,5 +1,30 @@
 # Changelog — GP da Família
 
+## Em desenvolvimento (2026-07-30) — estabilização de interface
+
+### Corrigido
+
+- Tarefas compartilhadas voltaram a usar cards independentes em cada coluna participante.
+- Botão de edição tornou-se permanentemente visível em tarefas individuais e compartilhadas.
+- Seletor de participantes foi substituído por cards responsivos em duas colunas.
+- Removida a restrição de criação anterior às `06:00`.
+- Agenda passa a expandir pelo menor e maior horário das tarefas do dia.
+- Cada linha e rótulo do grid representa exatamente 5 minutos.
+- Cards curtos mantêm título, emoji, horário, categoria e ações visíveis.
+- Ações de conclusão foram centralizadas verticalmente no conteúdo do card.
+
+### Adicionado
+
+- Categorias extensíveis com cores para serviços domésticos, homeschool, trabalho, igreja, alimentação, lazer, saúde, sono, higiene, transporte e outros.
+- Persistência de categoria compatível com o campo de descrição e backups existentes, sem alteração de schema.
+- Cobertura Playwright para cards compartilhados separados, editor permanente, categorias e horário `04:30`.
+
+### Validação
+
+- 21 contratos estáticos aprovados.
+- 8 cenários Playwright aprovados em Chromium desktop e Pixel 7.
+- 2 cenários autenticados opcionais ignorados por ausência de variáveis de credenciais.
+
 ## Em desenvolvimento (2026-07-30) — colaboração e agenda temporal
 
 ### Alterado
@@ -8,7 +33,7 @@
 - Edição de série/futuro atualiza todos os participantes.
 - Agenda Kanban foi substituída por linha do tempo comum em passos de 5 minutos.
 - Cards têm altura proporcional e tarefas simultâneas ficam alinhadas.
-- Tarefa compartilhada é renderizada uma única vez sobre as colunas participantes.
+- Tarefa compartilhada inicialmente era renderizada sobre as colunas participantes; essa geometria foi revogada no sprint de estabilização acima.
 - Progresso individual usa percentual de tarefas concluídas.
 - Progresso familiar usa a média dos membros que possuem tarefas no dia.
 - Pista, carrinho e linha de chegada passaram a ser o indicador principal.

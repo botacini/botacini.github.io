@@ -6,6 +6,29 @@ import {
 export const DAY_NAMES = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
 export const DAY_FULL = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 export const MEMBER_COLOR_PALETTE = ['#378add', '#e879c9', '#5cb832', '#e8b800', '#cb3232', '#8a5cf6', '#38b6ce', '#f2884b'];
+export const TASK_CATEGORIES = [
+  { id: 'domesticos', name: 'Serviços domésticos', color: '#f2884b' },
+  { id: 'homeschool', name: 'Homeschool', color: '#8a5cf6' },
+  { id: 'trabalho', name: 'Trabalho', color: '#378add' },
+  { id: 'igreja', name: 'Igreja', color: '#e8b800' },
+  { id: 'alimentacao', name: 'Alimentação', color: '#5cb832' },
+  { id: 'lazer', name: 'Lazer', color: '#38b6ce' },
+  { id: 'saude', name: 'Saúde', color: '#cb3232' },
+  { id: 'sono', name: 'Sono', color: '#52627a' },
+  { id: 'higiene', name: 'Higiene', color: '#4ba6a6' },
+  { id: 'transporte', name: 'Transporte', color: '#b56bd6' },
+  { id: 'outros', name: 'Outros', color: '#74777f' }
+];
+
+const CATEGORY_MARKER = /^\[categoria:([a-z0-9_-]+)\]\s*/i;
+export function taskCategoryFromDescription(description) {
+  const id = String(description || '').match(CATEGORY_MARKER)?.[1]?.toLowerCase() || 'outros';
+  return TASK_CATEGORIES.some(category => category.id === id) ? id : 'outros';
+}
+export function taskDescriptionWithCategory(categoryId, description = '') {
+  const validId = TASK_CATEGORIES.some(category => category.id === categoryId) ? categoryId : 'outros';
+  return `[categoria:${validId}] ${String(description || '').replace(CATEGORY_MARKER, '').trim()}`.trim();
+}
 
 export function nextMemberColor(members) {
   const used = new Set((members || []).map(member => member.color).filter(Boolean));

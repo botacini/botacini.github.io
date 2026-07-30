@@ -39,15 +39,17 @@ async function renderFixture(page) {
 
 test('renders shared timeline and proportional durations', async ({ page }) => {
   await renderFixture(page);
-  await expect(page.locator('.timeline-task')).toHaveCount(4);
-  await expect(page.locator('.timeline-task.shared-task')).toHaveCount(2);
-  await expect(page.locator('.timeline-task[data-mission-id="m1"]')).toContainText('COMPARTILHADA');
+  await expect(page.locator('.timeline-task')).toHaveCount(6);
+  await expect(page.locator('.timeline-task.shared-task')).toHaveCount(4);
+  await expect(page.locator('.timeline-task[data-mission-id="m1"]').first()).toContainText('◉ 2');
   const shortBox = await page.locator('.timeline-task[data-mission-id="m3"]').boundingBox();
   const longBox = await page.locator('.timeline-task[data-mission-id="m4"]').boundingBox();
   expect(longBox.height / shortBox.height).toBeGreaterThan(10);
   const shared = page.locator('.timeline-task[data-mission-id="m1"]');
-  await expect(shared).toHaveCSS('grid-column-start', '2');
-  await expect(shared).toHaveCSS('grid-column-end', '4');
+  await expect(shared).toHaveCount(2);
+  await expect(shared.nth(0)).toHaveCSS('grid-column-start', '2');
+  await expect(shared.nth(1)).toHaveCSS('grid-column-start', '3');
+  await expect(page.locator('.task-edit-direct')).toHaveCount(6);
 });
 
 test('shows independent individual and family progress', async ({ page }) => {
@@ -80,4 +82,23 @@ test('keeps the clicked member as primary and restores shared assignees on edit'
   await expect(page.locator('.qa-assignee-checkbox:checked')).toHaveCount(2);
   await expect(page.locator('.qa-assignee-checkbox[value="mae"]')).toBeChecked();
   await expect(page.locator('#qa-task-start')).toHaveAttribute('step', '300');
+  await expect(page.locator('.qa-assignee-option')).toHaveCount(3);
+  await expect(page.locator('#qa-task-category option')).toHaveCount(11);
+});
+
+test('expands the timeline to early tasks and labels every five minutes', async ({ page }) => {
+  await renderFixture(page);
+  await page.evaluate(async () => {
+    const { state } = await import('/js/state.js');
+    const renderer = await import('/js/render.js');
+    state.missions.push({
+      id: 'm5', title: 'MADRUGADA', emoji: '🌙', start: '04:30', end: '04:35',
+      assignee: ['pai'], desc: '[categoria:sono]', schedule: { type: 'once' }
+    });
+    renderer.renderMissions();
+  });
+  await expect(page.locator('.timeline-time-label').first()).toHaveText('04:30');
+  await expect(page.locator('.timeline-time-label').nth(1)).toHaveText('04:35');
+  await expect(page.locator('.timeline-task[data-mission-id="m5"] .task-emoji')).toBeVisible();
+  await expect(page.locator('.timeline-task[data-mission-id="m5"]')).toContainText('Sono');
 });

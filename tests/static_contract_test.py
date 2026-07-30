@@ -164,7 +164,7 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertNotIn("Reset remoto não está disponível", storage)
         self.assertIn("Todos os dados da família foram apagados", panel)
 
-    def test_shared_tasks_are_selected_and_rendered_once(self):
+    def test_shared_tasks_are_selected_and_rendered_per_participant(self):
         actions = self.read("js/quick-actions.js")
         renderer = self.read("js/render.js")
         page = self.read("index.html")
@@ -172,10 +172,11 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("selectedAssigneeIds", actions)
         self.assertIn("p_assignee_ids", self.read("js/storage.js"))
         timeline_body = renderer.split("function renderTimelineBoard", 1)[1].split("function updateProgress", 1)[0]
-        self.assertIn("state.missions.map", timeline_body)
+        self.assertIn("state.missions.flatMap", timeline_body)
         self.assertNotIn("members.map(mem => renderMemberColumn", renderer)
         self.assertIn("grid-column", timeline_body)
-        self.assertIn("COMPARTILHADA", timeline_body)
+        self.assertIn("participantIndexes.map", timeline_body)
+        self.assertIn("task-shared-label", timeline_body)
 
     def test_timeline_uses_five_minute_resolution(self):
         page = self.read("index.html")
@@ -184,7 +185,18 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertEqual(page.count('step="300"'), 2)
         self.assertIn("parts[1] % 5 === 0", actions)
         self.assertIn("const TIMELINE_STEP = 5", renderer)
-        self.assertIn("repeat(var(--slot-count), 8px)", self.read("css/style.css"))
+        self.assertIn("repeat(var(--slot-count), 32px)", self.read("css/style.css"))
+        self.assertNotIn("A agenda começa às 06:00", actions)
+
+    def test_task_categories_use_existing_description_contract(self):
+        page = self.read("index.html")
+        state = self.read("js/state.js")
+        actions = self.read("js/quick-actions.js")
+        renderer = self.read("js/render.js")
+        self.assertIn('id="qa-task-category"', page)
+        self.assertIn("TASK_CATEGORIES", state)
+        self.assertIn("taskDescriptionWithCategory", actions)
+        self.assertIn("taskCategoryFromDescription", renderer)
 
     def test_progress_and_stars_are_independent(self):
         missions = self.read("js/missions.js")

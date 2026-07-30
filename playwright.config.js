@@ -6,7 +6,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     screenshot: 'only-on-failure',
-    trace: 'retain-on-failure'
+    trace: 'retain-on-failure',
+    launchOptions: process.env.GP_CHROMIUM_EXECUTABLE
+      ? { executablePath: process.env.GP_CHROMIUM_EXECUTABLE }
+      : {}
   },
   webServer: {
     command: 'python3 -m http.server 4173 --bind 127.0.0.1',
