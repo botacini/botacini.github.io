@@ -1,6 +1,6 @@
 import {
   loadConfig, saveFamilySettings, loadDateState, loadWeekState, saveWeekState,
-  loadTotals, loadBadges, saveBadges, loadBonusLog, saveBonusLog
+  loadTotals, loadBadges, saveBadges, loadBonusLog, saveBonusLog, loadFamilyWallet
 } from './storage.js';
 
 export const DAY_NAMES = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
@@ -53,6 +53,7 @@ export const state = {
   missions: [],
   missionStatus: {},
   memberStars: {},
+  familyWallet: { earned: 0, spent: 0, balance: 0 },
   totals: {},
   badgesUnlocked: [],
   weekState: null,
@@ -69,16 +70,18 @@ export function getTodayMissions() { return [...state.missions]; }
 export async function loadDateContext(dateKey) {
   const normalized = dateKey || todayKey();
   state.selectedDate = normalized;
-  const [dateState, week, bonusLog] = await Promise.all([
+  const [dateState, week, bonusLog, familyWallet] = await Promise.all([
     loadDateState(normalized, state.config.members),
     loadWeekState(weekKeyOfDateKey(normalized)),
-    loadBonusLog()
+    loadBonusLog(),
+    loadFamilyWallet()
   ]);
   state.missions = dateState.missions.sort((a, b) => timeToMin(a.start) - timeToMin(b.start));
   state.missionStatus = dateState.missionStatus;
   state.memberStars = dateState.memberStars;
   state.weekState = week;
   state.bonusLog = bonusLog;
+  state.familyWallet = familyWallet;
 }
 
 export async function loadState() {

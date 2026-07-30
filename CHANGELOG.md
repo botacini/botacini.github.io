@@ -1,5 +1,28 @@
 # Changelog — GP da Família
 
+## Em desenvolvimento (2026-07-30) — colaboração e agenda temporal
+
+### Alterado
+
+- Tarefas compartilhadas voltaram a aceitar seleção múltipla no frontend.
+- Edição de série/futuro atualiza todos os participantes.
+- Agenda Kanban foi substituída por linha do tempo comum em passos de 5 minutos.
+- Cards têm altura proporcional e tarefas simultâneas ficam alinhadas.
+- Tarefa compartilhada é renderizada uma única vez sobre as colunas participantes.
+- Progresso individual usa percentual de tarefas concluídas.
+- Progresso familiar usa a média dos membros que possuem tarefas no dia.
+- Pista, carrinho e linha de chegada passaram a ser o indicador principal.
+- Conclusão comum não concede estrelas; somente os três bônus existentes concedem.
+- Estrelas formam carteira coletiva, sem duplicação por participantes de tarefa compartilhada.
+- Encerramento do dia persiste o resumo e avança sem redefinir estados.
+
+### Banco e testes
+
+- Migrations `collective_star_wallet` e `refine_collective_wallet_policies`.
+- RLS e grants verificados no Supabase de desenvolvimento.
+- 20 contratos estáticos.
+- Playwright em Chromium desktop e Pixel 7 para grid, proporção, compartilhamento, progresso e seleção de participantes.
+
 ## Em desenvolvimento (2026-07-27) — estabilidade da agenda
 
 ### Corrigido

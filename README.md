@@ -2,6 +2,8 @@
 
 Aplicação web em HTML, CSS e JavaScript para organizar agenda, tarefas, pontos, metas e membros de uma família. O frontend não usa framework e a persistência principal foi refatorada para um modelo relacional no Supabase.
 
+O objetivo funcional atual é levar toda a família à linha de chegada do dia. Progresso mede conclusão da rotina; estrelas medem somente a qualidade da execução.
+
 ## Estado atual
 
 O branch `codex/refactor-supabase-tests-20260724` reúne:
@@ -16,6 +18,13 @@ O branch `codex/refactor-supabase-tests-20260724` reúne:
 - navegação entre semanas com datas, setas e animação direcional;
 - fechamento padronizado dos pop-ups;
 - projeto Supabase separado para desenvolvimento.
+- tarefas compartilhadas criadas e editadas com múltiplos participantes;
+- agenda temporal comum, de `06:00` em diante, com passos de 5 minutos e altura proporcional à duração;
+- progresso individual por percentual e progresso familiar pela média dos membros com tarefas;
+- pista com carrinho e linha de chegada como indicador principal;
+- estrelas concedidas somente por pontualidade, capricho e realização sem reclamar;
+- carteira coletiva de estrelas e razão reservado para compras, desbloqueios, personalizações e campanhas;
+- regressão Playwright versionada para Chromium desktop e Pixel 7.
 
 O ambiente de desenvolvimento foi provisionado separadamente do projeto original. O núcleo dos testes integrados foi concluído; os cenários restantes estão descritos em [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
@@ -70,6 +79,7 @@ O plano e os critérios de aceite estão em [ROADMAP.md](ROADMAP.md).
 - `js/parent-panel.js`: membros, configurações, metas e backup.
 - `supabase/migrations`: schema, funções e RLS.
 - `tests/static_contract_test.py`: contratos estáticos.
+- `tests/e2e/timeline.spec.js`: regressão visual e funcional do grid, compartilhamento e progresso.
 - `SUPABASE_SETUP.md`: configuração e validação do Supabase.
 - `IA_HANDOFF.md`: estado técnico para continuidade.
 - `ROADMAP.md`: evolução planejada.
@@ -77,6 +87,8 @@ O plano e os critérios de aceite estão em [ROADMAP.md](ROADMAP.md).
 ## Validação
 
 Já foram executados testes estáticos, verificação de whitespace, migrations no projeto de Desenvolvimento e validação integrada via Auth/Data API: login, RLS entre famílias, recorrência, edição, exceções, backup/restauração e persistência após nova sessão.
+
+Execute `npm install` e `npm test` para rodar contratos estáticos e Playwright.
 
 Antes de produção ainda são obrigatórios:
 

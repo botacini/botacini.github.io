@@ -1,0 +1,12 @@
+{
+  "name": "gp-da-familia",
+  "private": true,
+  "scripts": {
+    "test:static": "python3 -m unittest -v tests.static_contract_test",
+    "test:e2e": "playwright test",
+    "test": "npm run test:static && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.54.1"
+  }
+}

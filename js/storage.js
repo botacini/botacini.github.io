@@ -263,6 +263,18 @@ export async function loadTotals() {
   return Object.fromEntries((data || []).map(row => [row.member_id, Number(row.stars) || 0]));
 }
 
+export async function loadFamilyWallet() {
+  const familyId = await ensureFamily();
+  const { data, error } = await getClient().rpc('get_family_star_wallet', { p_family_id: familyId });
+  if (error) fail('carregar carteira coletiva', error);
+  const wallet = Array.isArray(data) ? data[0] : data;
+  return {
+    earned: Number(wallet?.earned) || 0,
+    spent: Number(wallet?.spent) || 0,
+    balance: Number(wallet?.balance) || 0
+  };
+}
+
 export async function addManualStarEvent({ memberId, date, stars, reason, source = 'manual', sourceId = null }) {
   const familyId = await ensureFamily();
   const { error } = await getClient().from('manual_star_events').insert({

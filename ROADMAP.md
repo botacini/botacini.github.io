@@ -1,6 +1,6 @@
 # Roadmap — GP da Família
 
-Atualizado em 2026-07-25.
+Atualizado em 2026-07-30.
 
 ## Objetivo
 
@@ -34,6 +34,13 @@ Evoluir o GP da Família como uma aplicação única de organização e gamifica
 - Pop-ups fecháveis por `×` e toque fora.
 - Botão de penalidade com texto e cor próprios.
 - Projeto Supabase separado para desenvolvimento.
+- Agenda compartilhada baseada em tempo, com resolução de 5 minutos.
+- Tarefas compartilhadas exibidas em card único sobre as colunas participantes.
+- Progresso individual separado de estrelas e progresso familiar médio.
+- Pista, carrinho e linha de chegada como indicador principal.
+- Carteira coletiva calculada sem duplicar o bônus de tarefas compartilhadas.
+- Razão `family_star_transactions` preparado para a economia futura.
+- Testes Playwright desktop/mobile versionados.
 
 ### Pendente de validação antes de produção
 
@@ -99,11 +106,11 @@ Modelo:
 
 Entregas:
 
-1. Criar migration para o razão de transações.
+1. [concluído] Criar migration para o razão de transações.
 2. Migrar os eventos existentes para uma origem compatível, sem duplicar saldo.
 3. Calcular saldo de forma transacional no servidor.
 4. Impedir saldo negativo e compra duplicada.
-5. Exibir separadamente total histórico e saldo disponível.
+5. [parcial] Exibir a carteira coletiva; a separação visual entre histórico e saldo ficará para a loja.
 6. Definir se penalidades reduzem apenas o ganho da ocorrência ou também o saldo disponível antes de liberar a economia.
 
 Critério de conclusão:
@@ -111,6 +118,8 @@ Critério de conclusão:
 - comprar um item reduz somente `available_balance`;
 - metas e conquistas baseadas no histórico continuam usando `lifetime_earned`;
 - toda alteração de saldo possui origem auditável e pode ser estornada.
+
+Estado em 2026-07-30: a carteira soma cada bônus de ocorrência uma única vez, mesmo em tarefas compartilhadas, e agrega eventos manuais. A tabela de transações já aceita débitos futuros; nenhuma compra é implementada neste sprint.
 
 ## Fase 4 — Loja, inventário e personalização
 
@@ -206,4 +215,3 @@ Entregas:
 - venda ou transferência de itens;
 - atributos competitivos ou vantagens funcionais compráveis;
 - criação remota de temas por terceiros.
-

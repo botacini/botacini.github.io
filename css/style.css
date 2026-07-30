@@ -133,6 +133,7 @@ button { font-family: inherit; cursor: pointer; }
 .pill-avatar { font-size: 16px; }
 .pill-name { letter-spacing: .5px; }
 .pill-stars { color: var(--gold); font-weight: 900; }
+.pill-progress { color: var(--green); font-family: var(--font-display); font-weight: 900; }
 
 /* ════════════════ MAIN / PANELS ════════════════ */
 .app-main { flex: 1; padding: 14px 12px 20px; }
@@ -171,13 +172,63 @@ button { font-family: inherit; cursor: pointer; }
   transition: width .5s ease;
 }
 
-.race-strip {
-  display: flex;
-  justify-content: flex-end;
-  margin: -4px 4px 8px 0;
-  font-size: 22px;
+.family-race {
+  position: relative;
+  height: 46px;
+  margin: 4px 12px 12px 0;
 }
-.car-avatar { transform: scaleX(-1); }
+.race-lane {
+  position: absolute;
+  inset: 13px 0 5px;
+  border: 2px solid #555;
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, transparent 47%, rgba(255,255,255,.55) 48% 52%, transparent 53%),
+    #292a2e;
+}
+.car-avatar {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  bottom: 6px;
+  width: 28px;
+  font-size: 25px;
+  line-height: 1;
+  transition: left .6s ease;
+}
+.finish-line {
+  position: absolute;
+  z-index: 1;
+  top: 4px;
+  right: -10px;
+  width: 12px;
+  height: 40px;
+  border: 1px solid #fff;
+  background:
+    conic-gradient(#fff 25%, #111 0 50%, #fff 0 75%, #111 0) 0 0 / 8px 8px;
+}
+.individual-progress { display: grid; gap: 6px; }
+.individual-progress-row {
+  display: grid;
+  grid-template-columns: minmax(80px, auto) 1fr 36px;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.individual-progress-row strong { color: var(--text); text-align: right; }
+.mini-progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--card2);
+}
+.mini-progress-track span {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  transition: width .4s ease;
+}
 
 /* lista de missões */
 .mission-list {
@@ -272,6 +323,136 @@ button { font-family: inherit; cursor: pointer; }
   opacity: .62;
 }
 
+.timeline-scroll {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  max-height: 68vh;
+}
+.timeline-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px repeat(var(--member-count), minmax(150px, 1fr));
+  grid-template-rows: 48px repeat(var(--slot-count), 8px);
+  min-width: calc(52px + var(--member-count) * 150px);
+  isolation: isolate;
+}
+.timeline-corner,
+.timeline-member-header {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: #17181b;
+  border-bottom: 1px solid var(--line);
+}
+.timeline-corner {
+  left: 0;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  color: var(--muted);
+}
+.timeline-member-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-top: 3px solid var(--member-color);
+  font-size: 11px;
+  color: var(--member-color);
+}
+.timeline-add-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--card2);
+  color: var(--gold);
+  font-weight: 900;
+}
+.timeline-grid-bg {
+  z-index: -1;
+  grid-column: 2 / -1;
+  grid-row: 2 / -1;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.045) 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(to right, transparent 0 calc((100% / var(--member-count)) - 1px), var(--line) calc((100% / var(--member-count)) - 1px) calc(100% / var(--member-count)));
+}
+.timeline-time-label {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  grid-column: 1;
+  align-self: start;
+  height: 16px;
+  padding: 1px 5px;
+  transform: translateY(-1px);
+  background: #17181b;
+  border-top: 1px solid #37383d;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 8px;
+}
+.timeline-task {
+  z-index: 2;
+  margin: 1px 3px;
+  min-height: 0;
+  overflow: visible;
+  padding: 3px 24px 3px 4px;
+  border-left: 3px solid var(--blue);
+  border-radius: 5px;
+}
+.timeline-board.consultation-mode .timeline-task { opacity: .62; }
+.timeline-task .task-time {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  padding: 0;
+}
+.timeline-task .task-emoji { display: none; }
+.timeline-task .task-body {
+  min-width: 0;
+  margin-top: 11px;
+}
+.timeline-task .task-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.task-shared-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #8fc8ff;
+  font-size: 8px;
+}
+.timeline-task .task-actions {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  flex-direction: column;
+}
+.timeline-task .task-btn {
+  width: 18px;
+  height: 16px;
+  padding: 0;
+}
+.timeline-task[data-duration-slots="1"] .task-time,
+.timeline-task[data-duration-slots="1"] .task-body,
+.timeline-task[data-duration-slots="1"] .task-actions,
+.timeline-task[data-duration-slots="2"] .task-time,
+.timeline-task[data-duration-slots="2"] .task-body,
+.timeline-task[data-duration-slots="2"] .task-actions {
+  display: none;
+}
+.timeline-task[data-duration-slots="1"],
+.timeline-task[data-duration-slots="2"] {
+  padding: 0 22px 0 3px;
+}
+
 .board-column {
   flex: 0 0 160px;
   display: flex;
@@ -318,6 +499,11 @@ button { font-family: inherit; cursor: pointer; }
 .task-cell.fail { border-color: var(--red); background: #260f0f; opacity: .7; }
 .task-cell.current { border-color: var(--gold); box-shadow: 0 0 8px rgba(232,184,0,.4); }
 .task-cell.shared-task { background: rgba(55, 138, 221, .08); }
+.timeline-task.shared-task {
+  border: 1px solid #64a8e8;
+  border-left-width: 4px;
+  background: linear-gradient(90deg, rgba(55,138,221,.26), rgba(55,138,221,.10));
+}
 
 .task-time {
   display: flex;
@@ -517,6 +703,7 @@ button { font-family: inherit; cursor: pointer; }
 .role-crianca { background: #143a1c; color: var(--green); }
 .team-member-stats { text-align: right; }
 .team-member-stars { font-family: var(--font-display); color: var(--gold); font-weight: 900; font-size: 16px; }
+.team-member-progress { font-family: var(--font-display); color: var(--green); font-weight: 900; font-size: 17px; }
 .team-member-done { font-size: 9px; color: var(--muted); font-weight: 700; }
 
 /* ════════════════ ABA CONQUISTAS ════════════════ */

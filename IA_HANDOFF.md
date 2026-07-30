@@ -1,6 +1,6 @@
 # IA_HANDOFF — estado técnico
 
-Atualizado em 2026-07-27.
+Atualizado em 2026-07-30.
 
 ## Situação atual
 
@@ -19,6 +19,13 @@ A versão publicada para testes recebeu alterações posteriores ao primeiro com
 - encerramento do dia sem alteração de status, avançando uma data;
 - ações de série disponíveis após exclusão isolada, inclusive para tarefas compartilhadas;
 - reset relacional remoto restaurado e limitado à família autenticada.
+- seleção múltipla de participantes com responsável principal preservado;
+- linha do tempo de 5 minutos compartilhada entre todos os membros;
+- card único para tarefas compartilhadas;
+- progresso individual e familiar independentes de estrelas;
+- pista com carrinho e linha de chegada;
+- carteira coletiva e razão `family_star_transactions`;
+- Playwright versionado para desktop e Pixel 7.
 
 O modo temporário de teste baseado em `localStorage` não faz parte da consolidação. O branch mantém autenticação e persistência relacionais.
 
@@ -37,6 +44,7 @@ O modo temporário de teste baseado em `localStorage` não faz parte da consolid
 - Configuração: `family_settings`, `family_custom_goals`, `family_badges`.
 - Agenda: `tasks`, `task_assignees`, `task_schedules`, `task_schedule_overrides`, `task_occurrence_status`.
 - Histórico: `manual_star_events`, `daily_summaries`, `weekly_summaries`.
+- Economia preparada: `family_star_transactions` e RPC `get_family_star_wallet`.
 
 `tasks` guarda a definição; `task_schedules` guarda regras `once` ou `weekly`; `task_schedule_overrides` representa `skip` ou `patch` por data; `task_occurrence_status` é único por agenda e data.
 
@@ -55,13 +63,23 @@ Invariantes:
 
 Consulte [ROADMAP.md](ROADMAP.md) antes de implementar temas, loja ou campanhas.
 
+## Decisões arquiteturais do sprint
+
+- cada membro tem potencial de `0%` a `100%`, independentemente da quantidade de tarefas dos demais;
+- progresso familiar é a média dos percentuais dos membros com tarefas naquele dia;
+- tarefa compartilhada entra uma vez na agenda e uma vez na carteira coletiva, mas compõe o progresso de cada participante;
+- falha e pendência não contam como conclusão;
+- horários começam às `06:00` e devem ser múltiplos de 5 minutos;
+- a carteira atual é derivada das ocorrências e eventos manuais; o razão novo permanece sem gravações até a loja;
+- editar participantes em uma única ocorrência não é permitido, pois responsáveis pertencem à definição da tarefa; usar série ou “esta e as próximas”.
+
 ## Próxima fase
 
 Estabilização da base relacional:
 
 Concluídos no projeto de desenvolvimento: cadastro/login/logout, recuperação de sessão, isolamento RLS entre duas famílias, recorrência semanal, edições de série/ocorrência/futuro, exclusões de ocorrência/série, conflitos, estados/estrelas, bônus/penalidades, navegação semanal, encerramento do dia, backup/restauração, reset e persistência após nova sessão.
 
-Pendentes: datas limítrofes, concorrência e regressão visual das interações consolidadas.
+Pendentes: datas limítrofes, concorrência e testes integrados autenticados específicos deste sprint.
 
 Somente depois iniciar a extração do manifesto de tema.
 
@@ -69,8 +87,8 @@ Somente depois iniciar a extração do manifesto de tema.
 
 - dados do JSONB antigo não são migrados automaticamente;
 - backup antigo não é aceito pelo importador relacional;
-- a regressão E2E abrangente foi executada com Playwright em desktop, mas a infraestrutura Playwright permanece não versionada no diretório de trabalho;
+- Playwright visual usa estado controlado e não substitui o teste autenticado contra o Supabase;
 - a proteção contra senhas vazadas do Supabase Auth permanece desativada e deve ser habilitada antes de beta público;
 - termos, emojis, mensagens, CSS e nomes de componentes continuam acoplados ao automobilismo;
-- `manual_star_events` ainda não separa completamente histórico conquistado de saldo gastável;
+- transações futuras ainda não são gravadas nem restauradas pelo backup porque a loja não existe;
 - definir o efeito exato das penalidades sobre o futuro saldo é uma decisão pendente.

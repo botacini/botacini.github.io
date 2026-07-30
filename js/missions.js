@@ -17,7 +17,7 @@ import {
   isSelectedDateToday, loadDateContext, shiftDateKey,
 } from './state.js';
 import { setOccurrenceStatus, clearOccurrenceStatus } from './storage.js';
-import { renderMembersBar, renderMissions, renderWeek, renderDashboard } from './render.js';
+import { renderMembersBar, renderMissions, renderWeek, renderDashboard, calculateProgress } from './render.js';
 import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti } from './effects.js';
 
 /* ════════════════ ESTRELAS: CONCEDER / REVOGAR ════════════════ */
@@ -27,6 +27,8 @@ export function awardStars(mission, stars) {
     state.memberStars[id] = (state.memberStars[id] || 0) + stars;
     state.totals[id] = (state.totals[id] || 0) + stars;
   });
+  state.familyWallet.earned += stars;
+  state.familyWallet.balance += stars;
 }
 
 export function revokeStars(mission, stars) {
@@ -35,6 +37,8 @@ export function revokeStars(mission, stars) {
     state.memberStars[id] = Math.max(0, (state.memberStars[id] || 0) - stars);
     state.totals[id] = Math.max(0, (state.totals[id] || 0) - stars);
   });
+  state.familyWallet.earned = Math.max(0, state.familyWallet.earned - stars);
+  state.familyWallet.balance = Math.max(0, state.familyWallet.balance - stars);
 }
 
 /* ════════════════ MARCAR / DESMARCAR TAREFA ════════════════ */
@@ -117,7 +121,8 @@ function setDoneWithBonus(missionId, bonusFlags) {
 }
 
 function allMissionsDone() {
-  return state.missions.length > 0 && state.missions.every(ms => !!state.missionStatus[ms.id]);
+  return state.missions.length > 0
+    && state.missions.every(ms => state.missionStatus[ms.id]?.status === 'done');
 }
 
 /* ════════════════ POPUP DE BÔNUS ════════════════ */
@@ -195,8 +200,25 @@ export function tryFinalizeDay() {
 
 export async function finalizeDay() {
   if (!isSelectedDateToday()) return;
-  const nextDate = shiftDateKey(state.selectedDate || state.today, 1);
+  const currentDate = state.selectedDate || state.today;
+  const nextDate = shiftDateKey(currentDate, 1);
   try {
+    const { familyPct } = calculateProgress();
+    const done = state.missions.filter(mission => state.missionStatus[mission.id]?.status === 'done').length;
+    const taskStars = state.missions.reduce(
+      (sum, mission) => sum + (state.missionStatus[mission.id]?.status === 'done' ? Number(state.missionStatus[mission.id]?.stars || 0) : 0),
+      0
+    );
+    const manualStars = state.bonusLog
+      .filter(event => event.date === currentDate)
+      .reduce((sum, event) => sum + Number(event.stars || 0), 0);
+    state.weekState.days[currentDate] = {
+      done,
+      total: state.missions.length,
+      pct: familyPct,
+      stars: taskStars + manualStars
+    };
+    await persistWeekState();
     await loadDateContext(nextDate);
     renderDashboard();
     showToast('🏁 DIA ENCERRADO. AGENDA AVANÇADA.');

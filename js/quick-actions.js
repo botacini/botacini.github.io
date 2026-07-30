@@ -41,6 +41,37 @@ function occurrencePatch(task) {
   return { title: task.title.toUpperCase(), start: task.start, end: task.end, emoji: task.emoji, description: task.description || '' };
 }
 
+function renderAssigneeOptions(selectedIds, primaryId) {
+  const container = document.getElementById('qa-task-assignees');
+  if (!container) return;
+  const selected = new Set(selectedIds || []);
+  if (primaryId) selected.add(primaryId);
+  container.replaceChildren(...state.config.members.map(member => {
+    const label = document.createElement('label');
+    label.className = 'qa-assignee-option';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'qa-assignee-checkbox';
+    input.value = member.id;
+    input.checked = selected.has(member.id);
+    input.disabled = member.id === primaryId;
+    const text = document.createElement('span');
+    text.textContent = `${member.avatar || '👤'} ${member.name}${member.id === primaryId ? ' · RESPONSÁVEL' : ''}`;
+    label.append(input, text);
+    return label;
+  }));
+}
+
+function selectedAssigneeIds() {
+  return Array.from(document.querySelectorAll('.qa-assignee-checkbox:checked')).map(input => input.value);
+}
+
+function isFiveMinuteTime(value) {
+  const parts = String(value).split(':').map(Number);
+  return parts.length === 2 && Number.isInteger(parts[0]) && Number.isInteger(parts[1])
+    && parts[0] >= 0 && parts[0] <= 23 && parts[1] >= 0 && parts[1] < 60 && parts[1] % 5 === 0;
+}
+
 export function openNewTaskPopup(memberId, missionToEdit = null, targetDateKey = null) {
   newTaskMemberId = memberId;
   editingMission = missionToEdit;
@@ -63,6 +94,7 @@ export function openNewTaskPopup(memberId, missionToEdit = null, targetDateKey =
   setValue('qa-task-edit-scope', 'series');
   const weeklyDays = missionToEdit?.schedule?.weekdays || [dateFromKey(date).getDay()];
   document.querySelectorAll('.qa-day-checkbox').forEach(input => { input.checked = weeklyDays.includes(Number(input.value)); });
+  renderAssigneeOptions(missionToEdit?.assignee || [memberId], missionToEdit?.assignee?.[0] || memberId);
   show('qa-task-overlay');
   document.getElementById('qa-task-name')?.focus();
 }
@@ -76,10 +108,22 @@ export function closeNewTaskPopup() {
 export async function confirmNewTask() {
   const task = taskPayload();
   if (!task.title) { alert('Digite o nome da tarefa.'); return; }
+  if (!isFiveMinuteTime(task.start) || !isFiveMinuteTime(task.end)) {
+    alert('Use horários em intervalos de 5 minutos.');
+    return;
+  }
+  if (task.start < '06:00') {
+    alert('A agenda começa às 06:00.');
+    return;
+  }
   if (task.end <= task.start) { alert('O horário final deve ser após o inicial.'); return; }
   const schedule = schedulePayload();
   try {
-    const assigneeIds = editingMission?.assignee || (newTaskMemberId ? [newTaskMemberId] : []);
+    const assigneeIds = selectedAssigneeIds();
+    if (!assigneeIds.length) {
+      alert('Selecione ao menos um participante.');
+      return;
+    }
     const validationSchedule = editingMission
       && document.getElementById('qa-task-edit-scope')?.value === 'occurrence'
       ? { type: 'once', date: editingMission.date }
@@ -92,20 +136,26 @@ export async function confirmNewTask() {
       return;
     }
     if (!editingMission) {
-      await createTaskWithSchedule(task, schedule, newTaskMemberId ? [newTaskMemberId] : []);
+      await createTaskWithSchedule(task, schedule, assigneeIds);
       showToast('✓ Tarefa criada.');
     } else {
       const scope = document.getElementById('qa-task-edit-scope')?.value || 'series';
       if (scope === 'occurrence') {
+        const assigneesChanged = assigneeIds.length !== editingMission.assignee.length
+          || assigneeIds.some(id => !editingMission.assignee.includes(id));
+        if (assigneesChanged) {
+          alert('Para alterar participantes, edite a série ou esta e as próximas ocorrências.');
+          return;
+        }
         await setOccurrenceOverride(editingMission.scheduleId, editingMission.date, 'override', occurrencePatch(task));
       } else if (scope === 'future') {
         if (editingMission.schedule?.type !== 'weekly') {
           alert('Uma tarefa de data única não possui próximas ocorrências.');
           return;
         }
-        await splitTaskScheduleForFuture(editingMission.scheduleId, editingMission.date, task, schedule, editingMission.assignee);
+        await splitTaskScheduleForFuture(editingMission.scheduleId, editingMission.date, task, schedule, assigneeIds);
       } else {
-        await updateTaskSeries(editingMission.taskId, editingMission.scheduleId, task, schedule, editingMission.assignee);
+        await updateTaskSeries(editingMission.taskId, editingMission.scheduleId, task, schedule, assigneeIds);
       }
       showToast('✏️ Tarefa atualizada.');
     }

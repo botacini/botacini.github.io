@@ -31,12 +31,16 @@
     <section id="panel-missions" class="panel">
       <div class="progress-box">
         <div class="progress-row">
-          <span id="prog-label">0 DE 0 TAREFAS ✅</span>
+          <span id="prog-label">PROGRESSO DA FAMÍLIA</span>
           <span id="prog-pct">0%</span>
         </div>
-        <div class="progress-track"><div id="prog-bar" class="progress-fill"></div></div>
+        <div class="family-race" aria-label="Progresso coletivo até a linha de chegada">
+          <div class="race-lane"></div>
+          <span id="car-avatar" class="car-avatar">🏎️</span>
+          <span class="finish-line" aria-hidden="true"></span>
+        </div>
+        <div id="individual-progress" class="individual-progress"></div>
       </div>
-      <div class="race-strip"><span id="car-avatar" class="car-avatar">🏎️</span></div>
       <div id="mission-list" class="mission-list"></div>
       <button id="btn-finalize" class="btn-finalize" title="Encerrar o dia e avançar para a próxima data" aria-label="Encerrar o dia e avançar para a próxima data">🏁 ENCERRAR DIA E AVANÇAR</button>
     </section>
@@ -47,6 +51,7 @@
         <div class="stars-track"><div id="stars-goal-bar" class="stars-fill"></div></div>
         <div id="team-stars-goal" class="stars-goal-label"></div>
       </div>
+      <div class="collective-wallet-label">CARTEIRA COLETIVA</div>
       <div id="member-stars-grid" class="member-stars-grid"></div>
     </section>
 
@@ -253,14 +258,19 @@
         <input id="qa-task-name" class="qa-input" placeholder="NOME DA TAREFA" maxlength="50">
       </div>
     </div>
+    <div class="qa-field">
+      <label class="qa-label">PARTICIPANTES</label>
+      <div id="qa-task-assignees" class="qa-assignees" role="group" aria-label="Participantes da tarefa"></div>
+      <div class="qa-hint">O membro da coluna permanece como responsável principal.</div>
+    </div>
     <div class="qa-time-row">
       <div class="qa-field">
         <label class="qa-label">INÍCIO</label>
-        <input id="qa-task-start" class="qa-input" type="time" value="08:00">
+        <input id="qa-task-start" class="qa-input" type="time" value="08:00" step="300">
       </div>
       <div class="qa-field">
         <label class="qa-label">FIM</label>
-        <input id="qa-task-end" class="qa-input" type="time" value="08:30">
+        <input id="qa-task-end" class="qa-input" type="time" value="08:30" step="300">
       </div>
     </div>
     <div class="qa-time-row">

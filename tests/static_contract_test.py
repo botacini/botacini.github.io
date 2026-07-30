@@ -25,6 +25,8 @@ class RelationalPersistenceContract(unittest.TestCase):
             "202607260004_grant_rls_helper_execution.sql",
             "20260727195339_prevent_task_schedule_conflicts.sql",
             "20260727195347_restore_remote_family_reset.sql",
+            "202607300001_collective_star_wallet.sql",
+            "202607300002_refine_collective_wallet_policies.sql",
         ])
         core = self.read("supabase/migrations/202607230002_relational_core.sql")
         for table in ("families", "family_access", "family_members", "family_settings", "tasks", "task_assignees", "task_schedules", "task_schedule_overrides", "task_occurrence_status"):
@@ -161,6 +163,46 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("rpc('reset_current_family_data')", storage)
         self.assertNotIn("Reset remoto não está disponível", storage)
         self.assertIn("Todos os dados da família foram apagados", panel)
+
+    def test_shared_tasks_are_selected_and_rendered_once(self):
+        actions = self.read("js/quick-actions.js")
+        renderer = self.read("js/render.js")
+        page = self.read("index.html")
+        self.assertIn('id="qa-task-assignees"', page)
+        self.assertIn("selectedAssigneeIds", actions)
+        self.assertIn("p_assignee_ids", self.read("js/storage.js"))
+        timeline_body = renderer.split("function renderTimelineBoard", 1)[1].split("function updateProgress", 1)[0]
+        self.assertIn("state.missions.map", timeline_body)
+        self.assertNotIn("members.map(mem => renderMemberColumn", renderer)
+        self.assertIn("grid-column", timeline_body)
+        self.assertIn("COMPARTILHADA", timeline_body)
+
+    def test_timeline_uses_five_minute_resolution(self):
+        page = self.read("index.html")
+        actions = self.read("js/quick-actions.js")
+        renderer = self.read("js/render.js")
+        self.assertEqual(page.count('step="300"'), 2)
+        self.assertIn("parts[1] % 5 === 0", actions)
+        self.assertIn("const TIMELINE_STEP = 5", renderer)
+        self.assertIn("repeat(var(--slot-count), 8px)", self.read("css/style.css"))
+
+    def test_progress_and_stars_are_independent(self):
+        missions = self.read("js/missions.js")
+        renderer = self.read("js/render.js")
+        self.assertIn("calculateProgress", renderer)
+        self.assertIn("missions.length ? Math.round((done / missions.length) * 100)", renderer)
+        self.assertIn("['capricho', 'pontual', 'semreclamar']", missions)
+        self.assertNotIn("baseStars", missions)
+
+    def test_collective_wallet_is_ready_for_future_economy(self):
+        migration = self.read("supabase/migrations/202607300001_collective_star_wallet.sql").lower()
+        storage = self.read("js/storage.js")
+        self.assertIn("family_star_transactions", migration)
+        self.assertIn("enable row level security", migration)
+        self.assertIn("can_access_family", migration)
+        self.assertIn("get_family_star_wallet", migration)
+        self.assertIn("shared task contributes its quality bonus once", migration)
+        self.assertIn("loadFamilyWallet", storage)
 
 
 if __name__ == "__main__":

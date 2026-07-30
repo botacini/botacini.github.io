@@ -88,15 +88,44 @@ function renderDayBanner() {
 export function renderMembersBar() {
   const bar = document.getElementById('members-bar');
   if (!bar) return;
+  const progressByMember = new Map(calculateProgress().individual.map(item => [item.memberId, item.pct]));
   bar.innerHTML = state.config.members.map(mem => `
     <div class="member-pill" style="border-color:${safeCssColor(mem.color)};background:${safeCssColor(mem.color)}22">
       <span class="pill-avatar">${escapeHtml(mem.avatar)}</span>
       <span class="pill-name">${escapeHtml(mem.name)}</span>
-      <span class="pill-stars">⭐${safeNumber(state.memberStars[mem.id])}</span>
+      <span class="pill-progress">${progressByMember.get(mem.id) === null ? '—' : `${progressByMember.get(mem.id)}%`}</span>
     </div>`).join('');
 }
 
-/* ════════════════ QUADRO DE TAREFAS (KANBAN POR MEMBRO) ════════════════ */
+const TIMELINE_START = 6 * 60;
+const TIMELINE_DEFAULT_END = 22 * 60;
+const TIMELINE_STEP = 5;
+
+function formatMinutes(minutes) {
+  const hours = Math.floor(minutes / 60);
+  return `${String(hours).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+export function calculateProgress() {
+  const members = state.config?.members || [];
+  const individual = members.map(member => {
+    const missions = state.missions.filter(mission => assigneeIds(mission).includes(member.id));
+    const done = missions.filter(mission => state.missionStatus[mission.id]?.status === 'done').length;
+    return {
+      memberId: member.id,
+      done,
+      total: missions.length,
+      pct: missions.length ? Math.round((done / missions.length) * 100) : null
+    };
+  });
+  const active = individual.filter(item => item.pct !== null);
+  const familyPct = active.length
+    ? Math.round(active.reduce((sum, item) => sum + item.pct, 0) / active.length)
+    : 0;
+  return { individual, familyPct };
+}
+
+/* ════════════════ AGENDA COMPARTILHADA POR TEMPO ════════════════ */
 export function renderMissions() {
   const container = document.getElementById('mission-list');
   if (!container) return;
@@ -114,9 +143,7 @@ export function renderMissions() {
       Adicione os membros da família na aba <strong>TIME</strong> para começar.
     </div>`;
   } else {
-    boardHTML = `<div class="missions-board${readonly ? ' consultation-mode' : ''}">
-      ${members.map(mem => renderMemberColumn(mem)).join('')}
-    </div>`;
+    boardHTML = renderTimelineBoard(members, readonly);
   }
 
   container.innerHTML = `
@@ -126,25 +153,45 @@ export function renderMissions() {
   `;
 }
 
-function renderMemberColumn(member) {
+function renderTimelineBoard(members, readonly) {
   const currentId = getCurrentMissionId();
-  const readonly = !isSelectedDateToday();
-  const memberMissions = state.missions.filter(ms =>
-    assigneeIds(ms).includes(member.id)
-  );
-
-  const rows = memberMissions.map((ms) => {
+  const latestEnd = state.missions.reduce((latest, mission) => Math.max(latest, timeToMin(mission.end)), TIMELINE_DEFAULT_END);
+  const timelineEnd = Math.ceil(latestEnd / 60) * 60;
+  const slotCount = Math.max(1, Math.ceil((timelineEnd - TIMELINE_START) / TIMELINE_STEP));
+  const headers = members.map(member => `
+    <div class="timeline-member-header" style="--member-color:${safeCssColor(member.color)}">
+      <span>${escapeHtml(member.avatar)}</span>
+      <strong>${escapeHtml(member.name)}</strong>
+      <button class="timeline-add-btn" data-add-task-member="${escapeHtml(member.id)}" data-add-task-date="${escapeHtml(selectedDateKey())}" aria-label="Adicionar tarefa para ${escapeHtml(member.name)}">＋</button>
+    </div>`).join('');
+  const timeLabels = Array.from({ length: slotCount + 1 }, (_, slot) => {
+    const minute = TIMELINE_START + slot * TIMELINE_STEP;
+    if (minute % 30 !== 0) return '';
+    return `<div class="timeline-time-label" style="grid-row:${slot + 2}">${formatMinutes(minute)}</div>`;
+  }).join('');
+  const cards = state.missions.map(ms => {
+    const participantIds = assigneeIds(ms);
+    const participantIndexes = participantIds
+      .map(id => members.findIndex(member => member.id === id))
+      .filter(index => index >= 0)
+      .sort((a, b) => a - b);
+    if (!participantIndexes.length) return '';
+    const startSlot = Math.max(0, Math.floor((timeToMin(ms.start) - TIMELINE_START) / TIMELINE_STEP));
+    const durationSlots = Math.max(1, Math.ceil((timeToMin(ms.end) - timeToMin(ms.start)) / TIMELINE_STEP));
+    const firstColumn = participantIndexes[0] + 2;
+    const lastColumn = participantIndexes[participantIndexes.length - 1] + 2;
     const st = state.missionStatus[ms.id];
     const doneClass = st?.status === 'done' ? ' done' : '';
     const failClass = st?.status === 'fail' ? ' fail' : '';
     const currentClass = currentId === ms.id && !st ? ' current' : '';
-    const sharedMemberIds = assigneeIds(ms);
-    const isShared = sharedMemberIds.length > 1;
+    const isShared = participantIds.length > 1;
 
     const missionId = escapeHtml(ms.id);
     const menuId = `task-menu-${missionId}`;
     return `
-      <div class="task-cell${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}" data-mission-id="${missionId}">
+      <div class="task-cell timeline-task${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}"
+        style="grid-column:${firstColumn}/${lastColumn + 1};grid-row:${startSlot + 2}/span ${durationSlots}"
+        data-mission-id="${missionId}" data-duration-slots="${durationSlots}">
         <div class="task-time">
           <span class="task-start">${escapeHtml(ms.start)}</span>
           <span class="task-sep"> - </span>
@@ -161,7 +208,7 @@ function renderMemberColumn(member) {
         <div class="task-emoji">${escapeHtml(ms.emoji)}</div>
         <div class="task-body">
           <div class="task-title">${escapeHtml(ms.title)}</div>
-          <div class="task-desc">${escapeHtml(ms.desc)}</div>
+          ${isShared ? `<div class="task-shared-label">COMPARTILHADA · ${participantIds.length} MEMBROS</div>` : ''}
         </div>
         <div class="task-actions">
           <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
@@ -169,38 +216,41 @@ function renderMemberColumn(member) {
         </div>
       </div>`;
   }).join('');
-
-  const memberId = escapeHtml(member.id);
-  const addBtn = `<button class="task-add-btn" data-add-task-member="${memberId}" data-add-task-date="${escapeHtml(selectedDateKey())}">➕ Adicionar tarefa</button>`;
-
   return `
-    <div class="board-column" style="--member-color:${safeCssColor(member.color)}">
-      <div class="column-header">
-        <span class="column-avatar">${escapeHtml(member.avatar)}</span>
-        <span class="column-name">${escapeHtml(member.name)}</span>
-        <span class="column-stars">⭐${safeNumber(state.memberStars[member.id])}</span>
-      </div>
-      <div class="column-tasks">
-        ${rows || '<div class="column-empty">— sem tarefas hoje</div>'}
-        ${addBtn}
+    <div class="timeline-scroll">
+      <div class="timeline-board${readonly ? ' consultation-mode' : ''}"
+        style="--member-count:${members.length};--slot-count:${slotCount}">
+        <div class="timeline-corner">HORA</div>
+        ${headers}
+        <div class="timeline-grid-bg"></div>
+        ${timeLabels}
+        ${cards}
       </div>
     </div>`;
 }
 
 function updateProgress() {
-  const total = state.missions.length;
-  const done = state.missions.filter(ms => state.missionStatus[ms.id]?.status === 'done').length;
-  const pct = total ? Math.round((done / total) * 100) : 0;
+  const { individual, familyPct } = calculateProgress();
 
   const label = document.getElementById('prog-label');
   const pctEl = document.getElementById('prog-pct');
-  const bar = document.getElementById('prog-bar');
-  if (label) label.textContent = `${done} DE ${total} TAREFAS ✅`;
-  if (pctEl) pctEl.textContent = `${pct}%`;
-  if (bar) bar.style.width = pct + '%';
+  if (label) label.textContent = familyPct === 100 ? 'FAMÍLIA NA LINHA DE CHEGADA!' : 'PROGRESSO DA FAMÍLIA';
+  if (pctEl) pctEl.textContent = `${familyPct}%`;
 
   const car = document.getElementById('car-avatar');
-  if (car) car.style.left = pct + '%';
+  if (car) car.style.left = `calc(${familyPct}% - ${familyPct * 0.28}px)`;
+  const individualEl = document.getElementById('individual-progress');
+  if (individualEl) {
+    individualEl.innerHTML = individual.map(item => {
+      const member = state.config.members.find(candidate => candidate.id === item.memberId);
+      const pct = item.pct ?? 0;
+      return `<div class="individual-progress-row">
+        <span>${escapeHtml(member?.avatar || '👤')} ${escapeHtml(member?.name || '')}</span>
+        <div class="mini-progress-track"><span style="width:${pct}%"></span></div>
+        <strong>${item.pct === null ? '—' : `${item.pct}%`}</strong>
+      </div>`;
+    }).join('');
+  }
 
   const finalizeBtn = document.getElementById('btn-finalize');
   if (finalizeBtn) finalizeBtn.disabled = !isSelectedDateToday();
@@ -214,8 +264,7 @@ function updateProgress() {
 function updateHeaderStarsDisplay() {
   const el = document.getElementById('header-team-stars');
   if (!el) return;
-  const total = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
-  el.textContent = total;
+  el.textContent = safeNumber(state.familyWallet?.balance);
 }
 
 /* ════════════════ ABA ESTRELAS ════════════════ */
@@ -226,7 +275,7 @@ export function renderStarsTab() {
   const grid = document.getElementById('member-stars-grid');
   if (!totalEl || !grid) return;
 
-  const total = Object.values(state.memberStars).reduce((a, b) => a + b, 0);
+  const total = safeNumber(state.familyWallet?.balance);
   const goal = state.config.teamStarsGoal || 20;
   totalEl.textContent = total;
   if (barEl) barEl.style.width = Math.min(100, Math.round((total / goal) * 100)) + '%';
@@ -237,7 +286,7 @@ export function renderStarsTab() {
       <div class="member-star-avatar">${escapeHtml(mem.avatar)}</div>
       <div class="member-star-name">${escapeHtml(mem.name)}</div>
       <div class="member-star-count">⭐ ${safeNumber(state.memberStars[mem.id])}</div>
-      <div class="member-star-sub">${isSelectedDateToday() ? 'HOJE' : selectedDateLabel()}</div>
+      <div class="member-star-sub">CONTRIBUIÇÃO · ${isSelectedDateToday() ? 'HOJE' : selectedDateLabel()}</div>
     </div>`).join('');
 
   // Botão de atalho fora do grid
@@ -261,12 +310,10 @@ const ROLE_LABEL = { pai: 'PAI', mae: 'MÃE', crianca: 'CRIANÇA' };
 export function renderTeamTab() {
   const container = document.getElementById('team-cards');
   if (!container) return;
+  const progressByMember = new Map(calculateProgress().individual.map(item => [item.memberId, item]));
 
   const memberCards = state.config.members.map(mem => {
-    const doneCount = state.missions.filter(ms =>
-      assigneeIds(ms).includes(mem.id) &&
-      state.missionStatus[ms.id]?.status === 'done'
-    ).length;
+    const progress = progressByMember.get(mem.id) || { done: 0, total: 0, pct: null };
     return `
       <div class="team-member-card" style="border-left:4px solid ${safeCssColor(mem.color)}">
         <span class="team-member-avatar">${escapeHtml(mem.avatar)}</span>
@@ -275,8 +322,8 @@ export function renderTeamTab() {
           <span class="role-badge role-${ROLE_LABEL[mem.role] ? mem.role : 'crianca'}">${ROLE_LABEL[mem.role] || 'MEMBRO'}</span>
         </div>
         <div class="team-member-stats">
-          <div class="team-member-stars">⭐ ${safeNumber(state.memberStars[mem.id])}</div>
-          <div class="team-member-done">${doneCount} TAREFAS ${isSelectedDateToday() ? 'HOJE' : 'NO DIA'}</div>
+          <div class="team-member-progress">${progress.pct === null ? '—' : `${progress.pct}%`}</div>
+          <div class="team-member-done">${progress.done}/${progress.total} CONCLUÍDAS</div>
         </div>
       </div>`;
   }).join('');

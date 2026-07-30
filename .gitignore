@@ -9,3 +9,5 @@ coverage/
 node_modules/
 tests/__pycache__/
 tests/headless-smoke.png
+test-results/
+playwright-report/
