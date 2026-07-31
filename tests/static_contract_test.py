@@ -27,6 +27,7 @@ class RelationalPersistenceContract(unittest.TestCase):
             "20260727195347_restore_remote_family_reset.sql",
             "202607300001_collective_star_wallet.sql",
             "202607300002_refine_collective_wallet_policies.sql",
+            "202607300003_task_categories_settings.sql",
         ])
         core = self.read("supabase/migrations/202607230002_relational_core.sql")
         for table in ("families", "family_access", "family_members", "family_settings", "tasks", "task_assignees", "task_schedules", "task_schedule_overrides", "task_occurrence_status"):
@@ -197,6 +198,26 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertIn("TASK_CATEGORIES", state)
         self.assertIn("taskDescriptionWithCategory", actions)
         self.assertIn("taskCategoryFromDescription", renderer)
+
+    def test_task_categories_are_manageable_and_persisted(self):
+        page = self.read("index.html")
+        state = self.read("js/state.js")
+        storage = self.read("js/storage.js")
+        panel = self.read("js/parent-panel.js")
+        migration = self.read("supabase/migrations/202607300003_task_categories_settings.sql")
+        self.assertIn('data-sub="categorias"', page)
+        self.assertIn("task_categories jsonb", migration)
+        self.assertIn("task_categories", storage)
+        self.assertIn("setTaskCategories", state)
+        self.assertIn("makeCategoryId", panel)
+        self.assertIn("countTasksUsingCategory", panel)
+        self.assertIn("Mova essas tarefas para outra categoria", panel)
+
+    def test_timeline_card_layout_and_car_orientation_are_visual_only(self):
+        stylesheet = self.read("css/style.css")
+        self.assertIn(".timeline-task .task-time", stylesheet)
+        self.assertIn("justify-content: center", stylesheet)
+        self.assertIn("transform: scaleX(-1)", stylesheet)
 
     def test_progress_and_stars_are_independent(self):
         missions = self.read("js/missions.js")

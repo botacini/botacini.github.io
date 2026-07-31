@@ -1,5 +1,26 @@
 # Changelog — GP da Família
 
+## Em desenvolvimento (2026-07-30) — refinamento visual e categorias
+
+### Corrigido
+
+- Restaurado o equilíbrio interno dos cards da linha do tempo: horário fixo no topo e conteúdo visual centralizado no espaço restante.
+- Corrigida a orientação visual do carrinho da barra de progresso, mantendo a animação de deslocamento existente.
+
+### Adicionado
+
+- Painel dos Pais passa a administrar categorias de tarefas com nome, cor e identificador interno.
+- Categorias podem ser criadas, editadas e excluídas pela interface.
+- Exclusão de categoria usada por tarefas é bloqueada com aviso da quantidade de referências.
+- Catálogo de categorias persistido em `family_settings.task_categories`, mantendo a categoria da tarefa no marcador textual existente.
+- Cobertura Playwright para criação, edição, exclusão e bloqueio de exclusão de categorias.
+
+### Validação
+
+- 23 contratos estáticos aprovados.
+- 10 cenários Playwright aprovados em Chromium desktop e Pixel 7.
+- 2 cenários autenticados opcionais ignorados por ausência de variáveis de credenciais.
+
 ## Em desenvolvimento (2026-07-30) — estabilização de interface
 
 ### Corrigido

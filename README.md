@@ -23,7 +23,7 @@ O branch `codex/refactor-supabase-tests-20260724` reúne:
 - tarefas compartilhadas exibidas como cards independentes por participante, sem atravessar colunas;
 - edição permanentemente visível em todos os cards;
 - seletor de participantes em grid responsivo com avatar, nome e indicação do responsável;
-- categorias extensíveis por cor, compatíveis com tarefas e backups existentes;
+- categorias extensíveis por cor, administráveis no Painel dos Pais e compatíveis com tarefas e backups existentes;
 - progresso individual por percentual e progresso familiar pela média dos membros com tarefas;
 - pista com carrinho e linha de chegada como indicador principal;
 - estrelas concedidas somente por pontualidade, capricho e realização sem reclamar;
@@ -37,7 +37,7 @@ O ambiente de desenvolvimento foi provisionado separadamente do projeto original
 A aplicação não usa mais o documento JSONB monolítico de `family_config`.
 
 - Famílias e acessos: `families`, `family_access`, `family_members`.
-- Configurações e metas: `family_settings`, `family_custom_goals`, `family_badges`.
+- Configurações, categorias e metas: `family_settings`, `family_custom_goals`, `family_badges`.
 - Tarefas e responsáveis: `tasks`, `task_assignees`.
 - Agenda: `task_schedules`, `task_schedule_overrides`, `task_occurrence_status`.
 - Histórico: `manual_star_events`, `daily_summaries`, `weekly_summaries`.
@@ -80,7 +80,7 @@ O plano e os critérios de aceite estão em [ROADMAP.md](ROADMAP.md).
 - `js/quick-actions.js`: criação e edição.
 - `js/missions.js`: conclusão, bônus e penalidades.
 - `js/render.js`: renderização.
-- `js/parent-panel.js`: membros, configurações, metas e backup.
+- `js/parent-panel.js`: membros, categorias, configurações, metas e backup.
 - `supabase/migrations`: schema, funções e RLS.
 - `tests/static_contract_test.py`: contratos estáticos.
 - `tests/e2e/timeline.spec.js`: regressão visual e funcional do grid, compartilhamento e progresso.
@@ -92,7 +92,7 @@ O plano e os critérios de aceite estão em [ROADMAP.md](ROADMAP.md).
 
 Já foram executados testes estáticos, verificação de whitespace, migrations no projeto de Desenvolvimento e validação integrada via Auth/Data API: login, RLS entre famílias, recorrência, edição, exceções, backup/restauração e persistência após nova sessão.
 
-Execute `npm install` e `npm test` para rodar contratos estáticos e Playwright. O teste autenticado é opcional e exige `GP_TEST_EMAIL` e `GP_TEST_PASSWORD`.
+Execute `npm install` e `npm test` para rodar contratos estáticos e Playwright. A validação atual cobre 23 contratos estáticos e 10 cenários Playwright em Chromium desktop e Pixel 7; os 2 testes autenticados são opcionais e exigem `GP_TEST_EMAIL` e `GP_TEST_PASSWORD`.
 
 Antes de produção ainda são obrigatórios:
 
@@ -107,4 +107,5 @@ Antes de produção ainda são obrigatórios:
 - Excluir uma ocorrência cria uma exceção `skip` e preserva a identidade da série.
 - Encerrar o dia apenas avança a data exibida; estados das tarefas não são alterados.
 - A agenda aceita qualquer horário múltiplo de 5 minutos e expande sua faixa pelo menor início e maior término do dia.
-- Categorias são serializadas no campo de descrição existente; tarefas antigas sem marcador usam `Outros`.
+- O catálogo de categorias é persistido em `family_settings.task_categories`.
+- A categoria de cada tarefa continua serializada no campo de descrição existente; tarefas antigas sem marcador usam `Outros`.

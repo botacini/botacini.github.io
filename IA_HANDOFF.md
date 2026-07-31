@@ -24,10 +24,12 @@ A versão publicada para testes recebeu alterações posteriores ao primeiro com
 - cards compartilhados independentes por participante, sem atravessar colunas;
 - edição sempre visível, inclusive em cards compartilhados;
 - seletor de participantes em cards responsivos de duas colunas;
-- categorias extensíveis por cor, persistidas no campo textual existente;
+- categorias extensíveis por cor, administráveis no Painel dos Pais;
+- catálogo de categorias persistido em `family_settings.task_categories`, mantendo a categoria de cada tarefa no campo textual existente;
 - progresso individual e familiar independentes de estrelas;
 - pista com carrinho e linha de chegada;
 - carteira coletiva e razão `family_star_transactions`;
+- carrinho da pista orientado para a linha de chegada;
 - Playwright versionado para desktop e Pixel 7.
 
 O modo temporário de teste baseado em `localStorage` não faz parte da consolidação. O branch mantém autenticação e persistência relacionais.
@@ -44,7 +46,7 @@ O modo temporário de teste baseado em `localStorage` não faz parte da consolid
 ## Modelo atual
 
 - Núcleo: `families`, `family_access`, `family_members`.
-- Configuração: `family_settings`, `family_custom_goals`, `family_badges`.
+- Configuração: `family_settings` (inclui `task_categories`), `family_custom_goals`, `family_badges`.
 - Agenda: `tasks`, `task_assignees`, `task_schedules`, `task_schedule_overrides`, `task_occurrence_status`.
 - Histórico: `manual_star_events`, `daily_summaries`, `weekly_summaries`.
 - Economia preparada: `family_star_transactions` e RPC `get_family_star_wallet`.
@@ -75,6 +77,7 @@ Consulte [ROADMAP.md](ROADMAP.md) antes de implementar temas, loja ou campanhas.
 - horários podem ocupar qualquer parte do dia, devem ser múltiplos de 5 minutos e definem dinamicamente a faixa exibida;
 - a carteira atual é derivada das ocorrências e eventos manuais; o razão novo permanece sem gravações até a loja;
 - editar participantes em uma única ocorrência não é permitido, pois responsáveis pertencem à definição da tarefa; usar série ou “esta e as próximas”.
+- excluir categoria em uso é bloqueado no Painel dos Pais; primeiro é preciso mover as tarefas para outra categoria.
 
 ## Próxima fase
 
@@ -82,7 +85,7 @@ Estabilização da base relacional:
 
 Concluídos no projeto de desenvolvimento: cadastro/login/logout, recuperação de sessão, isolamento RLS entre duas famílias, recorrência semanal, edições de série/ocorrência/futuro, exclusões de ocorrência/série, conflitos, estados/estrelas, bônus/penalidades, navegação semanal, encerramento do dia, backup/restauração, reset e persistência após nova sessão.
 
-Validação do sprint: 21 contratos estáticos e 8 cenários Playwright aprovados em Chromium desktop e Pixel 7. O cenário autenticado opcional permanece pendente porque depende de credenciais fornecidas por variáveis de ambiente.
+Validação do sprint: 23 contratos estáticos e 10 cenários Playwright aprovados em Chromium desktop e Pixel 7. Os 2 cenários autenticados opcionais permanecem pendentes porque dependem de credenciais fornecidas por variáveis de ambiente.
 
 Somente depois iniciar a extração do manifesto de tema.
 
@@ -95,4 +98,4 @@ Somente depois iniciar a extração do manifesto de tema.
 - termos, emojis, mensagens, CSS e nomes de componentes continuam acoplados ao automobilismo;
 - transações futuras ainda não são gravadas nem restauradas pelo backup porque a loja não existe;
 - definir o efeito exato das penalidades sobre o futuro saldo é uma decisão pendente.
-- categorias usam um marcador reservado no campo `tasks.description`; descrições livres ainda não possuem editor próprio.
+- categorias de tarefas usam um marcador reservado no campo `tasks.description`; descrições livres ainda não possuem editor próprio.

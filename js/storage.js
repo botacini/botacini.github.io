@@ -30,6 +30,10 @@ function timeValue(value) {
   return typeof value === 'string' ? value.slice(0, 5) : value;
 }
 
+function categoryIdFromDescription(description) {
+  return String(description || '').match(/^\[categoria:([a-z0-9_-]+)\]\s*/i)?.[1]?.toLowerCase() || 'outros';
+}
+
 export function invalidateCache() {
   currentFamilyId = null;
 }
@@ -66,6 +70,7 @@ export async function loadConfig() {
     requireApproval: settingsResult.data.require_approval,
     skipParentPanelPin: settingsResult.data.skip_parent_panel_pin,
     teamStarsGoal: settingsResult.data.team_stars_goal,
+    taskCategories: settingsResult.data.task_categories || null,
     customGoals: goalsResult.data.map(goal => ({
       id: goal.id,
       type: goal.goal_type,
@@ -82,12 +87,14 @@ export async function loadConfig() {
 
 export async function saveFamilySettings(settings) {
   const familyId = await ensureFamily();
-  const { error } = await getClient().from('family_settings').update({
+  const payload = {
     pin: settings.pin,
     require_approval: !!settings.requireApproval,
     skip_parent_panel_pin: !!settings.skipParentPanelPin,
     team_stars_goal: Number(settings.teamStarsGoal) || 20
-  }).eq('family_id', familyId);
+  };
+  if (Array.isArray(settings.taskCategories)) payload.task_categories = settings.taskCategories;
+  const { error } = await getClient().from('family_settings').update(payload).eq('family_id', familyId);
   if (error) fail('salvar configuracoes', error);
 }
 
@@ -254,6 +261,13 @@ export async function clearOccurrenceStatus(mission) {
     p_occurrence_date: mission.date
   });
   if (error) fail('limpar status', error);
+}
+
+export async function countTasksUsingCategory(categoryId) {
+  const familyId = await ensureFamily();
+  const { data, error } = await getClient().from('tasks').select('description').eq('family_id', familyId);
+  if (error) fail('contar tarefas por categoria', error);
+  return (data || []).filter(task => categoryIdFromDescription(task.description) === categoryId).length;
 }
 
 export async function loadTotals() {

@@ -6,7 +6,7 @@ import {
 export const DAY_NAMES = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
 export const DAY_FULL = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 export const MEMBER_COLOR_PALETTE = ['#378add', '#e879c9', '#5cb832', '#e8b800', '#cb3232', '#8a5cf6', '#38b6ce', '#f2884b'];
-export const TASK_CATEGORIES = [
+export const DEFAULT_TASK_CATEGORIES = [
   { id: 'domesticos', name: 'Serviços domésticos', color: '#f2884b' },
   { id: 'homeschool', name: 'Homeschool', color: '#8a5cf6' },
   { id: 'trabalho', name: 'Trabalho', color: '#378add' },
@@ -19,14 +19,61 @@ export const TASK_CATEGORIES = [
   { id: 'transporte', name: 'Transporte', color: '#b56bd6' },
   { id: 'outros', name: 'Outros', color: '#74777f' }
 ];
+export const TASK_CATEGORIES = DEFAULT_TASK_CATEGORIES.map(category => ({ ...category }));
 
 const CATEGORY_MARKER = /^\[categoria:([a-z0-9_-]+)\]\s*/i;
+function validCategoryId(value) {
+  return /^[a-z0-9_-]{2,40}$/.test(String(value || ''));
+}
+
+function validColor(value) {
+  return /^#[0-9a-f]{6}$/i.test(String(value || ''));
+}
+
+export function normalizeTaskCategories(categories) {
+  const source = Array.isArray(categories) && categories.length ? categories : DEFAULT_TASK_CATEGORIES;
+  const seen = new Set();
+  const normalized = [];
+  source.forEach(category => {
+    const id = String(category?.id || '').trim().toLowerCase();
+    const name = String(category?.name || '').trim();
+    const color = String(category?.color || '').trim();
+    if (!validCategoryId(id) || !name || !validColor(color) || seen.has(id)) return;
+    seen.add(id);
+    normalized.push({ id, name: name.slice(0, 60), color });
+  });
+  return normalized.length ? normalized : DEFAULT_TASK_CATEGORIES.map(category => ({ ...category }));
+}
+
+export function setTaskCategories(categories) {
+  TASK_CATEGORIES.splice(0, TASK_CATEGORIES.length, ...normalizeTaskCategories(categories));
+}
+
+export function makeCategoryId(name, categories = TASK_CATEGORIES) {
+  const base = String(name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 32) || 'categoria';
+  const used = new Set(categories.map(category => category.id));
+  if (!used.has(base)) return base;
+  for (let suffix = 2; suffix < 1000; suffix += 1) {
+    const candidate = `${base}-${suffix}`;
+    if (!used.has(candidate)) return candidate;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
 export function taskCategoryFromDescription(description) {
   const id = String(description || '').match(CATEGORY_MARKER)?.[1]?.toLowerCase() || 'outros';
-  return TASK_CATEGORIES.some(category => category.id === id) ? id : 'outros';
+  if (TASK_CATEGORIES.some(category => category.id === id)) return id;
+  return TASK_CATEGORIES.some(category => category.id === 'outros') ? 'outros' : TASK_CATEGORIES[0]?.id || 'outros';
 }
 export function taskDescriptionWithCategory(categoryId, description = '') {
-  const validId = TASK_CATEGORIES.some(category => category.id === categoryId) ? categoryId : 'outros';
+  const fallback = TASK_CATEGORIES.some(category => category.id === 'outros') ? 'outros' : TASK_CATEGORIES[0]?.id || 'outros';
+  const validId = TASK_CATEGORIES.some(category => category.id === categoryId) ? categoryId : fallback;
   return `[categoria:${validId}] ${String(description || '').replace(CATEGORY_MARKER, '').trim()}`.trim();
 }
 
@@ -109,6 +156,8 @@ export async function loadDateContext(dateKey) {
 
 export async function loadState() {
   state.config = await loadConfig();
+  setTaskCategories(state.config.taskCategories);
+  state.config.taskCategories = TASK_CATEGORIES.map(category => ({ ...category }));
   state.today = todayKey();
   const [totals, badges, bonusLog] = await Promise.all([loadTotals(), loadBadges(), loadBonusLog()]);
   state.totals = totals;

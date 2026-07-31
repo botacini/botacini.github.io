@@ -1,14 +1,18 @@
-import { state, saveConfig, loadDateContext, nextMemberColor, todayKey } from './state.js';
+import {
+  state, saveConfig, loadDateContext, nextMemberColor, todayKey,
+  TASK_CATEGORIES, makeCategoryId, setTaskCategories
+} from './state.js';
 import {
   createFamilyMember, updateFamilyMember, deleteFamilyMember,
   updateCustomGoal, deleteCustomGoal, addManualStarEvent, deleteManualStarEventsBySource,
-  exportAllData, importAllData, resetAllData
+  exportAllData, importAllData, resetAllData, countTasksUsingCategory
 } from './storage.js';
 import { getSession } from './auth.js';
 import { renderDashboard } from './render.js';
 import { checkAndUnlockBadges } from './missions.js';
 
 let activeSubTab = 'membros';
+let editingCategoryId = null;
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
@@ -91,6 +95,33 @@ function tarefasHTML() {
     ${state.missions.map(mission => `<div class="pp-bonus-entry"><span>${escapeHtml(mission.emoji)} ${escapeHtml(mission.title)}</span><span>${escapeHtml(mission.start)}–${escapeHtml(mission.end)}</span></div>`).join('') || '<div class="pp-empty">NENHUMA TAREFA NESTA DATA</div>'}`;
 }
 
+function categoriasHTML() {
+  const editing = TASK_CATEGORIES.find(category => category.id === editingCategoryId) || null;
+  return `
+    <div class="pp-section-title">CATEGORIAS DE TAREFAS</div>
+    <div class="pp-category-form">
+      <input id="pp-category-name" class="pp-input" maxlength="60" placeholder="Nome da categoria" value="${escapeHtml(editing?.name || '')}">
+      <div class="pp-category-form-row">
+        <input id="pp-category-color" class="pp-input pp-color-input" type="color" value="${escapeHtml(editing?.color || '#74777f')}" aria-label="Cor da categoria">
+        <button class="pp-btn-add pp-category-save" data-save-category>${editing ? 'SALVAR CATEGORIA' : 'CRIAR CATEGORIA'}</button>
+        ${editing ? '<button class="pp-btn-small" data-cancel-category-edit>CANCELAR</button>' : ''}
+      </div>
+      ${editing ? `<div class="pp-category-id">ID: ${escapeHtml(editing.id)}</div>` : ''}
+    </div>
+    <div class="pp-category-list">
+      ${TASK_CATEGORIES.map(category => `
+        <div class="pp-category-row" data-category-id="${escapeHtml(category.id)}">
+          <span class="pp-category-swatch" style="background:${escapeHtml(category.color)}"></span>
+          <div class="pp-category-info">
+            <strong>${escapeHtml(category.name)}</strong>
+            <span>${escapeHtml(category.id)}</span>
+          </div>
+          <button class="pp-btn-small" data-edit-category>EDITAR</button>
+          <button class="pp-btn-remove" data-delete-category>X</button>
+        </div>`).join('')}
+    </div>`;
+}
+
 function extrasHTML() {
   const goals = state.config.customGoals || [];
   return `
@@ -144,6 +175,7 @@ function renderParentPanel() {
   const body = document.getElementById('parent-panel-body');
   if (!body) return;
   if (activeSubTab === 'tarefas') body.innerHTML = tarefasHTML();
+  else if (activeSubTab === 'categorias') body.innerHTML = categoriasHTML();
   else if (activeSubTab === 'extras') body.innerHTML = extrasHTML();
   else if (activeSubTab === 'bonus') body.innerHTML = bonusHTML();
   else if (activeSubTab === 'ajustes') body.innerHTML = ajustesHTML();
@@ -152,6 +184,14 @@ function renderParentPanel() {
 
 async function refreshAfterChange() {
   await loadDateContext(state.selectedDate || state.today);
+  renderDashboard();
+  renderParentPanel();
+}
+
+async function persistCategories(categories) {
+  setTaskCategories(categories);
+  state.config.taskCategories = TASK_CATEGORIES.map(category => ({ ...category }));
+  await saveConfig();
   renderDashboard();
   renderParentPanel();
 }
@@ -200,6 +240,41 @@ export function wireParentPanelEvents() {
         await deleteCustomGoal(goal.id);
         state.config.customGoals = state.config.customGoals.filter(item => item.id !== id);
         await refreshAfterChange();
+      } else if (event.target.matches('[data-edit-category]')) {
+        editingCategoryId = event.target.closest('[data-category-id]').dataset.categoryId;
+        renderParentPanel();
+      } else if (event.target.matches('[data-cancel-category-edit]')) {
+        editingCategoryId = null;
+        renderParentPanel();
+      } else if (event.target.matches('[data-save-category]')) {
+        const name = document.getElementById('pp-category-name')?.value.trim() || '';
+        const color = document.getElementById('pp-category-color')?.value || '#74777f';
+        if (!name) { alert('Informe o nome da categoria.'); return; }
+        if (!/^#[0-9a-f]{6}$/i.test(color)) { alert('Escolha uma cor valida.'); return; }
+        const categories = TASK_CATEGORIES.map(category => ({ ...category }));
+        if (editingCategoryId) {
+          const category = categories.find(item => item.id === editingCategoryId);
+          if (!category) return;
+          category.name = name;
+          category.color = color;
+          editingCategoryId = null;
+        } else {
+          categories.push({ id: makeCategoryId(name, categories), name, color });
+        }
+        await persistCategories(categories);
+      } else if (event.target.matches('[data-delete-category]')) {
+        const id = event.target.closest('[data-category-id]').dataset.categoryId;
+        const category = TASK_CATEGORIES.find(item => item.id === id);
+        if (!category) return;
+        if (TASK_CATEGORIES.length <= 1) { alert('Mantenha pelo menos uma categoria.'); return; }
+        const usage = await countTasksUsingCategory(id);
+        if (usage > 0) {
+          alert(`${usage} tarefa(s) usam a categoria "${category.name}". Mova essas tarefas para outra categoria antes de excluir.`);
+          return;
+        }
+        if (!confirm(`Excluir a categoria "${category.name}"? Ela nao e usada por nenhuma tarefa.`)) return;
+        editingCategoryId = null;
+        await persistCategories(TASK_CATEGORIES.filter(item => item.id !== id));
       } else if (event.target.id === 'pp-save-pin') {
         const pin = document.getElementById('pp-pin-input').value.trim();
         if (!/^\d{4,8}$/.test(pin)) { alert('O PIN deve ter de 4 a 8 números.'); return; }

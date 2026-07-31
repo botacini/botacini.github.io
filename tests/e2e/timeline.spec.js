@@ -102,3 +102,74 @@ test('expands the timeline to early tasks and labels every five minutes', async 
   await expect(page.locator('.timeline-task[data-mission-id="m5"] .task-emoji')).toBeVisible();
   await expect(page.locator('.timeline-task[data-mission-id="m5"]')).toContainText('Sono');
 });
+
+test('manages task categories from the parent panel', async ({ page }) => {
+  await renderFixture(page);
+  await page.evaluate(async ({ members }) => {
+    window.GP_SUPABASE_CONFIG = { url: 'https://example.test', publishableKey: 'test-key' };
+    window.__taskRows = [{ description: '[categoria:sono]' }];
+    window.__settingsPayload = null;
+    window.supabase = {
+      createClient: () => ({
+        rpc: async () => ({ data: 'family-test', error: null }),
+        from: table => ({
+          select: () => ({
+            eq: async () => ({ data: table === 'tasks' ? window.__taskRows : [], error: null })
+          }),
+          update: payload => {
+            window.__settingsPayload = payload;
+            return { eq: async () => ({ error: null }) };
+          }
+        })
+      })
+    };
+    const [{ state, setTaskCategories }, panel] = await Promise.all([
+      import('/js/state.js'),
+      import('/js/parent-panel.js')
+    ]);
+    state.config = {
+      members,
+      pin: '1234',
+      requireApproval: false,
+      skipParentPanelPin: true,
+      teamStarsGoal: 20,
+      customGoals: [],
+      familyName: 'TESTE',
+      taskCategories: [
+        { id: 'sono', name: 'Sono', color: '#52627a' },
+        { id: 'outros', name: 'Outros', color: '#74777f' }
+      ]
+    };
+    state.weekState = { weekKey: '2026-07-27', days: {}, finalized: false };
+    state.badgesUnlocked = [];
+    setTaskCategories(state.config.taskCategories);
+    panel.wireParentPanelEvents();
+    panel.openParentPanelOnTab('categorias');
+  }, { members });
+
+  await expect(page.locator('.pp-category-row')).toHaveCount(2);
+  await page.locator('#pp-category-name').fill('Musica');
+  await page.locator('#pp-category-color').fill('#112233');
+  await page.locator('[data-save-category]').click();
+  await expect(page.locator('.pp-category-row').filter({ hasText: 'Musica' })).toBeVisible();
+
+  const created = page.locator('.pp-category-row').filter({ hasText: 'Musica' });
+  await created.locator('[data-edit-category]').click();
+  await page.locator('#pp-category-name').fill('Arte');
+  await page.locator('#pp-category-color').fill('#223344');
+  await page.locator('[data-save-category]').click();
+  await expect(page.locator('.pp-category-row').filter({ hasText: 'Arte' })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.__settingsPayload.task_categories.find(item => item.id === 'musica')?.color)).toBe('#223344');
+
+  page.once('dialog', async dialog => {
+    expect(dialog.message()).toContain('1 tarefa');
+    await dialog.dismiss();
+  });
+  await page.locator('.pp-category-row').filter({ hasText: 'Sono' }).locator('[data-delete-category]').click();
+  await expect(page.locator('.pp-category-row').filter({ hasText: 'Sono' })).toBeVisible();
+
+  await page.evaluate(() => { window.__taskRows = []; });
+  page.once('dialog', async dialog => { await dialog.accept(); });
+  await page.locator('.pp-category-row').filter({ hasText: 'Arte' }).locator('[data-delete-category]').click();
+  await expect(page.locator('.pp-category-row').filter({ hasText: 'Arte' })).toHaveCount(0);
+});
