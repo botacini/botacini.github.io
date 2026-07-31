@@ -194,27 +194,30 @@ function renderTimelineBoard(members, readonly) {
       <div class="task-cell timeline-task${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}"
         style="--category-color:${safeCssColor(category.color)};grid-column:${participantIndex + 2};grid-row:${startSlot + 2}/span ${durationSlots}"
         data-mission-id="${missionId}" data-duration-slots="${durationSlots}">
-        <button class="task-edit-direct" data-edit-mission="${missionId}" aria-label="Editar ${escapeHtml(ms.title)}" title="Editar">✎</button>
-        ${cardIndex === 0 ? `<div class="task-menu-wrapper">
-          <button class="task-menu-btn" data-open-task-menu="${missionId}" title="Opções">⋯</button>
-          <div class="task-dropdown" id="${menuId}">
-            <button class="task-dropdown-item" data-edit-mission="${missionId}">✏️ Editar</button>
-            <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="occurrence">✕ Excluir esta ocorrência</button>
-            <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="series">✕ Excluir série</button>
-          </div>
-        </div>` : ''}
-        <div class="task-emoji">${escapeHtml(ms.emoji)}</div>
-        <div class="task-body">
-          <div class="task-title">${escapeHtml(ms.title)}</div>
-          <div class="task-meta">
-            <span class="task-time">${escapeHtml(ms.start)}–${escapeHtml(ms.end)}</span>
-            <span class="task-category">${escapeHtml(category.name)}</span>
-            ${isShared ? `<span class="task-shared-label">◉ ${participantIds.length}</span>` : ''}
-          </div>
+        <div class="task-header">
+          <span class="task-time">${escapeHtml(ms.start)}–${escapeHtml(ms.end)}</span>
+          ${cardIndex === 0 ? `<div class="task-menu-wrapper">
+            <button class="task-menu-btn" data-open-task-menu="${missionId}" title="Opções">⋯</button>
+            <div class="task-dropdown" id="${menuId}">
+              <button class="task-dropdown-item" data-edit-mission="${missionId}">✏️ Editar</button>
+              <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="occurrence">✕ Excluir esta ocorrência</button>
+              <button class="task-dropdown-item danger" data-delete-mission="${missionId}" data-delete-scope="series">✕ Excluir série</button>
+            </div>
+          </div>` : ''}
         </div>
-        <div class="task-actions">
-          <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
-          <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
+        <div class="task-content">
+          <div class="task-emoji">${escapeHtml(ms.emoji)}</div>
+          <div class="task-body">
+            <div class="task-title">${escapeHtml(ms.title)}</div>
+            <div class="task-meta">
+              <span class="task-category">${escapeHtml(category.name)}</span>
+              ${isShared ? `<span class="task-shared-label">◉ ${participantIds.length}</span>` : ''}
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="task-btn task-done${st?.status === 'done' ? ' active' : ''}" data-mission-action="done" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✓</button>
+            <button class="task-btn task-fail${st?.status === 'fail' ? ' active' : ''}" data-mission-action="fail" data-mission-id="${missionId}" ${readonly ? 'disabled aria-disabled="true"' : ''}>✕</button>
+          </div>
         </div>
       </div>`);
   }).join('');

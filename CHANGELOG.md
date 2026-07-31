@@ -1,5 +1,21 @@
 # Changelog — GP da Família
 
+## Em desenvolvimento (2026-07-31) — correção definitiva dos cards temporais
+
+### Corrigido
+
+- Removido da renderização o botão direto de edição introduzido na alteração anterior; o menu `⋯` preexistente permanece como único controle de edição por tarefa.
+- Reestruturado o card temporal em cabeçalho com horário e separador, conteúdo central e ações.
+- Restauradas as ações de concluir e falhar como duas colunas horizontais de largura equivalente, ocupando a largura útil do card.
+- Cards altos centralizam o conjunto de emoji, descrição e ações na área abaixo do cabeçalho; cards curtos reduzem tipografia e espaçamentos sem extravasar controles.
+- Cards compartilhados usam a mesma estrutura visual em cada coluna participante.
+
+### Validação
+
+- 23 contratos estáticos aprovados, incluindo a ausência do editor direto duplicado e a estrutura dos cards.
+- 10 cenários Playwright aprovados em Chromium desktop e Pixel 7, com geometria de cabeçalho, centralização, botões equivalentes e contenção em cards curtos.
+- 2 cenários autenticados opcionais ignorados por ausência de variáveis de credenciais.
+
 ## Em desenvolvimento (2026-07-30) — refinamento visual e categorias
 
 ### Corrigido

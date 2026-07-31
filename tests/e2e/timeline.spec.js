@@ -49,7 +49,29 @@ test('renders shared timeline and proportional durations', async ({ page }) => {
   await expect(shared).toHaveCount(2);
   await expect(shared.nth(0)).toHaveCSS('grid-column-start', '2');
   await expect(shared.nth(1)).toHaveCSS('grid-column-start', '3');
-  await expect(page.locator('.task-edit-direct')).toHaveCount(6);
+  await expect(page.locator('.task-edit-direct')).toHaveCount(0);
+  await expect(page.locator('[data-edit-mission]')).toHaveCount(4);
+  await expect(page.locator('.task-header')).toHaveCount(6);
+  await expect(page.locator('.task-actions')).toHaveCount(6);
+
+  const layout = await page.locator('.timeline-task').evaluateAll(cards => cards.map(card => {
+    const box = card.getBoundingClientRect();
+    const header = card.querySelector('.task-header').getBoundingClientRect();
+    const content = card.querySelector('.task-content').getBoundingClientRect();
+    const emoji = card.querySelector('.task-emoji').getBoundingClientRect();
+    const title = card.querySelector('.task-title').getBoundingClientRect();
+    const done = card.querySelector('.task-done').getBoundingClientRect();
+    const fail = card.querySelector('.task-fail').getBoundingClientRect();
+    return {
+      inside: done.top >= box.top && done.bottom <= box.bottom && fail.top >= box.top && fail.bottom <= box.bottom,
+      ordered: emoji.top <= title.top && title.top <= done.top,
+      equalActions: Math.abs(done.width - fail.width) < 1,
+      actionsUseWidth: (done.width + fail.width + 4) / content.width > .9,
+      headerAtTop: Math.abs(header.top - box.top) < 2,
+      contentCentered: Math.abs((emoji.top + emoji.height / 2) - (content.top + content.height / 2)) < content.height / 2
+    };
+  }));
+  expect(layout.every(card => card.inside && card.ordered && card.equalActions && card.actionsUseWidth && card.headerAtTop && card.contentCentered)).toBe(true);
 });
 
 test('shows independent individual and family progress', async ({ page }) => {

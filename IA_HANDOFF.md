@@ -1,6 +1,6 @@
 # IA_HANDOFF — estado técnico
 
-Atualizado em 2026-07-30.
+Atualizado em 2026-07-31.
 
 ## Situação atual
 
@@ -31,6 +31,7 @@ A versão publicada para testes recebeu alterações posteriores ao primeiro com
 - carteira coletiva e razão `family_star_transactions`;
 - carrinho da pista orientado para a linha de chegada;
 - Playwright versionado para desktop e Pixel 7.
+- cards temporais divididos em cabeçalho, conteúdo central e ações; o menu existente é o único controle de edição por tarefa.
 
 O modo temporário de teste baseado em `localStorage` não faz parte da consolidação. O branch mantém autenticação e persistência relacionais.
 
@@ -85,7 +86,7 @@ Estabilização da base relacional:
 
 Concluídos no projeto de desenvolvimento: cadastro/login/logout, recuperação de sessão, isolamento RLS entre duas famílias, recorrência semanal, edições de série/ocorrência/futuro, exclusões de ocorrência/série, conflitos, estados/estrelas, bônus/penalidades, navegação semanal, encerramento do dia, backup/restauração, reset e persistência após nova sessão.
 
-Validação do sprint: 23 contratos estáticos e 10 cenários Playwright aprovados em Chromium desktop e Pixel 7. Os 2 cenários autenticados opcionais permanecem pendentes porque dependem de credenciais fornecidas por variáveis de ambiente.
+Validação do sprint: 23 contratos estáticos e 10 cenários Playwright aprovados em Chromium desktop e Pixel 7. A regressão cobre cabeçalho no topo, conteúdo centralizado, ações horizontais equivalentes, compactação sem saída do card e um único editor por tarefa. Os 2 cenários autenticados opcionais permanecem pendentes porque dependem de credenciais fornecidas por variáveis de ambiente.
 
 Somente depois iniciar a extração do manifesto de tema.
 

@@ -215,8 +215,13 @@ class RelationalPersistenceContract(unittest.TestCase):
 
     def test_timeline_card_layout_and_car_orientation_are_visual_only(self):
         stylesheet = self.read("css/style.css")
+        renderer = self.read("js/render.js")
+        self.assertIn('class="task-header"', renderer)
+        self.assertIn('class="task-content"', renderer)
+        self.assertNotIn('task-edit-direct', renderer)
         self.assertIn(".timeline-task .task-time", stylesheet)
-        self.assertIn("justify-content: center", stylesheet)
+        self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr))", stylesheet)
+        self.assertIn(".timeline-task[data-duration-slots=\"1\"]", stylesheet)
         self.assertIn("transform: scaleX(-1)", stylesheet)
 
     def test_progress_and_stars_are_independent(self):
