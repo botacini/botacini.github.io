@@ -221,7 +221,9 @@ class RelationalPersistenceContract(unittest.TestCase):
         self.assertNotIn('task-edit-direct', renderer)
         self.assertIn(".timeline-task .task-time", stylesheet)
         self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr))", stylesheet)
-        self.assertIn(".timeline-task[data-duration-slots=\"1\"]", stylesheet)
+        self.assertIn(".timeline-task--compact", stylesheet)
+        self.assertIn(".timeline-task--ultra", stylesheet)
+        self.assertIn("refreshMissionStatus", renderer)
         self.assertIn("transform: scaleX(-1)", stylesheet)
 
     def test_progress_and_stars_are_independent(self):

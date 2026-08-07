@@ -154,6 +154,23 @@ export function renderMissions() {
   `;
 }
 
+export function refreshMissionStatus(missionId) {
+  updateProgress();
+  updateHeaderStarsDisplay();
+  renderMembersBar();
+
+  const status = state.missionStatus[missionId]?.status;
+  const currentId = getCurrentMissionId();
+  document.querySelectorAll('.timeline-task').forEach(card => {
+    if (card.dataset.missionId !== missionId) return;
+    card.classList.toggle('done', status === 'done');
+    card.classList.toggle('fail', status === 'fail');
+    card.classList.toggle('current', currentId === missionId && !status);
+    card.querySelector('.task-done')?.classList.toggle('active', status === 'done');
+    card.querySelector('.task-fail')?.classList.toggle('active', status === 'fail');
+  });
+}
+
 function renderTimelineBoard(members, readonly) {
   const currentId = getCurrentMissionId();
   const starts = state.missions.map(mission => timeToMin(mission.start));
@@ -179,7 +196,13 @@ function renderTimelineBoard(members, readonly) {
       .sort((a, b) => a - b);
     if (!participantIndexes.length) return [];
     const startSlot = Math.max(0, Math.floor((timeToMin(ms.start) - timelineStart) / TIMELINE_STEP));
-    const durationSlots = Math.max(1, Math.ceil((timeToMin(ms.end) - timeToMin(ms.start)) / TIMELINE_STEP));
+    const durationMinutes = Math.max(0, timeToMin(ms.end) - timeToMin(ms.start));
+    const durationSlots = Math.max(1, Math.ceil(durationMinutes / TIMELINE_STEP));
+    const densityClass = durationMinutes === 15
+      ? ' timeline-task--compact'
+      : durationMinutes < 15
+        ? ' timeline-task--ultra'
+        : '';
     const st = state.missionStatus[ms.id];
     const doneClass = st?.status === 'done' ? ' done' : '';
     const failClass = st?.status === 'fail' ? ' fail' : '';
@@ -191,9 +214,9 @@ function renderTimelineBoard(members, readonly) {
     const missionId = escapeHtml(ms.id);
     const menuId = `task-menu-${missionId}`;
     return participantIndexes.map((participantIndex, cardIndex) => `
-      <div class="task-cell timeline-task${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}"
+      <div class="task-cell timeline-task${densityClass}${doneClass}${failClass}${currentClass}${isShared ? ' shared-task' : ''}"
         style="--category-color:${safeCssColor(category.color)};grid-column:${participantIndex + 2};grid-row:${startSlot + 2}/span ${durationSlots}"
-        data-mission-id="${missionId}" data-duration-slots="${durationSlots}">
+        data-mission-id="${missionId}" data-duration-minutes="${durationMinutes}" data-duration-slots="${durationSlots}">
         <div class="task-header">
           <span class="task-time">${escapeHtml(ms.start)}–${escapeHtml(ms.end)}</span>
           ${cardIndex === 0 ? `<div class="task-menu-wrapper">

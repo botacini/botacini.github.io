@@ -17,7 +17,7 @@ import {
   isSelectedDateToday, loadDateContext, shiftDateKey,
 } from './state.js';
 import { setOccurrenceStatus, clearOccurrenceStatus } from './storage.js';
-import { renderMembersBar, renderMissions, renderWeek, renderDashboard, calculateProgress } from './render.js';
+import { refreshMissionStatus, renderWeek, renderDashboard, calculateProgress } from './render.js';
 import { playSound, vibrate, showToast, showBadgeUnlockPopup, startConfetti } from './effects.js';
 
 /* ════════════════ ESTRELAS: CONCEDER / REVOGAR ════════════════ */
@@ -72,8 +72,7 @@ function markFail(missionId) {
   });
   playSound('fail');
   vibrate([80]);
-  renderMembersBar();
-  renderMissions();
+  refreshMissionStatus(missionId);
 }
 
 export function unmarkMission(missionId) {
@@ -88,8 +87,7 @@ export function unmarkMission(missionId) {
     console.error('[missions] falha ao limpar status:', error);
     showToast('Falha ao salvar. Recarregue a página.');
   });
-  renderMembersBar();
-  renderMissions();
+  refreshMissionStatus(missionId);
 }
 
 function setDoneWithBonus(missionId, bonusFlags) {
@@ -110,8 +108,7 @@ function setDoneWithBonus(missionId, bonusFlags) {
   });
   playSound('done');
   vibrate([30, 30, 60]);
-  renderMembersBar();
-  renderMissions();
+  refreshMissionStatus(missionId);
   checkAndUnlockBadges();
 
   if (allMissionsDone()) {

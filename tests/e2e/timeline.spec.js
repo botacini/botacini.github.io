@@ -62,16 +62,118 @@ test('renders shared timeline and proportional durations', async ({ page }) => {
     const title = card.querySelector('.task-title').getBoundingClientRect();
     const done = card.querySelector('.task-done').getBoundingClientRect();
     const fail = card.querySelector('.task-fail').getBoundingClientRect();
+    const menu = card.querySelector('.task-menu-btn')?.getBoundingClientRect();
+    const isUltra = card.classList.contains('timeline-task--ultra');
+    const inside = rect => rect.top >= box.top && rect.bottom <= box.bottom
+      && rect.left >= box.left && rect.right <= box.right;
     return {
-      inside: done.top >= box.top && done.bottom <= box.bottom && fail.top >= box.top && fail.bottom <= box.bottom,
-      ordered: emoji.top <= title.top && title.top <= done.top,
+      inside: [header, emoji, title, done, fail, menu].filter(Boolean).every(inside),
+      ordered: isUltra || (emoji.top <= title.top && title.top <= done.top),
       equalActions: Math.abs(done.width - fail.width) < 1,
-      actionsUseWidth: (done.width + fail.width + 4) / content.width > .9,
+      actionsUseWidth: isUltra || (done.width + fail.width + 4) / content.width > .9,
       headerAtTop: Math.abs(header.top - box.top) < 2,
-      contentCentered: Math.abs((emoji.top + emoji.height / 2) - (content.top + content.height / 2)) < content.height / 2
+      contentCentered: isUltra || Math.abs((emoji.top + emoji.height / 2) - (content.top + content.height / 2)) < content.height / 2,
+      ultraReorganized: !isUltra || (emoji.right <= title.left && title.right <= done.left)
     };
   }));
-  expect(layout.every(card => card.inside && card.ordered && card.equalActions && card.actionsUseWidth && card.headerAtTop && card.contentCentered)).toBe(true);
+  expect(layout.every(card => card.inside && card.ordered && card.equalActions && card.actionsUseWidth && card.headerAtTop && card.contentCentered && card.ultraReorganized)).toBe(true);
+});
+
+test('uses compact variants only for tasks at or below fifteen minutes', async ({ page }) => {
+  await renderFixture(page);
+  await page.evaluate(async () => {
+    const { state } = await import('/js/state.js');
+    const renderer = await import('/js/render.js');
+    state.missions.push(
+      { id: 'm5', title: 'QUINZE MINUTOS', emoji: '⏱️', start: '12:05', end: '12:20', assignee: ['pai'], desc: '[categoria:saude]', schedule: { type: 'once' } },
+      { id: 'm6', title: 'TRINTA MINUTOS', emoji: '🧹', start: '12:20', end: '12:50', assignee: ['filho'], desc: '[categoria:outros]', schedule: { type: 'once' } }
+    );
+    renderer.renderMissions();
+  });
+
+  await expect(page.locator('.timeline-task[data-mission-id="m3"]')).toHaveClass(/timeline-task--ultra/);
+  await expect(page.locator('.timeline-task[data-mission-id="m5"]')).toHaveClass(/timeline-task--compact/);
+  await expect(page.locator('.timeline-task[data-mission-id="m6"]')).not.toHaveClass(/timeline-task--(?:compact|ultra)/);
+  await expect(page.locator('.timeline-task[data-mission-id="m5"] .task-category')).toBeVisible();
+  await expect(page.locator('.timeline-task[data-mission-id="m3"] .task-meta')).toBeHidden();
+
+  const contained = await page.locator('.timeline-task[data-mission-id="m3"], .timeline-task[data-mission-id="m5"]').evaluateAll(cards => cards.every(card => {
+    const box = card.getBoundingClientRect();
+    return [...card.querySelectorAll('.task-header, .task-emoji, .task-title, .task-btn')].every(element => {
+      const rect = element.getBoundingClientRect();
+      return rect.top >= box.top && rect.bottom <= box.bottom && rect.left >= box.left && rect.right <= box.right;
+    });
+  }));
+  expect(contained).toBe(true);
+});
+
+test('keeps window and timeline scroll positions when a task status changes', async ({ page }) => {
+  await renderFixture(page);
+  await page.evaluate(() => {
+    window.GP_SUPABASE_CONFIG = { url: 'https://example.test', publishableKey: 'test-key' };
+    window.supabase = { createClient: () => ({ rpc: async () => ({ error: null }) }) };
+    document.body.style.minHeight = '2400px';
+    const timeline = document.querySelector('.timeline-scroll');
+    const card = document.querySelector('.timeline-task[data-mission-id="m4"]');
+    timeline.scrollTop = card.offsetTop - 80;
+    window.scrollTo(0, 300);
+    window.__statusScrollSnapshot = {
+      windowY: window.scrollY,
+      timelineY: timeline.scrollTop,
+      card,
+      sharedCards: [...document.querySelectorAll('.timeline-task[data-mission-id="m1"]')]
+    };
+  });
+
+  await page.evaluate(async () => {
+    const missions = await import('/js/missions.js');
+    missions.handleMissionAction('m4', 'fail');
+    missions.handleMissionAction('m1', 'done');
+    await new Promise(resolve => requestAnimationFrame(resolve));
+  });
+
+  const result = await page.evaluate(() => {
+    const timeline = document.querySelector('.timeline-scroll');
+    const card = document.querySelector('.timeline-task[data-mission-id="m4"]');
+    return {
+      sameCard: card === window.__statusScrollSnapshot.card,
+      windowY: window.scrollY,
+      timelineY: timeline.scrollTop,
+      expectedWindowY: window.__statusScrollSnapshot.windowY,
+      expectedTimelineY: window.__statusScrollSnapshot.timelineY,
+      failed: card.classList.contains('fail'),
+      activeFail: card.querySelector('.task-fail').classList.contains('active'),
+      sharedCardsUpdatedInPlace: [...document.querySelectorAll('.timeline-task[data-mission-id="m1"]')]
+        .every((sharedCard, index) => sharedCard === window.__statusScrollSnapshot.sharedCards[index]
+          && !sharedCard.classList.contains('done'))
+    };
+  });
+  expect(result.sameCard).toBe(true);
+  expect(result.windowY).toBe(result.expectedWindowY);
+  expect(result.timelineY).toBe(result.expectedTimelineY);
+  expect(result.failed).toBe(true);
+  expect(result.activeFail).toBe(true);
+  expect(result.sharedCardsUpdatedInPlace).toBe(true);
+});
+
+test('desktop starts the progress panel below the header without displacing navigation', async ({ page }) => {
+  test.skip((page.viewportSize()?.width || 0) < 768, 'desktop-only layout assertion');
+  await renderFixture(page);
+  const layout = await page.evaluate(() => {
+    const header = document.querySelector('.app-header').getBoundingClientRect();
+    const progress = document.querySelector('.progress-box').getBoundingClientRect();
+    const navigation = document.querySelector('.tab-bar').getBoundingClientRect();
+    return {
+      membersDisplay: getComputedStyle(document.querySelector('.members-bar')).display,
+      progressGap: progress.top - header.bottom,
+      navigationLeft: navigation.left,
+      navigationWidth: navigation.width
+    };
+  });
+  expect(layout.membersDisplay).toBe('none');
+  expect(layout.progressGap).toBeLessThanOrEqual(24);
+  expect(layout.navigationLeft).toBe(0);
+  expect(layout.navigationWidth).toBeGreaterThan(200);
 });
 
 test('shows independent individual and family progress', async ({ page }) => {

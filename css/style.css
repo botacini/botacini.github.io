@@ -402,7 +402,6 @@ button { font-family: inherit; cursor: pointer; }
   z-index: 2;
   margin: 1px 3px;
   min-height: 28px;
-  overflow: hidden;
   padding: 0;
   border-left: 4px solid var(--category-color, var(--blue));
   border-radius: 5px;
@@ -487,36 +486,59 @@ button { font-family: inherit; cursor: pointer; }
   padding-right: 0;
 }
 
-.timeline-task[data-duration-slots="1"] {
-  min-height: 0;
+.timeline-task--compact .task-header {
+  flex-basis: 18px;
+  padding: 2px 4px;
 }
-.timeline-task[data-duration-slots="1"] .task-header {
-  flex-basis: 8px;
+.timeline-task--compact .task-content {
+  padding: 3px 4px;
+  gap: 2px;
+}
+.timeline-task--compact .task-emoji { font-size: 19px; }
+.timeline-task--compact .task-title { font-size: 10px; line-height: 1.1; }
+.timeline-task--compact .task-meta { gap: 3px; }
+.timeline-task--compact .task-category,
+.timeline-task--compact .task-shared-label { font-size: 7px; }
+.timeline-task--compact .task-actions { gap: 3px; margin-top: 0; }
+.timeline-task--compact .task-btn { height: 17px; font-size: 8px; }
+
+.timeline-task--ultra .task-header {
+  flex-basis: 9px;
   padding: 0 3px;
 }
-.timeline-task[data-duration-slots="1"] .task-time { font-size: 6px; line-height: 7px; }
-.timeline-task[data-duration-slots="1"] .task-content { padding: 0 3px; gap: 0; }
-.timeline-task[data-duration-slots="1"] .task-emoji { font-size: 8px; line-height: 7px; }
-.timeline-task[data-duration-slots="1"] .task-title { font-size: 6px; line-height: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.timeline-task[data-duration-slots="1"] .task-category,
-.timeline-task[data-duration-slots="1"] .task-shared-label { display: none; }
-.timeline-task[data-duration-slots="1"] .task-meta { display: none; }
-.timeline-task[data-duration-slots="1"] .task-actions {
+.timeline-task--ultra .task-time { font-size: 6px; line-height: 7px; }
+.timeline-task--ultra .task-menu-btn { padding: 0 2px; font-size: 8px; }
+.timeline-task--ultra .task-content {
+  flex-direction: row;
+  justify-content: center;
+  padding: 1px 3px;
+  gap: 2px;
+}
+.timeline-task--ultra .task-emoji {
+  flex: 0 0 auto;
+  font-size: 10px;
+  line-height: 1;
+}
+.timeline-task--ultra .task-body {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.timeline-task--ultra .task-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 7px;
+  line-height: 8px;
+}
+.timeline-task--ultra .task-meta { display: none; }
+.timeline-task--ultra .task-actions {
+  flex: 0 0 32px;
+  width: 32px;
   gap: 2px;
   margin-top: 0;
 }
-.timeline-task[data-duration-slots="1"] .task-btn { height: 8px; font-size: 6px; }
-
-.timeline-task[data-duration-slots="2"] {
-  min-height: 0;
-}
-.timeline-task[data-duration-slots="2"] .task-header { flex-basis: 14px; padding: 1px 4px; }
-.timeline-task[data-duration-slots="2"] .task-content { padding: 1px 4px; gap: 0; }
-.timeline-task[data-duration-slots="2"] .task-emoji { font-size: 14px; line-height: 14px; }
-.timeline-task[data-duration-slots="2"] .task-title { font-size: 8px; line-height: 9px; }
-.timeline-task[data-duration-slots="2"] .task-meta { display: none; }
-.timeline-task[data-duration-slots="2"] .task-actions { margin-top: 0; }
-.timeline-task[data-duration-slots="2"] .task-btn { height: 14px; font-size: 8px; }
+.timeline-task--ultra .task-btn { height: 14px; padding: 0; font-size: 8px; }
 
 .board-column {
   flex: 0 0 160px;
@@ -1227,17 +1249,7 @@ button { font-family: inherit; cursor: pointer; }
     min-height: 0;
   }
   .members-bar {
-    flex-direction: column;
-    overflow-x: visible;
-    overflow-y: auto;
-    background: transparent;
-    border-bottom: none;
-    border-top: 1px solid var(--line);
-    padding: 10px 0 0;
-    gap: 6px;
-    width: 220px;
-    min-width: 220px;
-    max-width: 220px;
+    display: none;
   }
   .member-pill { border-radius: 10px; padding: 8px 10px; font-size: 11px; }
   .tab-bar {
@@ -1298,7 +1310,7 @@ button { font-family: inherit; cursor: pointer; }
     min-width: 0;
     padding: 20px 24px 20px;
     overflow-y: auto;
-    min-height: calc(100vh - var(--topbar-h, 64px));
+    min-height: 0;
     margin-left: 220px;
   }
   .board-column { flex: 0 0 200px; min-width: 200px; }
